@@ -1,0 +1,52 @@
+#!/bin/bash
+# Re-vendor the Render OpenAPI spec and regenerate the Swift client.
+#
+# Structurally a port of render-agent/scripts/generate.sh, swapping `go generate` for
+# swift-openapi-generator. Both the flattened spec and the generated Swift are committed, so
+# running this turns an upstream spec change into two reviewable diffs rather than a surprise
+# build break. See PLAN.md for why.
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PKG="$REPO_ROOT/Packages/RenderAPI"
+SPEC="$PKG/openapi.json"
+CONFIG="$PKG/openapi-generator-config.yaml"
+OUT="$PKG/Sources/RenderAPI/Generated"
+SPEC_URL="https://api-docs.render.com/openapi/render-public-api-1.json"
+
+echo "==> Downloading Render spec"
+curl -sSfL -o "$SPEC" "$SPEC_URL"
+
+echo "==> Pretty-printing"
+jq . "$SPEC" > "$SPEC.tmp" && mv "$SPEC.tmp" "$SPEC"
+
+echo "==> Flattening intra-path \$ref pointers"
+# Mandatory, not cosmetic: OpenAPIKit only resolves refs into #/components/..., and the raw
+# spec has ~250 refs into #/paths/... Without this the generator fails outright.
+python3 "$REPO_ROOT/Scripts/flatten-path-refs.py" "$SPEC"
+
+remaining=$(grep -c '#/paths/' "$SPEC" || true)
+if [ "$remaining" != "0" ]; then
+  echo "!!! $remaining unresolved #/paths/ refs remain — generation will fail" >&2
+  exit 1
+fi
+
+echo "==> Generating Swift client"
+# Invoked as a plain executable rather than as a build-tool plugin, so that the generated
+# sources can be committed and the spec kept outside Sources/. Also avoids Xcode's
+# per-checkout "Trust & Enable" plugin prompt.
+cd "$PKG"
+rm -rf "$OUT"
+mkdir -p "$OUT"
+swift run -q swift-openapi-generator generate "$SPEC" \
+  --config "$CONFIG" \
+  --output-directory "$OUT"
+
+# The generator always emits all three files; Server.swift is empty because we only request
+# types+client. Drop it rather than committing a stub.
+rm -f "$OUT/Server.swift"
+
+echo "==> Generated:"
+wc -l "$OUT"/*.swift
+
+echo "==> Done. Review with: git diff --stat Packages/RenderAPI"
