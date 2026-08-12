@@ -1,19 +1,56 @@
 import RenderAPI
 import SwiftUI
 
-/// Phase 0 placeholder.
-///
-/// Its only job is to prove the app target links `RenderAPI` and can construct a client — the
-/// onboarding and service-list screens that replace it land in Phase 1. See PLAN.md.
+/// App entry point. Switches between onboarding and the service list on `AuthStore` state, and
+/// revalidates any stored key on launch.
 struct RootView: View {
+    @State private var authStore = AuthStore()
+
     var body: some View {
-        NavigationStack {
-            ContentUnavailableView {
-                Label("Render", systemImage: "server.rack")
-            } description: {
-                Text("Phase 0 — API client wired up.\nSign-in and services land in Phase 1.")
+        content
+            .task { await authStore.restore() }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        switch authStore.phase {
+        case .restoring:
+            ProgressView("Connecting…")
+        case .needsKey, .authenticating:
+            OnboardingView(authStore: authStore)
+        case .authenticated:
+            authenticatedView
+        }
+    }
+
+    @ViewBuilder
+    private var authenticatedView: some View {
+        if let ownerID = authStore.selectedOwnerID {
+            NavigationStack {
+                ServicesListView(client: authStore.authenticatedClient(), ownerID: ownerID)
+                    .navigationTitle("Services")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        if authStore.owners.count > 1 {
+                            ToolbarItem(placement: .topBarLeading) {
+                                OwnerPickerView(authStore: authStore)
+                            }
+                        }
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Menu {
+                                Button("Sign Out", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) {
+                                    authStore.signOut()
+                                }
+                            } label: {
+                                Image(systemName: "person.crop.circle")
+                            }
+                        }
+                    }
             }
-            .navigationTitle("Render")
+            // Re-create the list (and its store) when the active workspace changes.
+            .id(ownerID)
+        } else {
+            ContentUnavailableView("No Workspace", systemImage: "person.slash")
         }
     }
 }

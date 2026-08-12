@@ -41,6 +41,9 @@ the phone you already have.
 **Phase 0 is complete and verified.** See [Phase 0 outcomes](#phase-0-outcomes) for what was built,
 what was measured, and where the implementation deviates from what is described below.
 
+**Phase 1 (auth + service list) is built** and passes `make check`; only the live smoke test
+against a real API key remains. See the [Phase 1 milestone](#phase-1--auth--service-list-first-runnable-app--done-pending-live-smoke).
+
 ---
 
 ## Three spec gotchas that shape the design
@@ -259,12 +262,45 @@ Each phase builds, runs, and is independently useful. Full parity is reached at 
 - `RenderClient`, `RenderError`, `AuthMiddleware`, `RetryMiddleware`, `Pagination`.
 - **Gate:** `xcodebuild build` for the simulator succeeds; `swift test` in the package passes.
 
-### Phase 1 — Auth + service list (first runnable app)
+### Phase 1 — Auth + service list (first runnable app) ✅ DONE (pending live smoke)
 - Onboarding / API-key entry, Keychain storage, `GET /owners` validation, workspace picker.
-- `GET /services` with cursor paging, pull-to-refresh, search, filter by type and status.
-- `ServiceDetails+Decode.swift` and its per-type fixture tests.
-- Status design system: color/label mapping for the 11 `deployStatus` values, the 5 service types,
-  and `suspended`.
+- `GET /services` with cursor paging, pull-to-refresh, search, filter by type.
+- Status design system: label/icon/tint for the 5 service types + a suspended badge.
+
+**Built:** `Keychain`, `KeychainAPIKeyProvider`, and `StatusMappingMiddleware` (added to `RenderAPI`);
+`AuthStore`, `OnboardingView`, `ServicesStore`, `ServicesListView`, `ServiceRow`, `OwnerPickerView`,
+`ServiceType+Display`, and a reworked `RootView` in the app target. `make check` green — 31 tests
+in 6 suites (added `StatusMappingMiddleware` + real-stack `listOwners` pagination/401 cases),
+`BUILD SUCCEEDED`, onboarding screen verified on the simulator. Live smoke (real key → list) still
+needs a real API key at runtime.
+
+**Deviations from the original outline, and why:**
+1. **No per-service deploy status in the list.** The `/services` payload carries none; showing a
+   live health dot would need an `N+1` deploy fetch. The list shows type + suspended only; deploy
+   status lands in Phase 2 detail. (Confirmed with the user.)
+2. **`ServiceDetails+Decode.swift` moved to Phase 2.** It's only needed once a screen reads
+   `serviceDetails`; the list doesn't. It ships with the detail screen and its fixture tests.
+3. **Status design system scoped to what the list shows** (type + suspended). The 11-value
+   `deployStatus` color mapping is deferred to Phase 2, where it's first used.
+4. **New `StatusMappingMiddleware`** (outermost in the stack) maps a terminal 4xx/5xx response to a
+   thrown `RenderError`, so all 207 operations surface one error type without a per-operation
+   `Output`-enum switch. Feature stores just `RenderError.wrapping(_:)` in their catch blocks.
+5. **Filter is by type only, not status** — the list has no deploy status to filter on. Search and
+   the type filter are client-side over loaded pages.
+
+**Live smoke turned up two spec-vs-reality mismatches** (the app's list wouldn't decode until both
+were fixed — the generated client decodes the *whole* `Service` strictly before any domain mapping):
+- **Microsecond timestamps.** Render sends `2026-08-11T19:59:22.275356Z` (5–6 fractional digits);
+  the runtime's default ISO8601 decoder accepts at most 3. Fixed globally with
+  `RenderDateTranscoder` on the client `Configuration` — affects every `Date` in the API.
+- **`null` for required fields.** The spec marks `buildFilter.paths`/`ignoredPaths` and
+  `serviceDetails.openPorts` required + non-nullable, but the API returns `null` (66 of 190 real
+  services for `ignoredPaths`). Fixed by `Scripts/relax-nullable.py`, a spec-patch step in
+  `generate-api.sh` (after flatten) that drops these from `required` so the decoder tolerates null.
+  Add a line there if a new null-for-required field surfaces. Only these two exist in real data.
+
+Both are the kind of drift PLAN.md predicted; the vendored-spec pipeline absorbed them as a
+reviewable spec diff + regeneration, exactly as intended.
 
 ### Phase 2 — Service detail, deploys, and the emergency actions
 - Detail screen: current deploy, health, instance count, repo/branch, dashboard deep link.
@@ -403,3 +439,6 @@ Everything in Phase 0 is built and verified. `make check` is green.
    generation to the tags the app actually uses. Not doing this up front — full parity is the goal.
 4. **No CI yet.** `make check` is the whole gate and runs locally. Worth a GitHub Actions workflow
    once there is something to protect.
+5. ~~**PR-preview services dominate the list.**~~ **Done.** `ServicesStore.makePaginator` now sends
+   `includePreviews: false` so the list shows real services only. A toggle to show previews is a
+   later refinement.

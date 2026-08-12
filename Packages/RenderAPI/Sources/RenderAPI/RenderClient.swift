@@ -25,10 +25,15 @@ public struct RenderClient: Sendable {
     ) {
         self.api = Client(
             serverURL: baseURL,
+            // Render sends microsecond-precision timestamps the default transcoder rejects.
+            configuration: Configuration(dateTranscoder: RenderDateTranscoder()),
             transport: transport,
             middlewares: [
-                // Order matters: retry is outermost so a retried attempt re-reads the API key,
-                // which matters if the user swapped workspaces mid-flight.
+                // Order matters (first = outermost). StatusMapping is outermost so it sees only the
+                // *final* response and maps a terminal 4xx/5xx to a thrown RenderError — after Retry
+                // has done its retries. Retry sits above Auth so a retried attempt re-reads the API
+                // key, which matters if the user swapped workspaces mid-flight.
+                StatusMappingMiddleware(),
                 RetryMiddleware(policy: retryPolicy),
                 AuthMiddleware(provider: apiKeyProvider),
             ]
