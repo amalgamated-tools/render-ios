@@ -11,14 +11,14 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-# Toolchain is the macos-26 image default (Xcode 26 / Swift 6), which is what the project is
-# developed against. Left unpinned deliberately: pinning DEVELOPER_DIR to an exact Xcode_26.x.app
-# breaks whenever GitHub rotates the image's point release. The "Show toolchain" step below
-# records what actually ran, so a toolchain-caused failure is diagnosable from the log.
+# Runs on the self-hosted Apple Silicon runner (RENDER-PV). Toolchain is whatever Xcode is
+# selected on that machine rather than a pinned DEVELOPER_DIR, so the runner tracks the same
+# Xcode the project is developed against. The "Show toolchain" step below records what actually
+# ran, so a toolchain-caused failure is diagnosable from the log.
 jobs:
   test:
     name: RenderAPI tests
-    runs-on: macos-26
+    runs-on: [self-hosted, macOS, ARM64]
     steps:
       - uses: actions/checkout@v5
 
@@ -38,7 +38,7 @@ jobs:
 
   test-app:
     name: App tests
-    runs-on: macos-26
+    runs-on: [self-hosted, macOS, ARM64]
     steps:
       - uses: actions/checkout@v5
 
@@ -59,7 +59,7 @@ jobs:
 
   build:
     name: Build app
-    runs-on: macos-26
+    runs-on: [self-hosted, macOS, ARM64]
     steps:
       - uses: actions/checkout@v5
 
