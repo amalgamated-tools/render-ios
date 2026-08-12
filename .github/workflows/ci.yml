@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A newer push to the same branch supersedes an in-flight run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Toolchain is the macos-26 image default (Xcode 26 / Swift 6), which is what the project is
+# developed against. Left unpinned deliberately: pinning DEVELOPER_DIR to an exact Xcode_26.x.app
+# breaks whenever GitHub rotates the image's point release. The "Show toolchain" step below
+# records what actually ran, so a toolchain-caused failure is diagnosable from the log.
+jobs:
+  test:
+    name: RenderAPI tests
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Show toolchain
+        run: swift --version && xcodebuild -version
+
+      - name: Cache SwiftPM build
+        uses: actions/cache@v4
+        with:
+          path: Packages/RenderAPI/.build
+          key: spm-${{ runner.os }}-${{ hashFiles('Packages/RenderAPI/Package.resolved') }}
+          restore-keys: spm-${{ runner.os }}-
+
+      # No network access is needed by the tests themselves — every test drives a StubTransport.
+      - name: Test
+        run: make test
+
+  build:
+    name: Build app
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Show toolchain
+        run: xcodebuild -version
+
+      - name: Cache resolved SPM checkouts
+        uses: actions/cache@v4
+        with:
+          path: .spm-cache
+          key: xcode-spm-${{ runner.os }}-${{ hashFiles('Packages/RenderAPI/Package.resolved') }}
+          restore-keys: xcode-spm-${{ runner.os }}-
+
+      # 'generic/platform=iOS Simulator' compiles for the simulator SDK without requiring a
+      # specific device to exist on the runner, so CI does not break when GitHub rotates
+      # the installed simulator set.
+      - name: Build
+        run: >-
+          make build
+          DESTINATION='generic/platform=iOS Simulator'
+          XCODEBUILD_FLAGS='-clonedSourcePackagesDirPath .spm-cache'

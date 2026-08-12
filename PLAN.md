@@ -437,8 +437,10 @@ Everything in Phase 0 is built and verified. `make check` is green.
 3. **Generated-code size.** 6.4 MB / 135K lines committed, ~30s to compile clean. Acceptable, but
    if incremental build times bite, `filter:` in `openapi-generator-config.yaml` can trim
    generation to the tags the app actually uses. Not doing this up front — full parity is the goal.
-4. **No CI yet.** `make check` is the whole gate and runs locally. Worth a GitHub Actions workflow
-   once there is something to protect.
+4. ~~**No CI yet.**~~ **Done.** `.github/workflows/ci.yml` runs the package tests and an app build
+   on every PR and every push to `main`, using the same `make` targets as local development.
+   `.github/workflows/spec-drift.yml` re-runs `make generate` weekly and fails when Render has
+   changed the spec out from under the vendored copy.
 5. ~~**PR-preview services dominate the list.**~~ **Done.** `ServicesStore.makePaginator` now sends
    `includePreviews: false` so the list shows real services only. A toggle to show previews is a
    later refinement.
