@@ -1,0 +1,40 @@
+name: Spec drift
+
+# Render publishes the OpenAPI spec unversioned and warns it changes without notice, so the
+# vendored copy in Packages/RenderAPI can silently go stale. This job re-runs the generator
+# against the live spec and fails when the committed output no longer matches — the fix is to
+# run `make generate` locally and review the diff.
+#
+# Deliberately separate from CI: it needs network access to api-docs.render.com and a failure
+# here means "upstream moved", not "this PR is broken".
+on:
+  schedule:
+    - cron: '0 13 * * 1' # Mondays, 13:00 UTC
+  workflow_dispatch:
+
+jobs:
+  drift:
+    name: Check vendored spec against upstream
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Regenerate from the live spec
+        run: make generate
+
+      - name: Report
+        run: |
+          if git diff --quiet -- Packages/RenderAPI; then
+            echo "No drift — the vendored spec matches upstream." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          {
+            echo "## Render spec has drifted"
+            echo
+            echo "Run \`make generate\` locally and review the diff."
+            echo
+            echo '```'
+            git diff --stat -- Packages/RenderAPI
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1

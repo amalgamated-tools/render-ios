@@ -1,5 +1,9 @@
 SIMULATOR ?= iPhone 17 Pro
-DESTINATION := platform=iOS Simulator,name=$(SIMULATOR)
+# Overridable so CI can build against 'generic/platform=iOS Simulator' and not depend on a
+# particular simulator being installed on the runner.
+DESTINATION ?= platform=iOS Simulator,name=$(SIMULATOR)
+# Extra flags for xcodebuild — CI passes -clonedSourcePackagesDirPath to make SPM checkouts cacheable.
+XCODEBUILD_FLAGS ?=
 
 .DEFAULT_GOAL := check
 
@@ -11,7 +15,7 @@ check: test build
 .PHONY: build
 build:
 	xcodebuild -project RenderiOS.xcodeproj -scheme RenderiOS \
-	  -destination '$(DESTINATION)' build
+	  -destination '$(DESTINATION)' $(XCODEBUILD_FLAGS) build
 
 ## test: run the RenderAPI package tests (no network)
 .PHONY: test
