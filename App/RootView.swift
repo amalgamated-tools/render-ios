@@ -27,27 +27,9 @@ struct RootView: View {
     private var authenticatedView: some View {
         if let ownerID = authStore.selectedOwnerID {
             NavigationStack {
-                ServicesListView(client: authStore.authenticatedClient(), ownerID: ownerID)
-                    .navigationTitle("Services")
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        if authStore.owners.count > 1 {
-                            ToolbarItem(placement: .topBarLeading) {
-                                OwnerPickerView(authStore: authStore)
-                            }
-                        }
-                        ToolbarItem(placement: .topBarTrailing) {
-                            Menu {
-                                Button("Sign Out", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) {
-                                    authStore.signOut()
-                                }
-                            } label: {
-                                Image(systemName: "person.crop.circle")
-                            }
-                        }
-                    }
+                ServicesScreen(authStore: authStore, client: authStore.authenticatedClient(), ownerID: ownerID)
             }
-            // Re-create the list (and its store) when the active workspace changes.
+            // Re-create the screen (and its stores) when the active workspace changes.
             .id(ownerID)
         } else {
             ContentUnavailableView("No Workspace", systemImage: "person.slash")

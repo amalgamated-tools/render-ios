@@ -8,9 +8,9 @@ struct ServicesListView: View {
 
     private let client: RenderClient
 
-    init(client: RenderClient, ownerID: String) {
+    init(client: RenderClient, ownerID: String, environmentIDs: [String]? = nil) {
         self.client = client
-        _store = State(initialValue: ServicesStore(client: client, ownerID: ownerID))
+        _store = State(initialValue: ServicesStore(client: client, ownerID: ownerID, environmentIDs: environmentIDs))
     }
 
     var body: some View {
@@ -83,7 +83,7 @@ struct ServicesListView: View {
             ContentUnavailableView(
                 "No Services",
                 systemImage: "server.rack",
-                description: Text("This workspace has no services yet.")
+                description: Text(store.isProjectScoped ? "This project has no services yet." : "This workspace has no services yet.")
             )
         } else if store.visibleServices.isEmpty {
             // Loaded services exist, but none match the current search/filter.
