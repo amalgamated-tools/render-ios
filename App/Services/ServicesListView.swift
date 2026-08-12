@@ -2,12 +2,14 @@ import RenderAPI
 import SwiftUI
 
 /// The service list for the active owner: searchable, filterable by type, pull-to-refresh, and
-/// incremental paging as you scroll. Tapping a row opens a dashboard link for now — the native
-/// detail screen lands in Phase 2.
+/// incremental paging as you scroll. Tapping a row pushes the service detail screen.
 struct ServicesListView: View {
     @State private var store: ServicesStore
 
+    private let client: RenderClient
+
     init(client: RenderClient, ownerID: String) {
+        self.client = client
         _store = State(initialValue: ServicesStore(client: client, ownerID: ownerID))
     }
 
@@ -28,14 +30,10 @@ struct ServicesListView: View {
         .task { if store.services.isEmpty { await store.refresh() } }
     }
 
-    @ViewBuilder
     private func row(for service: ServiceSummary) -> some View {
-        if let url = service.dashboardURL {
-            Link(destination: url) {
-                ServiceRow(service: service)
-            }
-            .buttonStyle(.plain)
-        } else {
+        NavigationLink {
+            ServiceDetailView(client: client, serviceID: service.id, serviceName: service.name)
+        } label: {
             ServiceRow(service: service)
         }
     }

@@ -5537,9 +5537,9 @@ public enum Components {
                 /// - Remark: Generated from `#/components/schemas/service/serviceDetails/case3`.
                 case PrivateServiceDetails(Components.Schemas.PrivateServiceDetails)
                 /// - Remark: Generated from `#/components/schemas/service/serviceDetails/case4`.
-                case BackgroundWorkerDetails(Components.Schemas.BackgroundWorkerDetails)
-                /// - Remark: Generated from `#/components/schemas/service/serviceDetails/case5`.
                 case CronJobDetails(Components.Schemas.CronJobDetails)
+                /// - Remark: Generated from `#/components/schemas/service/serviceDetails/case5`.
+                case BackgroundWorkerDetails(Components.Schemas.BackgroundWorkerDetails)
                 public init(from decoder: any Swift.Decoder) throws {
                     var errors: [any Swift.Error] = []
                     do {
@@ -5561,13 +5561,13 @@ public enum Components {
                         errors.append(error)
                     }
                     do {
-                        self = .BackgroundWorkerDetails(try .init(from: decoder))
+                        self = .CronJobDetails(try .init(from: decoder))
                         return
                     } catch {
                         errors.append(error)
                     }
                     do {
-                        self = .CronJobDetails(try .init(from: decoder))
+                        self = .BackgroundWorkerDetails(try .init(from: decoder))
                         return
                     } catch {
                         errors.append(error)
@@ -5586,9 +5586,9 @@ public enum Components {
                         try value.encode(to: encoder)
                     case let .PrivateServiceDetails(value):
                         try value.encode(to: encoder)
-                    case let .BackgroundWorkerDetails(value):
-                        try value.encode(to: encoder)
                     case let .CronJobDetails(value):
+                        try value.encode(to: encoder)
+                    case let .BackgroundWorkerDetails(value):
                         try value.encode(to: encoder)
                     }
                 }
@@ -10252,22 +10252,36 @@ public enum Components {
             public var id: Swift.String?
             /// - Remark: Generated from `#/components/schemas/error/message`.
             public var message: Swift.String?
+            /// A stable, machine-readable identifier present on specific errors that clients can handle specially. Each endpoint documents the codes it can return. The errorCode schema lists the full vocabulary of codes.
+            ///
+            /// - Remark: Generated from `#/components/schemas/error/code`.
+            public var code: Swift.String?
             /// Creates a new `_Error`.
             ///
             /// - Parameters:
             ///   - id:
             ///   - message:
+            ///   - code: A stable, machine-readable identifier present on specific errors that clients can handle specially. Each endpoint documents the codes it can return. The errorCode schema lists the full vocabulary of codes.
             public init(
                 id: Swift.String? = nil,
-                message: Swift.String? = nil
+                message: Swift.String? = nil,
+                code: Swift.String? = nil
             ) {
                 self.id = id
                 self.message = message
+                self.code = code
             }
             public enum CodingKeys: String, CodingKey {
                 case id
                 case message
+                case code
             }
+        }
+        /// The machine-readable codes that can appear in the error object's "code" field. The field is a plain string so new codes are not breaking changes; this vocabulary exists so generated clients get typed constants. OpenAPI cannot deprecate individual enum values, so deprecation notes live in x-enum-descriptions.
+        ///
+        /// - Remark: Generated from `#/components/schemas/errorCode`.
+        @frozen public enum ErrorCode: String, Codable, Hashable, Sendable, CaseIterable {
+            case multipleRegions = "multiple_regions"
         }
         /// This field has been deprecated. previews.generation should be used in its place.
         ///
