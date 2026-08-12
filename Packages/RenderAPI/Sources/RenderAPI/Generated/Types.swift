@@ -58503,7 +58503,7 @@ public enum Operations {
                 /// The quantile of latencies to fetch. When multiple quantile query params are provided, they are ORed together
                 ///
                 /// - Remark: Generated from `#/paths/metrics/http-latency/GET/query/quantile`.
-                public var quantile: Swift.Float?
+                public var quantile: Swift.Double?
                 /// Creates a new `Query`.
                 ///
                 /// - Parameters:
@@ -58523,7 +58523,7 @@ public enum Operations {
                     service: Swift.String? = nil,
                     host: Swift.String? = nil,
                     path: Swift.String? = nil,
-                    quantile: Swift.Float? = nil
+                    quantile: Swift.Double? = nil
                 ) {
                     self.startTime = startTime
                     self.endTime = endTime

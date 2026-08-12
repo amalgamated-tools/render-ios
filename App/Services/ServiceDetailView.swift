@@ -191,6 +191,17 @@ struct ServiceDetailView: View {
                 Label("Logs", systemImage: "text.alignleft")
             }
             NavigationLink {
+                // Which charts exist depends on the service — a static site has no CPU — so the
+                // catalog is resolved from the loaded service rather than fixed by the screen.
+                MetricsView(
+                    client: client,
+                    resourceID: service.id,
+                    charts: MetricsCatalog.charts(for: service)
+                )
+            } label: {
+                Label("Metrics", systemImage: "chart.xyaxis.line")
+            }
+            NavigationLink {
                 ServiceEventsView(client: client, serviceID: service.id)
             } label: {
                 Label("Events", systemImage: "list.bullet.rectangle")

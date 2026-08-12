@@ -8,14 +8,16 @@ services, without opening a laptop.
 Sign in with a Render API key, browse the services in any workspace or project you belong to, drill
 into one to see its current deploy and configuration, walk its deploy history and event timeline,
 and run the actions that matter at 3am: deploy, roll back, cancel, restart, suspend/resume, scale,
-purge cache, trigger a cron job.
+purge cache, trigger a cron job. Read its logs, live, and chart its CPU, memory, HTTP traffic,
+latency, bandwidth, instances, and disk against the plan's limits.
 
 Built with SwiftUI, Swift 6 strict concurrency, and a code-generated client over Render's public
 OpenAPI spec. No third-party UI or networking dependencies.
 
 > **Status:** Phases 0–3 are complete (auth, service list, service detail, deploys, events,
-> lifecycle actions, and logs with a live WebSocket tail). Metrics and full dashboard parity are
-> planned — see [`PLAN.md`](PLAN.md) for the roadmap.
+> lifecycle actions, and logs with a live WebSocket tail). Phase 4 (metrics) is built and tested but
+> has not yet had its live pass against a real workspace. Full dashboard parity is planned — see
+> [`PLAN.md`](PLAN.md) for the roadmap.
 
 ---
 
@@ -66,8 +68,9 @@ make help         # list targets
 
 ### Optional: live smoke test
 
-`Scripts/smoke.sh` exercises the real API read-only (owners, services, deploys, events) so you can
-confirm what the app should be showing:
+`Scripts/smoke.sh` exercises the real API read-only (owners, services, deploys, events, logs,
+metrics) so you can confirm what the app should be showing — and it asserts the spec assumptions the
+app is built on, so it's how you find out one stopped holding:
 
 ```sh
 cp .env.example .env   # then paste your key into RENDER_API_KEY
@@ -141,6 +144,9 @@ changes (SwiftUI `.id(...)` on the view).
 | `ServiceDetailStore` | Loads the service and its latest deploy concurrently, owns the lifecycle actions, and **polls while a deploy is in progress** — stopping the moment it settles, so an idle service costs zero requests. |
 | `DeploysStore` | Pages deploy history; also the source of `latestDeploy` for the detail header. |
 | `ServiceEventsStore` | Pages the event timeline **by time window, not cursor** — the events envelope declares a `cursor` it never defines, so the generator drops it. Each page asks for events older than the oldest one held, de-duplicated by ID. |
+| `LogsStore` | Pages log history on the window Render hands back (`hasMore` + `nextStartTime`/`nextEndTime` — the one list endpoint that isn't cursor-based), and merges a live WebSocket tail into the same newest-first list. |
+| `LogFilterValuesStore` | Fetches the filter vocabulary per facet from `GET /logs/values`, six calls concurrently. A facet that fails or comes back empty simply isn't offered. |
+| `MetricsStore` | Fires up to twelve series requests **concurrently behind a single spinner** — there's no batch endpoint. A failed series fails its chart, not the screen; only a total failure takes over. |
 
 ### Actions, and the care taken with them
 
@@ -174,12 +180,13 @@ the layer that earns its keep is the store that maps results into domain types.
 
 ## Working with the spec
 
-Render publishes its OpenAPI spec unversioned and warns that it changes without notice. Three of its
-properties actively break naive code generation, and `Scripts/generate-api.sh` works around all
-three before the generator ever sees the file:
+Render publishes its OpenAPI spec unversioned and warns that it changes without notice. Four of its
+properties actively break or degrade naive code generation, and `Scripts/generate-api.sh` works
+around all four before the generator ever sees the file:
 
 ```
-download → jq pretty-print → flatten-path-refs.py → relax-nullable.py → order-oneof.py → generate
+download → jq pretty-print → flatten-path-refs.py → relax-nullable.py → order-oneof.py
+         → widen-float-params.py → generate
 ```
 
 1. **Unresolvable `$ref`s.** OpenAPIKit only resolves refs into `#/components/…`, and the spec has
@@ -197,6 +204,11 @@ download → jq pretty-print → flatten-path-refs.py → relax-nullable.py → 
    authoritative `service.type` and records which union member actually decoded, purely so a
    disagreement can be *detected* — the detail screen shows a warning banner rather than presenting
    possibly-wrong configuration as fact.
+4. **A float query parameter that can't round-trip its own literal.** `/metrics/http-latency`'s
+   `quantile` is typed `format: float`, so the generator emits a Swift `Float` — and its query
+   serializer widens that to a Double before printing it, turning a request for p95 into
+   `quantile=0.949999988079071`. Render picks a pre-computed quantile series off that value.
+   `widen-float-params.py` drops the `format`, so the parameter is a `Double` and `0.95` stays `0.95`.
 
 Two consequences worth knowing before extending the app:
 
@@ -204,8 +216,16 @@ Two consequences worth knowing before extending the app:
   `oneOf` whose second member has *no* required properties, so it matches almost anything and reports
   success. `ServiceEvent` therefore carries only `type` and `timestamp`. (The upside: the union can
   never fail, so events always load.) Making details usable needs a spec patch.
-- **The metrics endpoints drop `unit`.** It appears in `required` but not in `properties`, so the
-  generator skips it entirely. A metrics feature will have to hard-code units per series.
+- **The metrics endpoints drop the *datapoint* `unit`.** It appears in `required` but not in
+  `properties`, so the generator skips it. The series-level `unit` beside it is well-formed, though,
+  which is the one that matters — `MetricUnit(apiUnit:)` maps what Render reports rather than
+  hard-coding a unit per endpoint.
+- **Each metrics response has its own generated type.** None of the fourteen `/metrics/*` schemas is a
+  named component, so the generator emits fourteen unrelated copies of `{labels, values, unit}` (and
+  fourteen unrelated query types). `MetricSeries` is the single type the app sees; the collapse is a
+  protocol whose requirements are spelled with the generated property names, so all forty-two
+  conformances are *empty* — nothing to keep in sync, and a compile error rather than a blank chart if
+  a spec change moves a field.
 
 `.github/workflows/spec-drift.yml` re-runs generation against the live spec every Monday and fails
 when the committed output no longer matches. The fix is `make generate` and a review of the diff.
@@ -222,6 +242,8 @@ App/                      app target (Xcode 26 synchronized folders)
   Projects/               ProjectsStore
   Services/               list, detail, actions, events
   Deploys/                history, detail, rollback
+  Logs/                   history, live tail, server-side filter sheet
+  Metrics/                charts, range picker, unit formatting, per-type catalog
   DesignSystem/           status chips, type glyphs, shared display mappings
 AppTests/                 store tests, transport stubbed
 Packages/RenderAPI/       the only dependency surface
@@ -232,6 +254,8 @@ Packages/RenderAPI/       the only dependency surface
     *Middleware.swift     auth, retry, status mapping
     Pagination.swift      generic cursor AsyncSequence
     ServiceDetails+Decode.swift   the oneOf workaround
+    LogQuery/LogStream.swift      one filter description, two transports (one hand-written)
+    MetricSeries*/MetricsQuery.swift   one series type and one window for 14 endpoints
   Sources/RenderAPITestSupport/   StubTransport, shared by both suites
   Tests/RenderAPITests/
 Scripts/                  generation pipeline, smoke test, simulator driver, icon builder

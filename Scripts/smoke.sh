@@ -120,3 +120,49 @@ case "$handshake" in
   *101*) ;;
   *) echo "  !!! expected 101 Switching Protocols — LogStream's live tail will not connect" ;;
 esac
+
+# --- Phase 4: metrics ----------------------------------------------------------------------------
+
+# The window the app's shortest range asks for.
+metrics_start=$(date -u -v-1H +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d '1 hour ago' +%Y-%m-%dT%H:%M:%SZ)
+metrics_end=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+metrics_window="startTime=$metrics_start&endTime=$metrics_end&resource=$service_id"
+
+echo "==> GET /metrics/* (last hour, 60s resolution)"
+# Every one of these decodes into the single MetricSeries type, so what matters per endpoint is the
+# series count, the unit, and whether any points came back at all.
+for metric in cpu cpu-limit cpu-target memory memory-limit memory-target \
+              http-requests http-latency instance-count disk-usage disk-capacity; do
+  # /metrics/bandwidth is handled separately: it's the one series endpoint that declares no
+  # resolutionSeconds, and sending one anyway is a 400.
+  body=$(curl -fsS "${auth[@]}" "$API/metrics/$metric?$metrics_window&resolutionSeconds=60" 2>/dev/null || echo '[]')
+  printf '  %-16s series=%s unit=%s points=%s\n' \
+    "$metric" \
+    "$(echo "$body" | jq -r 'length')" \
+    "$(echo "$body" | jq -r '[.[].unit] | unique | join(",") | if . == "" then "-" else . end')" \
+    "$(echo "$body" | jq -r '[.[].values | length] | add // 0')"
+
+  # MetricUnit reads the unit off the series rather than hard-coding one per endpoint. The Phase 0
+  # survey found the *datapoint* unit missing from the spec; if the series-level one ever goes the
+  # same way, every axis label silently loses its unit.
+  if [ "$(echo "$body" | jq -r 'length')" != "0" ] && [ "$(echo "$body" | jq -r '[.[] | has("unit")] | all')" != "true" ]; then
+    echo "  !!! $metric returned a series with no unit — MetricUnit has nothing to read"
+  fi
+done
+
+echo "==> GET /metrics/bandwidth (no resolutionSeconds — the endpoint doesn't declare it)"
+bandwidth=$(curl -fsS "${auth[@]}" "$API/metrics/bandwidth?$metrics_window" 2>/dev/null || echo '[]')
+printf '  bandwidth        series=%s unit=%s points=%s\n' \
+  "$(echo "$bandwidth" | jq -r 'length')" \
+  "$(echo "$bandwidth" | jq -r '[.[].unit] | unique | join(",") | if . == "" then "-" else . end')" \
+  "$(echo "$bandwidth" | jq -r '[.[].values | length] | add // 0')"
+
+# Scripts/widen-float-params.py exists because the spec's `format: float` made the generator send
+# quantile=0.949999988079071 instead of 0.95. This is the live check on whether that mattered: if the
+# two disagree, Render is matching on the literal and the patch is load-bearing.
+echo "==> GET /metrics/http-latency — quantile literal fidelity"
+for q in 0.95 0.949999988079071; do
+  printf '  quantile=%-20s points=%s\n' "$q" \
+    "$(curl -fsS "${auth[@]}" "$API/metrics/http-latency?$metrics_window&resolutionSeconds=60&quantile=$q" 2>/dev/null \
+       | jq -r '[.[].values | length] | add // 0')"
+done

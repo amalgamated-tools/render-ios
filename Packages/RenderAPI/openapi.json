@@ -10913,7 +10913,6 @@
           "description": "The quantile of latencies to fetch. When multiple quantile query params are provided, they are ORed together",
           "schema": {
             "type": "number",
-            "format": "float",
             "example": 0.99
           }
         }

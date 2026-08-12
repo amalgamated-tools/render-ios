@@ -1,0 +1,88 @@
+import Foundation
+import RenderAPI
+import Testing
+
+@testable import RenderiOS
+
+/// Which charts a service gets. Worth testing because it's the one piece of Phase 4 that encodes a
+/// claim about Render rather than about the code: that a static site has no CPU, that a worker serves
+/// no HTTP. If a claim is wrong, this is where it's written down and where it changes.
+@MainActor
+@Suite("Metrics catalog")
+struct MetricsCatalogTests {
+    private func service(type: String, diskSizeGB: Int? = nil) throws -> ServiceDetailModel {
+        let json = Fixtures.serviceJSON(
+            type: type,
+            details: Fixtures.serviceDetailsJSON(for: type, diskSizeGB: diskSizeGB)
+        )
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return ServiceDetailModel(
+            try decoder.decode(Components.Schemas.Service.self, from: Data(json.utf8))
+        )
+    }
+
+    private func chartIDs(for type: String, diskSizeGB: Int? = nil) throws -> [String] {
+        MetricsCatalog.charts(for: try service(type: type, diskSizeGB: diskSizeGB)).map(\.id)
+    }
+
+    @Test("a web service gets the full set")
+    func webService() throws {
+        #expect(try chartIDs(for: "web_service") == [
+            "cpu", "memory", "instance-count", "http-requests", "http-latency", "bandwidth",
+        ])
+    }
+
+    @Test("a private service gets everything but bandwidth")
+    func privateService() throws {
+        // It serves HTTP, just not to the internet — so requests and latency, no egress.
+        #expect(try chartIDs(for: "private_service") == [
+            "cpu", "memory", "instance-count", "http-requests", "http-latency",
+        ])
+    }
+
+    @Test("a background worker gets compute only")
+    func backgroundWorker() throws {
+        #expect(try chartIDs(for: "background_worker") == ["cpu", "memory", "instance-count"])
+    }
+
+    @Test("a cron job gets no instance count")
+    func cronJob() throws {
+        // Its container exists only during a run, so an instance count over time would be a chart of
+        // ones and gaps.
+        #expect(try chartIDs(for: "cron_job") == ["cpu", "memory"])
+    }
+
+    @Test("a static site gets bandwidth only")
+    func staticSite() throws {
+        // Served from the CDN: there is no instance to measure, so CPU and memory aren't "no data",
+        // they're not applicable.
+        #expect(try chartIDs(for: "static_site") == ["bandwidth"])
+    }
+
+    @Test("the disk chart appears only when a disk is attached")
+    func diskChart() throws {
+        #expect(try chartIDs(for: "web_service", diskSizeGB: 10).contains("disk"))
+        #expect(try !chartIDs(for: "web_service").contains("disk"))
+        // A static site can't have a disk, and adding one to the fixture mustn't conjure the chart.
+        #expect(try !chartIDs(for: "static_site", diskSizeGB: 10).contains("disk"))
+    }
+
+    @Test("limits and targets are reference lines, never measurements")
+    func referenceRoles() {
+        // The headline reads measurements only; a limit promoted to a measurement would show the
+        // plan's ceiling as if it were the current usage.
+        let references = (MetricsCatalog.cpu.series + MetricsCatalog.memory.series)
+            .filter { $0.role == .reference }
+            .map(\.name)
+        #expect(references == ["Limit", "Autoscaling target", "Limit", "Autoscaling target"])
+        #expect(MetricsCatalog.disk.series.last?.role == .reference)
+    }
+
+    @Test("latency asks for three distinct quantiles")
+    func latencyQuantiles() {
+        let ids = MetricsCatalog.httpLatency.series.map(\.id)
+        #expect(Set(ids).count == 3)
+        #expect(MetricsCatalog.httpLatency.series.map(\.name) == ["p50", "p95", "p99"])
+    }
+}
