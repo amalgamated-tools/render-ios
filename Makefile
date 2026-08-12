@@ -17,10 +17,20 @@ build:
 	xcodebuild -project RenderiOS.xcodeproj -scheme RenderiOS \
 	  -destination '$(DESTINATION)' $(XCODEBUILD_FLAGS) build
 
-## test: run the RenderAPI package tests (no network)
+## test: run every unit test (no network)
 .PHONY: test
-test:
+test: test-package test-app
+
+## test-package: RenderAPI package tests — fast, no simulator
+.PHONY: test-package
+test-package:
 	cd Packages/RenderAPI && swift test
+
+## test-app: app-target tests (stores) — needs a simulator, resolved at run time
+.PHONY: test-app
+test-app:
+	xcodebuild -project RenderiOS.xcodeproj -scheme RenderiOS \
+	  -destination "$$(Scripts/test-destination.sh)" $(XCODEBUILD_FLAGS) test
 
 ## run: build, install, and launch on the simulator
 .PHONY: run

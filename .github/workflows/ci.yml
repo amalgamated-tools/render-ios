@@ -34,7 +34,28 @@ jobs:
 
       # No network access is needed by the tests themselves — every test drives a StubTransport.
       - name: Test
-        run: make test
+        run: make test-package
+
+  test-app:
+    name: App tests
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Show toolchain
+        run: xcodebuild -version
+
+      - name: Cache resolved SPM checkouts
+        uses: actions/cache@v4
+        with:
+          path: .spm-cache
+          key: xcode-spm-${{ runner.os }}-${{ hashFiles('Packages/RenderAPI/Package.resolved') }}
+          restore-keys: xcode-spm-${{ runner.os }}-
+
+      # Unlike a build, running tests needs a concrete simulator; Scripts/test-destination.sh picks
+      # one that exists on the runner rather than pinning a device GitHub may drop.
+      - name: Test
+        run: make test-app XCODEBUILD_FLAGS='-clonedSourcePackagesDirPath .spm-cache'
 
   build:
     name: Build app

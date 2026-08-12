@@ -376,6 +376,8 @@ the transport stubbed, so they test the actual decoder rather than a re-implemen
    mapping). The app target still has no test target — the same gap Phase 1 had. The endTime paging
    logic is the piece that most deserves one; adding an app test target to the hand-written pbxproj is a
    follow-up worth doing before Phase 3's log stream, which has real state to test.
+   *(Closed: the `RenderiOSTests` target now exists — see Verification. `DeploysStore` and
+   `ServiceEventsStore` still have no cases, but the harness they'd need is in place.)*
 
 **Live smoke: done, driven from this repo.** `Scripts/sim-input.swift` (new) synthesizes taps and
 drags against the booted simulator, taking coordinates straight from a `simctl` screenshot and
@@ -461,12 +463,26 @@ Verified against a real workspace, on both an image-backed and a Git-backed serv
 
 **Unit (no network), every phase:**
 ```
-cd Packages/RenderAPI && swift test
+make test          # both suites
+make test-package  # RenderAPI only — fast, no simulator
+make test-app      # app target only — needs a simulator
 ```
-Fixture-driven `swift-testing` cases: `ServiceDetails` decoding for all 5 service types,
-cursor pagination termination, `RetryMiddleware` backoff on a stubbed 429 with `Retry-After`,
-`RenderError` mapping for 401/403/404/429/5xx. Transport is stubbed via a
-`ClientTransport` test double — no live calls in tests.
+
+*Package* (`Packages/RenderAPI/Tests`), fixture-driven `swift-testing` cases: `ServiceDetails`
+decoding for all 5 service types, cursor pagination termination, `RetryMiddleware` backoff on a
+stubbed 429 with `Retry-After`, `RenderError` mapping for 401/403/404/429/5xx.
+
+*App* (`AppTests/`, target `RenderiOSTests`): the `@Observable` stores, driven through the real
+generated client with only the transport stubbed — so a test covers the query a store actually
+builds, not a re-implementation of it.
+
+Transport is stubbed via `RenderAPITestSupport`, a product of the RenderAPI package rather than a
+file in one test target, because both suites need it and a test target's sources aren't visible
+outside it. No live calls in tests: an API key is a user secret and CI runs offline.
+
+Running the app tests needs a *concrete* simulator (`generic/platform=iOS Simulator` builds but
+can't run), so `Scripts/test-destination.sh` resolves one at run time instead of pinning a device
+that a CI image may stop shipping.
 
 **Build + simulator, every phase:**
 ```
