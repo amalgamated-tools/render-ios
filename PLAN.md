@@ -44,9 +44,9 @@ what was measured, and where the implementation deviates from what is described 
 **Phase 1 (auth + service list) is complete**, including live smoke against a real workspace. See the
 [Phase 1 milestone](#phase-1--auth--service-list-first-runnable-app--done).
 
-**Phase 2 (service detail, deploys, actions) is built** and passes `make check`. Live smoke covers the
-list and the service payload; the deploy/event screens and the lifecycle actions still need a pass by
-hand. See the [Phase 2 milestone](#phase-2--service-detail-deploys-and-the-emergency-actions--done-pending-live-smoke).
+**Phase 2 (service detail, deploys, actions) is complete**, including live smoke: a real deploy was
+triggered from the app and watched transition to `live`. See the
+[Phase 2 milestone](#phase-2--service-detail-deploys-and-the-emergency-actions--done).
 
 ---
 
@@ -191,6 +191,7 @@ Scripts/
   order-oneof.py                     orders the serviceDetails oneOf for first-match decode (Phase 2)
   smoke.sh                           read-only live checks against a real key in .env
   run-simulator.sh                   build, install, launch
+  sim-input.swift                    tap/drag the booted simulator for the per-phase live pass
 Makefile                             check / build / test / run / generate / drift
 ```
 
@@ -309,7 +310,7 @@ were fixed — the generated client decodes the *whole* `Service` strictly befor
 Both are the kind of drift PLAN.md predicted; the vendored-spec pipeline absorbed them as a
 reviewable spec diff + regeneration, exactly as intended.
 
-### Phase 2 — Service detail, deploys, and the emergency actions ✅ DONE (pending live smoke)
+### Phase 2 — Service detail, deploys, and the emergency actions ✅ DONE
 - Detail screen: current deploy, health, instance count, repo/branch, dashboard deep link.
 - `GET /services/{id}/deploys` history and `GET .../deploys/{deployId}` detail.
 - Actions with confirmation sheets: **deploy**, **rollback**, **cancel deploy**, **restart**,
@@ -376,10 +377,38 @@ the transport stubbed, so they test the actual decoder rather than a re-implemen
    logic is the piece that most deserves one; adding an app test target to the hand-written pbxproj is a
    follow-up worth doing before Phase 3's log stream, which has real state to test.
 
-**Live smoke still to do by hand** (needs a tap on a device — the simulator has no scriptable input):
-open a service, confirm the configuration block matches the dashboard, open Deploys and Events, then
-trigger a deploy and watch it transition. `Scripts/smoke.sh` now checks the same payloads read-only and
-will flag it if either spec assumption above stops holding.
+**Live smoke: done, driven from this repo.** `Scripts/sim-input.swift` (new) synthesizes taps and
+drags against the booted simulator, taking coordinates straight from a `simctl` screenshot and
+resolving the device-screen rect through the accessibility API at run time. That made the whole pass
+scriptable — read a screenshot, tap, screenshot again. Two environment gotchas are written into its
+header because both fail *silently*: the calling process needs Accessibility permission, and **the Mac
+must be unlocked** (macOS drops synthesized events while the console is locked, so every tap looks
+like a no-op).
+
+Verified against a real workspace, on both an image-backed and a Git-backed service:
+- Detail screen: `live` chip, plan/region/instances/runtime/repo/branch/health-check/URL all matching
+  the dashboard, suspended badge with its suspender (`user`), dashboard link, "Updated 2 days ago".
+- Deploy history: `live`, `deactivated`, and `build_failed` rows — all three status colors — with commit
+  subject, short SHA, trigger, relative time, and duration (`1m 11s`). Deploy detail refetched cleanly.
+- Events: real `deploy_started`/`deploy_ended` timeline; the `endTime` paging stopped at the end of the
+  list rather than spinning.
+- Actions menu gating: `resume` (not `suspend`) on a suspended service, no cron trigger on a web
+  service, no cancel with nothing in flight.
+- **A real deploy, end to end:** confirmation → `Deploy started.` banner → chip `Deploying` with
+  "Watching for updates…" → polled to `Live` (`API · 6 seconds ago · 31s`) → polling stopped on its own.
+- Backing out of a destructive action (tap outside the `restart` confirmation) does nothing at all.
+
+**Three defects the live pass turned up, all fixed:**
+1. **Wrong deploy wording for image-backed services.** The action read "Deploy Latest Commit" and the
+   confirmation promised to build "the latest commit on the service's branch" for a service that has no
+   branch. `ServiceAction.Source` now switches both to image wording, and "Deploy (Clear Cache)" is
+   hidden for image-backed services — there's no build to cache.
+2. **A long swipe could roll back with no confirmation.** `swipeActions` allows full-swipe by default,
+   which *performs* the first action; on a destructive one that's a footgun. Now
+   `allowsFullSwipe: false`, so the button must be revealed and tapped.
+3. **Rollback was offered for the deploy already serving traffic**, which would spend a deploy to
+   change nothing. It's now withheld for the newest `live` deploy — which is not always the newest
+   deploy, since a failed latest attempt leaves an older one serving.
 
 ### Phase 3 — Logs
 - Historical `GET /logs` with the full filter set (resource, instance, level, statusCode, method,
@@ -444,7 +473,16 @@ cursor pagination termination, `RetryMiddleware` backoff on a stubbed 429 with `
 xcodebuild -project RenderiOS.xcodeproj -scheme RenderiOS \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
 ```
-then boot the sim and drive the app via the `/run` skill to confirm the phase's screens work.
+then `make run` and drive the app to confirm the phase's screens work. Driving is scriptable:
+
+```
+swift Scripts/sim-input.swift tap 600 1349          # coords read off a simctl screenshot
+swift Scripts/sim-input.swift drag 600 2200 600 1200
+xcrun simctl io booted screenshot /tmp/step.png
+```
+
+Needs Accessibility permission **and an unlocked Mac** — see the script's header; both failure modes
+are silent no-ops.
 
 **Live smoke test:** needs a real Render API key, entered in the app's onboarding screen at
 runtime. Nothing in the repo, tests, or CI ever holds a key. Per phase, confirm against a real

@@ -6,7 +6,29 @@ import RenderAPI
 /// so every one is gated behind a dialog that names the service and says what will happen. The
 /// wording matters as much as the call does — `restart` and `suspend` are one row apart in the menu.
 enum ServiceAction: Identifiable, Hashable {
-    case deploy(clearCache: Bool)
+    /// What a deploy actually ships, which decides the wording. Render deploys either the latest
+    /// commit on a branch or the latest image from a registry, and telling a user running an
+    /// image-backed service that we'll "build the latest commit on the branch" is simply wrong.
+    enum Source: Hashable {
+        case commit
+        case image
+
+        var deployTitle: String {
+            switch self {
+            case .commit: "Deploy Latest Commit"
+            case .image: "Deploy Latest Image"
+            }
+        }
+
+        var deployMessage: String {
+            switch self {
+            case .commit: "Builds and deploys the latest commit on the service's branch."
+            case .image: "Pulls and deploys the latest image from the service's registry."
+            }
+        }
+    }
+
+    case deploy(clearCache: Bool, source: Source)
     case rollback(deployID: String)
     case cancelDeploy(deployID: String)
     case restart
@@ -18,7 +40,7 @@ enum ServiceAction: Identifiable, Hashable {
 
     var id: String {
         switch self {
-        case .deploy(let clearCache): "deploy-\(clearCache)"
+        case .deploy(let clearCache, _): "deploy-\(clearCache)"
         case .rollback(let deployID): "rollback-\(deployID)"
         case .cancelDeploy(let deployID): "cancel-\(deployID)"
         case .restart: "restart"
@@ -32,7 +54,7 @@ enum ServiceAction: Identifiable, Hashable {
 
     var title: String {
         switch self {
-        case .deploy(let clearCache): clearCache ? "Deploy (Clear Cache)" : "Deploy Latest Commit"
+        case .deploy(let clearCache, let source): clearCache ? "Deploy (Clear Cache)" : source.deployTitle
         case .rollback: "Roll Back to This Deploy"
         case .cancelDeploy: "Cancel Deploy"
         case .restart: "Restart"
@@ -69,7 +91,7 @@ enum ServiceAction: Identifiable, Hashable {
 
     func confirmationTitle(serviceName: String) -> String {
         switch self {
-        case .deploy(let clearCache):
+        case .deploy(let clearCache, _):
             clearCache ? "Deploy \(serviceName) with a clean build cache?" : "Deploy \(serviceName)?"
         case .rollback: "Roll back \(serviceName)?"
         case .cancelDeploy: "Cancel the in-progress deploy?"
@@ -84,10 +106,10 @@ enum ServiceAction: Identifiable, Hashable {
 
     var confirmationMessage: String {
         switch self {
-        case .deploy(let clearCache):
+        case .deploy(let clearCache, let source):
             clearCache
                 ? "Builds from scratch without the build cache. Slower than a normal deploy."
-                : "Builds and deploys the latest commit on the service's branch."
+                : source.deployMessage
         case .rollback:
             // Straight from the endpoint's own docs — the footgun worth spelling out on a phone.
             "Redeploys this build. Auto-deploy stays on, so a later commit can restore the changes you're rolling back."

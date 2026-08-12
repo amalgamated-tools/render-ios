@@ -94,8 +94,13 @@ final class ServiceDetailStore {
         if service.type == .cronJob {
             actions.append(.runCronJob)
         } else {
-            actions.append(.deploy(clearCache: false))
-            actions.append(.deploy(clearCache: true))
+            let source: ServiceAction.Source = service.details.runtime == .image ? .image : .commit
+            actions.append(.deploy(clearCache: false, source: source))
+            // An image-backed service has no build to cache, so offering a cache-clearing build is
+            // offering something that can't happen.
+            if source == .commit {
+                actions.append(.deploy(clearCache: true, source: source))
+            }
         }
         if service.type.supportsRestart {
             actions.append(.restart)
@@ -158,7 +163,7 @@ final class ServiceDetailStore {
     /// accessor, which throws if the response wasn't the documented one.
     private func send(_ action: ServiceAction) async throws {
         switch action {
-        case .deploy(let clearCache):
+        case .deploy(let clearCache, _):
             // The only operation with two documented success codes: 201 when Render created a deploy,
             // 202 when it accepted the request but had nothing new to build. Both are successes.
             let output = try await client.api.createDeploy(

@@ -28,8 +28,11 @@ struct DeploysListView: View {
                 } label: {
                     DeployRow(deploy: deploy)
                 }
-                .swipeActions(edge: .leading) {
-                    if deploy.isRollbackCandidate {
+                // allowsFullSwipe is off deliberately: with it on, a long leading swipe *performs*
+                // the first action, so a careless thumb would fire a rollback without ever seeing the
+                // confirmation. The button has to be revealed and tapped.
+                .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                    if canRollBack(to: deploy) {
                         Button("Roll Back", systemImage: "arrow.uturn.backward") {
                             pendingRollback = deploy
                         }
@@ -68,6 +71,18 @@ struct DeploysListView: View {
     }
 
     private var serviceName: String { store.service?.name ?? "this service" }
+
+    /// The deploy currently serving traffic — the newest one that reached `live`. Note this isn't
+    /// always the newest deploy: when the latest attempt failed, an older live deploy keeps serving.
+    private var servingDeployID: String? {
+        deploysStore.deploys.first { $0.status == .live }?.id
+    }
+
+    /// Rollback needs a deploy that actually shipped *and* isn't the one already running — rolling
+    /// back to what's currently serving would burn a deploy to change nothing.
+    private func canRollBack(to deploy: DeploySummary) -> Bool {
+        deploy.isRollbackCandidate && deploy.id != servingDeployID
+    }
 
     private func rollbackAction(for deploy: DeploySummary) -> ServiceAction {
         .rollback(deployID: deploy.id)
