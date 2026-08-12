@@ -18,3 +18,9 @@ Packages/*/.build/
 
 # Conductor
 .context/
+
+# Secrets — never commit. A real Render API key for local live smoke tests lives in .env.
+.env
+.env.local
+*.env
+!.env.example

@@ -31,6 +31,11 @@ if [ "$remaining" != "0" ]; then
   exit 1
 fi
 
+echo "==> Relaxing required for fields the API returns as null"
+# The spec marks some fields required + non-nullable that the live API sends as null; without
+# this the generated strict decoder rejects real responses. See the script for the field list.
+python3 "$REPO_ROOT/Scripts/relax-nullable.py" "$SPEC"
+
 echo "==> Generating Swift client"
 # Invoked as a plain executable rather than as a build-tool plugin, so that the generated
 # sources can be committed and the spec kept outside Sources/. Also avoids Xcode's

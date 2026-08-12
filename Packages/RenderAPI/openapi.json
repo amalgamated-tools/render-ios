@@ -19850,10 +19850,7 @@
       },
       "buildFilter": {
         "type": "object",
-        "required": [
-          "paths",
-          "ignoredPaths"
-        ],
+        "required": [],
         "properties": {
           "paths": {
             "type": "array",
@@ -20192,7 +20189,6 @@
           "numInstances",
           "buildPlan",
           "healthCheckPath",
-          "openPorts",
           "url"
         ],
         "properties": {
@@ -20408,7 +20404,6 @@
           "region",
           "numInstances",
           "buildPlan",
-          "openPorts",
           "url"
         ],
         "properties": {

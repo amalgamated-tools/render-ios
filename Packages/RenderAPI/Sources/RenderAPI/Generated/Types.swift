@@ -6062,17 +6062,17 @@ public enum Components {
         /// - Remark: Generated from `#/components/schemas/buildFilter`.
         public struct BuildFilter: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/buildFilter/paths`.
-            public var paths: [Swift.String]
+            public var paths: [Swift.String]?
             /// - Remark: Generated from `#/components/schemas/buildFilter/ignoredPaths`.
-            public var ignoredPaths: [Swift.String]
+            public var ignoredPaths: [Swift.String]?
             /// Creates a new `BuildFilter`.
             ///
             /// - Parameters:
             ///   - paths:
             ///   - ignoredPaths:
             public init(
-                paths: [Swift.String],
-                ignoredPaths: [Swift.String]
+                paths: [Swift.String]? = nil,
+                ignoredPaths: [Swift.String]? = nil
             ) {
                 self.paths = paths
                 self.ignoredPaths = ignoredPaths
@@ -6720,7 +6720,7 @@ public enum Components {
             /// - Remark: Generated from `#/components/schemas/webServiceDetails/numInstances`.
             public var numInstances: Swift.Int
             /// - Remark: Generated from `#/components/schemas/webServiceDetails/openPorts`.
-            public var openPorts: [Components.Schemas.ServerPort]
+            public var openPorts: [Components.Schemas.ServerPort]?
             /// - Remark: Generated from `#/components/schemas/webServiceDetails/parentServer`.
             public var parentServer: Components.Schemas.Resource?
             /// - Remark: Generated from `#/components/schemas/webServiceDetails/plan`.
@@ -6777,7 +6777,7 @@ public enum Components {
                 ipAllowList: [Components.Schemas.CidrBlockAndDescription]? = nil,
                 maintenanceMode: Components.Schemas.MaintenanceMode? = nil,
                 numInstances: Swift.Int,
-                openPorts: [Components.Schemas.ServerPort],
+                openPorts: [Components.Schemas.ServerPort]? = nil,
                 parentServer: Components.Schemas.Resource? = nil,
                 plan: Components.Schemas.Plan,
                 pullRequestPreviewsEnabled: Components.Schemas.PullRequestPreviewsEnabled? = nil,
@@ -7128,7 +7128,7 @@ public enum Components {
             /// - Remark: Generated from `#/components/schemas/privateServiceDetails/numInstances`.
             public var numInstances: Swift.Int
             /// - Remark: Generated from `#/components/schemas/privateServiceDetails/openPorts`.
-            public var openPorts: [Components.Schemas.ServerPort]
+            public var openPorts: [Components.Schemas.ServerPort]?
             /// - Remark: Generated from `#/components/schemas/privateServiceDetails/parentServer`.
             public var parentServer: Components.Schemas.Resource?
             /// - Remark: Generated from `#/components/schemas/privateServiceDetails/plan`.
@@ -7174,7 +7174,7 @@ public enum Components {
                 env: Components.Schemas.ServiceEnv,
                 envSpecificDetails: Components.Schemas.EnvSpecificDetails,
                 numInstances: Swift.Int,
-                openPorts: [Components.Schemas.ServerPort],
+                openPorts: [Components.Schemas.ServerPort]? = nil,
                 parentServer: Components.Schemas.Resource? = nil,
                 plan: Components.Schemas.Plan,
                 pullRequestPreviewsEnabled: Components.Schemas.PullRequestPreviewsEnabled? = nil,
