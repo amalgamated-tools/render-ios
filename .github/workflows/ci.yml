@@ -39,6 +39,12 @@ jobs:
   test-app:
     name: App tests
     runs-on: [self-hosted, macOS, ARM64]
+    # The runner shares a Mac with interactive development, and a simulator device is shared
+    # mutable state: every checkout installs the same bundle ID, so a local build reinstalling
+    # RenderiOS mid-run kills the test host ("Test crashed with signal kill before establishing
+    # connection"). CI therefore drives its own device instance, which nothing else targets.
+    env:
+      SIMULATOR: CI iPhone 17 Pro
     steps:
       - uses: actions/checkout@v5
 
@@ -51,6 +57,21 @@ jobs:
           path: .spm-cache
           key: xcode-spm-${{ runner.os }}-${{ hashFiles('Packages/RenderAPI/Package.resolved') }}
           restore-keys: xcode-spm-${{ runner.os }}-
+
+      # Created once and reused across runs. The explicit re-check matters: test-destination.sh
+      # falls back to any available iPhone when $SIMULATOR is missing, which would silently put CI
+      # back on the shared device this job exists to avoid — better to fail here than to go green
+      # on the wrong device.
+      - name: Ensure the CI simulator exists
+        run: |
+          if ! xcrun simctl list devices available | grep -qF "    $SIMULATOR ("; then
+            echo "Creating $SIMULATOR"
+            xcrun simctl create "$SIMULATOR" com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro
+          fi
+          xcrun simctl list devices available | grep -qF "    $SIMULATOR (" || {
+            echo "!!! $SIMULATOR is still unavailable — refusing to fall back to a shared device" >&2
+            exit 1
+          }
 
       # Unlike a build, running tests needs a concrete simulator; Scripts/test-destination.sh picks
       # one that exists on the runner rather than pinning a device GitHub may drop.
