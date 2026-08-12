@@ -48,6 +48,9 @@ what was measured, and where the implementation deviates from what is described 
 triggered from the app and watched transition to `live`. See the
 [Phase 2 milestone](#phase-2--service-detail-deploys-and-the-emergency-actions--done).
 
+**Phase 3 (logs) is complete**, including live smoke: history, the server-side filter set, and a real
+WebSocket tail against a live service. See the [Phase 3 milestone](#phase-3--logs--done).
+
 ---
 
 ## Three spec gotchas that shape the design
@@ -181,6 +184,7 @@ Packages/
       AuthMiddleware.swift           injects Bearer token
       RetryMiddleware.swift          429/5xx exponential backoff + Retry-After
       Pagination.swift               generic cursor AsyncSequence
+      LogQuery.swift                 one filter description, two transports     (Phase 3)
       LogStream.swift                URLSessionWebSocketTask log subscription   (Phase 3)
       ServiceDetails+Decode.swift    type-driven oneOf workaround               (Phase 1)
     Tests/RenderAPITests/            swift-testing; StubTransport, no network
@@ -412,12 +416,89 @@ Verified against a real workspace, on both an image-backed and a Git-backed serv
    change nothing. It's now withheld for the newest `live` deploy — which is not always the newest
    deploy, since a failed latest attempt leaves an older one serving.
 
-### Phase 3 — Logs
+### Phase 3 — Logs ✅ DONE
 - Historical `GET /logs` with the full filter set (resource, instance, level, statusCode, method,
   path, text) and direction-based paging.
 - Live tail via `LogStream.swift` (`URLSessionWebSocketTask` against `/logs/subscribe`), with
   reconnect-with-backoff, pause/resume, and a bounded in-memory ring buffer.
 - Monospaced log view with level coloring, search, and share/copy.
+
+**Built:** `LogQuery` and `LogStream` (added to `RenderAPI`, plus `StubLogSocket`/
+`StubLogSocketConnector` in `RenderAPITestSupport`, and a `logs` property on `RenderClient`);
+`LogLine`/`LogLevel`, `LogFilter`, `LogsStore`, `LogFilterValuesStore`, `LogsView`, and
+`LogFilterSheet` in the app target; a `Logs` drill-down on the service detail screen, which is why
+`ownerID` now travels from the service list into the detail screen. `Scripts/smoke.sh` grew Phase 3
+coverage including a real `101` handshake check. `make check` green — **52 package tests in 10 suites
+and 32 app tests in 4 suites**, `BUILD SUCCEEDED`, and the whole screen driven against a real
+workspace on the simulator.
+
+**One query type, two transports.** `GET /logs` and `GET /logs/subscribe` take an identical parameter
+list, but the generator emits two unrelated `Input.Query` types for them and can't express the socket
+at all. `LogQuery` is the single description: `listLogsQuery(…)` projects it onto the generated
+operation, `queryItems` onto the socket URL — matching the generated `style: .form, explode: true`
+encoding, so `level=error&level=warning` rather than a comma join.
+
+**`LogStream` is the only hand-written transport, and it reuses everything it can.** The frame type is
+the *generated* `101` body (`LogEntryPayload`), decoded with the same `RenderDateTranscoder` leniency
+the REST client needs; failures come back as `RenderError`. Three decisions worth naming:
+1. **A socket that opens resets the backoff.** A tail left running all day should survive any number
+   of drops, so `maxAttempts` counts *consecutive* failures. Only errors a retry could fix are
+   retried — a 401 or 403 finishes the stream rather than burning six round trips to say so. A
+   rejected handshake surfaces as an opaque `URLError`, so `URLSessionLogSocket` reads the status off
+   `task.response` to recover the distinction.
+2. **Reconnects are announced, not silent.** Render replays nothing across a gap, so
+   `LogStreamEvent.connected` is re-emitted and the UI says "Reconnecting (n)…".
+3. **An unrecognized frame is skipped, not fatal.** One odd frame is a bad reason to tear down a tail
+   someone is watching.
+
+**Deviations from the outline above, and why:**
+1. **Paging is by the window Render returns, not by direction alone.** `/logs` is the one list endpoint
+   that isn't an array of cursor envelopes: it's an object with `hasMore` + `nextStartTime` +
+   `nextEndTime`. That's a *better* signal than the cursor convention — Render says when the range is
+   exhausted instead of making us infer it from a short page — so `LogsStore` uses it verbatim and
+   de-duplicates by ID, since the windows are inclusive at both edges.
+2. **Two kinds of search, deliberately.** The filter sheet's "message contains" is server-side
+   (wildcards and regex, matched by Render); the search bar filters the lines already loaded, instantly,
+   and matches label values too so "the instance ID I just saw" is one paste away.
+3. **The filter vocabulary is fetched, not hard-coded.** `GET /logs/values` per facet, six calls
+   concurrently. Levels are per runtime — this workspace returns `alert, critical, debug, emergency,
+   error, info, notice, warning` — so a hard-coded list would offer filters that match nothing. A facet
+   that fails or comes back empty isn't shown; an empty picker is worse than no picker.
+4. **Newest-first, not terminal order.** A phone opens at the top, and the live tail then lands above
+   what you're reading instead of dragging the viewport.
+5. **Pause holds lines rather than dropping them**, bounded by the same cap as the visible buffer, and
+   resuming merges them in. Stopping the tail keeps whatever it already delivered.
+6. **`LogLevel` is inferred, not just read.** Request logs often carry no `level`, but a 502 is an error
+   whether or not anything labelled it one — so the status code fills in when the label is absent.
+   Build output has neither and stays uncolored rather than being called `info`.
+
+**Live smoke: done, driven from this repo** with `Scripts/sim-input.swift`, against a real image-backed
+web service:
+- History: request logs newest-first with `POST 200 /webhook` subtitles and blue severity rules.
+- Filter sheet: the eight real levels above, plus `type`, `statusCode`, `method`, `instance`, `host`.
+  Selecting `error` re-ran the query *and* restarted the socket on the new subscription — the list came
+  back all 502/503 with red rules, and the toolbar icon filled in.
+- **A real WebSocket tail:** green `Live`, the deploy's build output arriving, `Pause` → `Paused`, and
+  the whole thing surviving a filter change.
+
+**Three defects the live pass turned up, all fixed:**
+1. **ANSI escape sequences rendered literally.** Build logs are colorized for a terminal and Render
+   passes the escapes through, so a line read `[0;32m[1m==> [0mDetected service running on port 10000`.
+   `LogLine.strippingANSI` now removes them at construction. Rendering the colors instead would mean an
+   `AttributedString` per line and a palette fighting Dark Mode, for information the level rule already
+   carries.
+2. **`/logs/subscribe` replays recent history on connect, out of order relative to what's loaded.**
+   Blind prepending put a 3:50 build line above a 3:55 one. Live lines are now inserted at their place
+   in the newest-first list; the scan starts at the top, so the common case still costs one comparison.
+3. **Every filter option rendered in the accent color**, reading as a row of links and leaving the
+   checkmark as the only selected/unselected cue. `.buttonStyle(.plain)`.
+
+**One thing worth knowing about the app test target:** it links `RenderAPI` twice — once as a package
+framework, once statically — which the runtime warns about, and which makes `error as? RenderError`
+fail across that boundary. Errors thrown by a stub *in the test target* therefore reach the store as
+generic `.transport` failures. Nothing in the app is affected (it links the framework once), and the
+package's own suite tests error mapping properly; app tests just shouldn't assert on a specific
+`RenderError` case. Worth untangling in the pbxproj before it causes a subtler surprise.
 
 ### Phase 4 — Metrics
 - Swift Charts for CPU, memory, HTTP requests, HTTP latency, bandwidth, instance count,

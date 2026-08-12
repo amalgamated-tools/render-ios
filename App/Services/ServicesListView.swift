@@ -7,9 +7,13 @@ struct ServicesListView: View {
     @State private var store: ServicesStore
 
     private let client: RenderClient
+    /// Passed down to the detail screen: logs are addressed by workspace, not by service, so the
+    /// owner has to travel with the service ID.
+    private let ownerID: String
 
     init(client: RenderClient, ownerID: String, environmentIDs: [String]? = nil) {
         self.client = client
+        self.ownerID = ownerID
         _store = State(initialValue: ServicesStore(client: client, ownerID: ownerID, environmentIDs: environmentIDs))
     }
 
@@ -32,7 +36,12 @@ struct ServicesListView: View {
 
     private func row(for service: ServiceSummary) -> some View {
         NavigationLink {
-            ServiceDetailView(client: client, serviceID: service.id, serviceName: service.name)
+            ServiceDetailView(
+                client: client,
+                ownerID: ownerID,
+                serviceID: service.id,
+                serviceName: service.name
+            )
         } label: {
             ServiceRow(service: service)
         }
