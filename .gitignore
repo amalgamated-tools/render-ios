@@ -1,0 +1,20 @@
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcscmblueprint
+*.xccheckout
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Packages/*/.build/
+# Package.resolved IS committed — it pins the generator and runtime versions that produced
+# the checked-in Sources/RenderAPI/Generated output.
+
+# macOS
+.DS_Store
+
+# Conductor
+.context/
