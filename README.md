@@ -14,10 +14,9 @@ latency, bandwidth, instances, and disk against the plan's limits.
 Built with SwiftUI, Swift 6 strict concurrency, and a code-generated client over Render's public
 OpenAPI spec. No third-party UI or networking dependencies.
 
-> **Status:** Phases 0–3 are complete (auth, service list, service detail, deploys, events,
-> lifecycle actions, and logs with a live WebSocket tail). Phase 4 (metrics) is built and tested but
-> has not yet had its live pass against a real workspace. Full dashboard parity is planned — see
-> [`PLAN.md`](PLAN.md) for the roadmap.
+> **Status:** Phases 0–4 are complete (auth, service list, service detail, deploys, events, lifecycle
+> actions, logs with a live WebSocket tail, and metrics charts), each verified against a real workspace.
+> Full dashboard parity is planned — see [`PLAN.md`](PLAN.md) for the roadmap.
 
 ---
 
@@ -32,6 +31,11 @@ OpenAPI spec. No third-party UI or networking dependencies.
 |---|---|---|---|
 | ![Actions menu](docs/screenshots/actions-menu.png) | ![Deploys](docs/screenshots/deploys.png) | ![Deploy detail](docs/screenshots/deploy-detail.png) | ![Events](docs/screenshots/events.png) |
 | The action set is computed per service: an image-backed service gets "Deploy Latest Image" and no cache-clearing build; a cron job gets "Run Now". Every action is confirmed first. | Newest first, paging as you scroll. Roll back from a leading swipe — full-swipe is disabled deliberately, so a careless thumb can't fire one. | Status, trigger, timing, and the commit or image that shipped. Refetched on open so an in-flight deploy shows current status. | What Render did to this service and when. 42 event types, colour-coded by whether something broke, something is moving, or it's bookkeeping. |
+
+| Metrics | HTTP metrics | Static site |
+|---|---|---|
+| ![Metrics](docs/screenshots/metrics.png) | ![HTTP metrics](docs/screenshots/metrics-http.png) | ![Static site metrics](docs/screenshots/metrics-static-site.png) |
+| Up to twelve series fetched concurrently behind one spinner. Units come from the API, not from a table — and a limit too far above the readings to plot becomes a caption rather than flattening the line you came to read. | Requests grouped by status code, because the 3am question is how many failed. Latency at p50/p95/p99: a p50 alone hides the tail, a p99 alone can't say whether everything is slow or only a few things. | Charts are chosen per service type. A static site has no instance, so it has no CPU or memory — offering them would make "no data" ambiguous between *nothing happened* and *not applicable here*. |
 
 | Logs | Live tail | Log filters |
 |---|---|---|
@@ -186,7 +190,7 @@ around all four before the generator ever sees the file:
 
 ```
 download → jq pretty-print → flatten-path-refs.py → relax-nullable.py → order-oneof.py
-         → widen-float-params.py → generate
+         → number-params.py → generate
 ```
 
 1. **Unresolvable `$ref`s.** OpenAPIKit only resolves refs into `#/components/…`, and the spec has
@@ -204,11 +208,13 @@ download → jq pretty-print → flatten-path-refs.py → relax-nullable.py → 
    authoritative `service.type` and records which union member actually decoded, purely so a
    disagreement can be *detected* — the detail screen shows a warning banner rather than presenting
    possibly-wrong configuration as fact.
-4. **A float query parameter that can't round-trip its own literal.** `/metrics/http-latency`'s
-   `quantile` is typed `format: float`, so the generator emits a Swift `Float` — and its query
-   serializer widens that to a Double before printing it, turning a request for p95 into
-   `quantile=0.949999988079071`. Render picks a pre-computed quantile series off that value.
-   `widen-float-params.py` drops the `format`, so the parameter is a `Double` and `0.95` stays `0.95`.
+4. **Numeric query parameters that don't serialize the way Render parses them.** Every numeric query
+   parameter is typed `number`, which the generator maps to `Double` — so `resolutionSeconds` went out as
+   `60.0` and Render answered `could not parse input 60.0 for field resolutionSeconds`. That 400'd
+   *every* metrics chart, and only the live pass caught it: the unit test had pinned `60.0` as if it were
+   correct. `number-params.py` retypes it as `integer`, and separately drops `format: float` from
+   `/metrics/http-latency`'s `quantile` — mapped to `Float`, whose serialization widens to
+   `0.949999988079071` before printing, which is not reliably a request for the p95.
 
 Two consequences worth knowing before extending the app:
 
@@ -218,8 +224,9 @@ Two consequences worth knowing before extending the app:
   never fail, so events always load.) Making details usable needs a spec patch.
 - **The metrics endpoints drop the *datapoint* `unit`.** It appears in `required` but not in
   `properties`, so the generator skips it. The series-level `unit` beside it is well-formed, though,
-  which is the one that matters — `MetricUnit(apiUnit:)` maps what Render reports rather than
-  hard-coding a unit per endpoint.
+  which is the one that matters — `MetricUnit(apiUnit:)` maps what Render reports (`cpu`, `bytes`,
+  `seconds`, `unitless`, `mb`) rather than hard-coding a unit per endpoint, and renders an unrecognized
+  one verbatim instead of guessing.
 - **Each metrics response has its own generated type.** None of the fourteen `/metrics/*` schemas is a
   named component, so the generator emits fourteen unrelated copies of `{labels, values, unit}` (and
   fourteen unrelated query types). `MetricSeries` is the single type the app sees; the collapse is a
@@ -295,7 +302,15 @@ Screens can be exercised end-to-end without XCUITest:
 make run
 swift Scripts/sim-input.swift tap 600 1349     # coordinates read straight off a screenshot
 swift Scripts/sim-input.swift drag 600 2200 600 1200
+swift Scripts/sim-input.swift press return
 xcrun simctl io booted screenshot /tmp/step.png
+```
+
+Signing in is part of it, since a fresh simulator's Keychain is empty. Pipe the key rather than passing
+it as an argument, so it stays out of argv and the shell history:
+
+```sh
+printf '%s' "$RENDER_API_KEY" | swift Scripts/sim-input.swift type
 ```
 
 Both failure modes are silent, so check them first: the calling process needs **Accessibility**

@@ -16,7 +16,10 @@ xcodebuild -project RenderiOS.xcodeproj -scheme RenderiOS \
   build | grep -E 'error:|warning: .*RenderiOS|BUILD' || true
 
 DEVICE=$(xcrun simctl list devices available \
-  | grep "$SIMULATOR (" | head -1 | sed 's/.*(\([0-9A-F-]*\)).*/\1/')
+  | grep -E "^[[:space:]]+$SIMULATOR \(" | head -1 | sed 's/.*(\([0-9A-F-]*\)).*/\1/')
+# Anchored to the start of the name, not a substring match: since CI got its own device, a plain
+# `grep "iPhone 17 Pro ("` also matches "CI iPhone 17 Pro" — and launching onto the test device while
+# you're watching the other one looks exactly like the app failing to start.
 if [ -z "$DEVICE" ]; then
   echo "!!! No available simulator named '$SIMULATOR'" >&2
   exit 1

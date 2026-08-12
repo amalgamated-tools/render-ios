@@ -42,10 +42,11 @@ echo "==> Ordering undiscriminated oneOf members"
 # (cron job vs background worker) where the spec's order is wrong.
 python3 "$REPO_ROOT/Scripts/order-oneof.py" "$SPEC"
 
-echo "==> Widening float query parameters to double"
-# `format: float` makes the generator emit Swift `Float`, which its query serializer widens to
-# Double before printing — so quantile 0.95 goes on the wire as 0.949999988079071. See the script.
-python3 "$REPO_ROOT/Scripts/widen-float-params.py" "$SPEC"
+echo "==> Fixing numeric query parameter types"
+# The spec types every numeric query parameter as `number`, which the generator maps to Double or
+# Float — and Render accepts neither serialization: it rejects `resolutionSeconds=60.0` outright, and
+# a Float quantile prints as 0.949999988079071 rather than 0.95. See the script.
+python3 "$REPO_ROOT/Scripts/number-params.py" "$SPEC"
 
 echo "==> Generating Swift client"
 # Invoked as a plain executable rather than as a build-tool plugin, so that the generated

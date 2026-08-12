@@ -186,9 +186,14 @@ enum MetricsCatalog {
         series: [
             // Three quantiles in one chart: a p50 alone hides the tail, and a p99 alone can't say
             // whether everything is slow or a few things are.
-            .init(.httpLatency(quantile: 0.5), name: "p50", distinguishingLabel: nil),
-            .init(.httpLatency(quantile: 0.95), name: "p95", distinguishingLabel: nil),
-            .init(.httpLatency(quantile: 0.99), name: "p99", distinguishingLabel: nil),
+            //
+            // Each quantile can itself come back as several series — the live pass showed Render
+            // labelling latency by `statusCode` and `host` — so the label refines the quantile name
+            // ("p95 · 200") rather than replacing it. Three lines all reading "p95" would be worse
+            // than useless.
+            .init(.httpLatency(quantile: 0.5), name: "p50", distinguishingLabel: "statusCode"),
+            .init(.httpLatency(quantile: 0.95), name: "p95", distinguishingLabel: "statusCode"),
+            .init(.httpLatency(quantile: 0.99), name: "p99", distinguishingLabel: "statusCode"),
         ]
     )
 

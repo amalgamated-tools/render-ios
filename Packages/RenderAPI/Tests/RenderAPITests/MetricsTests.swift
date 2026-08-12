@@ -97,9 +97,12 @@ struct MetricsTests {
         let path = try #require(transport.requests.first?.path)
         #expect(path.hasPrefix("/metrics/cpu?"))
         #expect(path.contains("resource=srv-abc"))
-        // `60.0`, not `60`: the spec types resolution as `number`, so the generated parameter is a
-        // Double. JSON numbers are JSON numbers and Render accepts it.
-        #expect(path.contains("resolutionSeconds=60.0"))
+        // `60`, not `60.0`. The spec types resolution as `number`, which made the generated parameter
+        // a Double — and Render rejects the decimal outright:
+        // "could not parse input 60.0 for field resolutionSeconds". Every chart in the app 400'd until
+        // Scripts/number-params.py retyped it as an integer, so this assertion is that patch's guard.
+        #expect(path.contains("resolutionSeconds=60"))
+        #expect(!path.contains("resolutionSeconds=60.0"))
         #expect(path.contains("startTime="))
         #expect(path.contains("endTime="))
     }
@@ -114,7 +117,7 @@ struct MetricsTests {
 
         _ = try await client.metricSeries(.cpu, fine)
 
-        #expect(try #require(transport.requests.first?.path).contains("resolutionSeconds=30.0"))
+        #expect(try #require(transport.requests.first?.path).contains("resolutionSeconds=30"))
         #expect(MetricsQuery(
             resourceID: "srv-abc", startTime: .now, endTime: .now, resolutionSeconds: 1
         ).resolutionSeconds == 30)
@@ -129,9 +132,10 @@ struct MetricsTests {
         let path = try #require(transport.requests.first?.path)
         #expect(path.hasPrefix("/metrics/http-latency?"))
         // Not `quantile=0.949999988079071`, which is what the spec's `format: float` produced before
-        // Scripts/widen-float-params.py — Render picks a pre-computed quantile series off this value,
-        // so the literal has to survive the round trip. This assertion is the regression guard for
-        // that patch; if a re-vendor loses it, this fails.
+        // Scripts/number-params.py — Render picks a pre-computed quantile series off this value, so the
+        // literal ought to survive the round trip. (The live pass found Render tolerant of the widened
+        // value, returning identical points for both, so this is correctness rather than a fix for a
+        // broken feature.)
         #expect(path.contains("quantile=0.95"))
     }
 

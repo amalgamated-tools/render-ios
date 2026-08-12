@@ -56252,7 +56252,7 @@ public enum Operations {
                 /// The resolution of the returned data
                 ///
                 /// - Remark: Generated from `#/paths/metrics/cpu/GET/query/resolutionSeconds`.
-                public var resolutionSeconds: Swift.Double?
+                public var resolutionSeconds: Swift.Int?
                 /// Resource ID to query. When multiple resource query params are provided, they are ORed together. Resources can be service ids, Postgres ids, or Redis ids
                 ///
                 /// - Remark: Generated from `#/paths/metrics/cpu/GET/query/resource`.
@@ -56289,7 +56289,7 @@ public enum Operations {
                 public init(
                     startTime: Components.Parameters.StartTimeParam? = nil,
                     endTime: Components.Parameters.EndTimeParam? = nil,
-                    resolutionSeconds: Swift.Double? = nil,
+                    resolutionSeconds: Swift.Int? = nil,
                     resource: Swift.String? = nil,
                     service: Swift.String? = nil,
                     instance: Swift.String? = nil,
@@ -56579,7 +56579,7 @@ public enum Operations {
                 /// The resolution of the returned data
                 ///
                 /// - Remark: Generated from `#/paths/metrics/cpu-limit/GET/query/resolutionSeconds`.
-                public var resolutionSeconds: Swift.Double?
+                public var resolutionSeconds: Swift.Int?
                 /// Resource ID to query. When multiple resource query params are provided, they are ORed together. Resources can be service ids, Postgres ids, or Redis ids
                 ///
                 /// - Remark: Generated from `#/paths/metrics/cpu-limit/GET/query/resource`.
@@ -56605,7 +56605,7 @@ public enum Operations {
                 public init(
                     startTime: Components.Parameters.StartTimeParam? = nil,
                     endTime: Components.Parameters.EndTimeParam? = nil,
-                    resolutionSeconds: Swift.Double? = nil,
+                    resolutionSeconds: Swift.Int? = nil,
                     resource: Swift.String? = nil,
                     service: Swift.String? = nil,
                     instance: Swift.String? = nil
@@ -56893,7 +56893,7 @@ public enum Operations {
                 /// The resolution of the returned data
                 ///
                 /// - Remark: Generated from `#/paths/metrics/cpu-target/GET/query/resolutionSeconds`.
-                public var resolutionSeconds: Swift.Double?
+                public var resolutionSeconds: Swift.Int?
                 /// Resource ID to query. When multiple resource query params are provided, they are ORed together. Resources can be service ids, Postgres ids, or Redis ids
                 ///
                 /// - Remark: Generated from `#/paths/metrics/cpu-target/GET/query/resource`.
@@ -56919,7 +56919,7 @@ public enum Operations {
                 public init(
                     startTime: Components.Parameters.StartTimeParam? = nil,
                     endTime: Components.Parameters.EndTimeParam? = nil,
-                    resolutionSeconds: Swift.Double? = nil,
+                    resolutionSeconds: Swift.Int? = nil,
                     resource: Swift.String? = nil,
                     service: Swift.String? = nil,
                     instance: Swift.String? = nil
@@ -57207,7 +57207,7 @@ public enum Operations {
                 /// The resolution of the returned data
                 ///
                 /// - Remark: Generated from `#/paths/metrics/memory/GET/query/resolutionSeconds`.
-                public var resolutionSeconds: Swift.Double?
+                public var resolutionSeconds: Swift.Int?
                 /// Resource ID to query. When multiple resource query params are provided, they are ORed together. Resources can be service ids, Postgres ids, or Redis ids
                 ///
                 /// - Remark: Generated from `#/paths/metrics/memory/GET/query/resource`.
@@ -57233,7 +57233,7 @@ public enum Operations {
                 public init(
                     startTime: Components.Parameters.StartTimeParam? = nil,
                     endTime: Components.Parameters.EndTimeParam? = nil,
-                    resolutionSeconds: Swift.Double? = nil,
+                    resolutionSeconds: Swift.Int? = nil,
                     resource: Swift.String? = nil,
                     service: Swift.String? = nil,
                     instance: Swift.String? = nil
@@ -57521,7 +57521,7 @@ public enum Operations {
                 /// The resolution of the returned data
                 ///
                 /// - Remark: Generated from `#/paths/metrics/memory-limit/GET/query/resolutionSeconds`.
-                public var resolutionSeconds: Swift.Double?
+                public var resolutionSeconds: Swift.Int?
                 /// Resource ID to query. When multiple resource query params are provided, they are ORed together. Resources can be service ids, Postgres ids, or Redis ids
                 ///
                 /// - Remark: Generated from `#/paths/metrics/memory-limit/GET/query/resource`.
@@ -57547,7 +57547,7 @@ public enum Operations {
                 public init(
                     startTime: Components.Parameters.StartTimeParam? = nil,
                     endTime: Components.Parameters.EndTimeParam? = nil,
-                    resolutionSeconds: Swift.Double? = nil,
+                    resolutionSeconds: Swift.Int? = nil,
                     resource: Swift.String? = nil,
                     service: Swift.String? = nil,
                     instance: Swift.String? = nil
@@ -57835,7 +57835,7 @@ public enum Operations {
                 /// The resolution of the returned data
                 ///
                 /// - Remark: Generated from `#/paths/metrics/memory-target/GET/query/resolutionSeconds`.
-                public var resolutionSeconds: Swift.Double?
+                public var resolutionSeconds: Swift.Int?
                 /// Resource ID to query. When multiple resource query params are provided, they are ORed together. Resources can be service ids, Postgres ids, or Redis ids
                 ///
                 /// - Remark: Generated from `#/paths/metrics/memory-target/GET/query/resource`.
@@ -57861,7 +57861,7 @@ public enum Operations {
                 public init(
                     startTime: Components.Parameters.StartTimeParam? = nil,
                     endTime: Components.Parameters.EndTimeParam? = nil,
-                    resolutionSeconds: Swift.Double? = nil,
+                    resolutionSeconds: Swift.Int? = nil,
                     resource: Swift.String? = nil,
                     service: Swift.String? = nil,
                     instance: Swift.String? = nil
@@ -58149,7 +58149,7 @@ public enum Operations {
                 /// The resolution of the returned data
                 ///
                 /// - Remark: Generated from `#/paths/metrics/http-requests/GET/query/resolutionSeconds`.
-                public var resolutionSeconds: Swift.Double?
+                public var resolutionSeconds: Swift.Int?
                 /// Service ID to query. When multiple service ids are provided, they are ORed together
                 ///
                 /// - Remark: Generated from `#/paths/metrics/http-requests/GET/query/resource`.
@@ -58190,7 +58190,7 @@ public enum Operations {
                 public init(
                     startTime: Components.Parameters.StartTimeParam? = nil,
                     endTime: Components.Parameters.EndTimeParam? = nil,
-                    resolutionSeconds: Swift.Double? = nil,
+                    resolutionSeconds: Swift.Int? = nil,
                     resource: Swift.String? = nil,
                     service: Swift.String? = nil,
                     host: Swift.String? = nil,
@@ -58482,7 +58482,7 @@ public enum Operations {
                 /// The resolution of the returned data
                 ///
                 /// - Remark: Generated from `#/paths/metrics/http-latency/GET/query/resolutionSeconds`.
-                public var resolutionSeconds: Swift.Double?
+                public var resolutionSeconds: Swift.Int?
                 /// Service ID to query. When multiple service ids are provided, they are ORed together
                 ///
                 /// - Remark: Generated from `#/paths/metrics/http-latency/GET/query/resource`.
@@ -58518,7 +58518,7 @@ public enum Operations {
                 public init(
                     startTime: Components.Parameters.StartTimeParam? = nil,
                     endTime: Components.Parameters.EndTimeParam? = nil,
-                    resolutionSeconds: Swift.Double? = nil,
+                    resolutionSeconds: Swift.Int? = nil,
                     resource: Swift.String? = nil,
                     service: Swift.String? = nil,
                     host: Swift.String? = nil,
@@ -59455,7 +59455,7 @@ public enum Operations {
                 /// The resolution of the returned data
                 ///
                 /// - Remark: Generated from `#/paths/metrics/disk-usage/GET/query/resolutionSeconds`.
-                public var resolutionSeconds: Swift.Double?
+                public var resolutionSeconds: Swift.Int?
                 /// Resource ID to query. When multiple resource query params are provided, they are ORed together. Resources can be service ids, Postgres ids, or Redis ids
                 ///
                 /// - Remark: Generated from `#/paths/metrics/disk-usage/GET/query/resource`.
@@ -59476,7 +59476,7 @@ public enum Operations {
                 public init(
                     startTime: Components.Parameters.StartTimeParam? = nil,
                     endTime: Components.Parameters.EndTimeParam? = nil,
-                    resolutionSeconds: Swift.Double? = nil,
+                    resolutionSeconds: Swift.Int? = nil,
                     resource: Swift.String? = nil,
                     service: Swift.String? = nil
                 ) {
@@ -59762,7 +59762,7 @@ public enum Operations {
                 /// The resolution of the returned data
                 ///
                 /// - Remark: Generated from `#/paths/metrics/disk-capacity/GET/query/resolutionSeconds`.
-                public var resolutionSeconds: Swift.Double?
+                public var resolutionSeconds: Swift.Int?
                 /// Resource ID to query. When multiple resource query params are provided, they are ORed together. Resources can be service ids, Postgres ids, or Redis ids
                 ///
                 /// - Remark: Generated from `#/paths/metrics/disk-capacity/GET/query/resource`.
@@ -59783,7 +59783,7 @@ public enum Operations {
                 public init(
                     startTime: Components.Parameters.StartTimeParam? = nil,
                     endTime: Components.Parameters.EndTimeParam? = nil,
-                    resolutionSeconds: Swift.Double? = nil,
+                    resolutionSeconds: Swift.Int? = nil,
                     resource: Swift.String? = nil,
                     service: Swift.String? = nil
                 ) {
@@ -60069,7 +60069,7 @@ public enum Operations {
                 /// The resolution of the returned data
                 ///
                 /// - Remark: Generated from `#/paths/metrics/instance-count/GET/query/resolutionSeconds`.
-                public var resolutionSeconds: Swift.Double?
+                public var resolutionSeconds: Swift.Int?
                 /// Resource ID to query. When multiple resource query params are provided, they are ORed together. Resources can be service ids, Postgres ids, or Redis ids
                 ///
                 /// - Remark: Generated from `#/paths/metrics/instance-count/GET/query/resource`.
@@ -60090,7 +60090,7 @@ public enum Operations {
                 public init(
                     startTime: Components.Parameters.StartTimeParam? = nil,
                     endTime: Components.Parameters.EndTimeParam? = nil,
-                    resolutionSeconds: Swift.Double? = nil,
+                    resolutionSeconds: Swift.Int? = nil,
                     resource: Swift.String? = nil,
                     service: Swift.String? = nil
                 ) {
@@ -60376,7 +60376,7 @@ public enum Operations {
                 /// The resolution of the returned data
                 ///
                 /// - Remark: Generated from `#/paths/metrics/active-connections/GET/query/resolutionSeconds`.
-                public var resolutionSeconds: Swift.Double?
+                public var resolutionSeconds: Swift.Int?
                 /// Resource ID to query. When multiple resource query params are provided, they are ORed together. Resources Postgres ids or Redis ids
                 ///
                 /// - Remark: Generated from `#/paths/metrics/active-connections/GET/query/resource`.
@@ -60391,7 +60391,7 @@ public enum Operations {
                 public init(
                     startTime: Components.Parameters.StartTimeParam? = nil,
                     endTime: Components.Parameters.EndTimeParam? = nil,
-                    resolutionSeconds: Swift.Double? = nil,
+                    resolutionSeconds: Swift.Int? = nil,
                     resource: Swift.String? = nil
                 ) {
                     self.startTime = startTime
@@ -60675,7 +60675,7 @@ public enum Operations {
                 /// The resolution of the returned data
                 ///
                 /// - Remark: Generated from `#/paths/metrics/replication-lag/GET/query/resolutionSeconds`.
-                public var resolutionSeconds: Swift.Double?
+                public var resolutionSeconds: Swift.Int?
                 /// Postgres ID to query. When multiple resource query params are provided, they are ORed together
                 ///
                 /// - Remark: Generated from `#/paths/metrics/replication-lag/GET/query/resource`.
@@ -60690,7 +60690,7 @@ public enum Operations {
                 public init(
                     startTime: Components.Parameters.StartTimeParam? = nil,
                     endTime: Components.Parameters.EndTimeParam? = nil,
-                    resolutionSeconds: Swift.Double? = nil,
+                    resolutionSeconds: Swift.Int? = nil,
                     resource: Swift.String? = nil
                 ) {
                     self.startTime = startTime
@@ -60974,7 +60974,7 @@ public enum Operations {
                 /// The resolution of the returned data
                 ///
                 /// - Remark: Generated from `#/paths/metrics/filters/application/GET/query/resolutionSeconds`.
-                public var resolutionSeconds: Swift.Double?
+                public var resolutionSeconds: Swift.Int?
                 /// Service ID to query. When multiple service ids are provided, they are ORed together
                 ///
                 /// - Remark: Generated from `#/paths/metrics/filters/application/GET/query/resource`.
@@ -60995,7 +60995,7 @@ public enum Operations {
                 public init(
                     startTime: Components.Parameters.StartTimeParam? = nil,
                     endTime: Components.Parameters.EndTimeParam? = nil,
-                    resolutionSeconds: Swift.Double? = nil,
+                    resolutionSeconds: Swift.Int? = nil,
                     resource: Swift.String? = nil,
                     service: Swift.String? = nil
                 ) {
@@ -61215,7 +61215,7 @@ public enum Operations {
                 /// The resolution of the returned data
                 ///
                 /// - Remark: Generated from `#/paths/metrics/filters/http/GET/query/resolutionSeconds`.
-                public var resolutionSeconds: Swift.Double?
+                public var resolutionSeconds: Swift.Int?
                 /// Service ID to query. When multiple service ids are provided, they are ORed together
                 ///
                 /// - Remark: Generated from `#/paths/metrics/filters/http/GET/query/resource`.
@@ -61246,7 +61246,7 @@ public enum Operations {
                 public init(
                     startTime: Components.Parameters.StartTimeParam? = nil,
                     endTime: Components.Parameters.EndTimeParam? = nil,
-                    resolutionSeconds: Swift.Double? = nil,
+                    resolutionSeconds: Swift.Int? = nil,
                     resource: Swift.String? = nil,
                     service: Swift.String? = nil,
                     host: Swift.String? = nil,
@@ -61470,7 +61470,7 @@ public enum Operations {
                 /// The resolution of the returned data
                 ///
                 /// - Remark: Generated from `#/paths/metrics/filters/path/GET/query/resolutionSeconds`.
-                public var resolutionSeconds: Swift.Double?
+                public var resolutionSeconds: Swift.Int?
                 /// Service ID to query. When multiple service ids are provided, they are ORed together
                 ///
                 /// - Remark: Generated from `#/paths/metrics/filters/path/GET/query/resource`.
@@ -61506,7 +61506,7 @@ public enum Operations {
                 public init(
                     startTime: Components.Parameters.StartTimeParam? = nil,
                     endTime: Components.Parameters.EndTimeParam? = nil,
-                    resolutionSeconds: Swift.Double? = nil,
+                    resolutionSeconds: Swift.Int? = nil,
                     resource: Swift.String? = nil,
                     service: Swift.String? = nil,
                     host: Swift.String? = nil,
@@ -61701,7 +61701,7 @@ public enum Operations {
                 /// The resolution of the returned data
                 ///
                 /// - Remark: Generated from `#/paths/metrics/task-runs-queued/GET/query/resolutionSeconds`.
-                public var resolutionSeconds: Swift.Double?
+                public var resolutionSeconds: Swift.Int?
                 /// Task ID to query. When multiple task IDs are provided, they are ORed together
                 ///
                 /// - Remark: Generated from `#/paths/metrics/task-runs-queued/GET/query/resource`.
@@ -61716,7 +61716,7 @@ public enum Operations {
                 public init(
                     startTime: Components.Parameters.StartTimeParam? = nil,
                     endTime: Components.Parameters.EndTimeParam? = nil,
-                    resolutionSeconds: Swift.Double? = nil,
+                    resolutionSeconds: Swift.Int? = nil,
                     resource: Swift.String? = nil
                 ) {
                     self.startTime = startTime
@@ -62000,7 +62000,7 @@ public enum Operations {
                 /// The resolution of the returned data
                 ///
                 /// - Remark: Generated from `#/paths/metrics/task-runs-completed/GET/query/resolutionSeconds`.
-                public var resolutionSeconds: Swift.Double?
+                public var resolutionSeconds: Swift.Int?
                 /// Task ID to query. When multiple task IDs are provided, they are ORed together
                 ///
                 /// - Remark: Generated from `#/paths/metrics/task-runs-completed/GET/query/resource`.
@@ -62034,7 +62034,7 @@ public enum Operations {
                 public init(
                     startTime: Components.Parameters.StartTimeParam? = nil,
                     endTime: Components.Parameters.EndTimeParam? = nil,
-                    resolutionSeconds: Swift.Double? = nil,
+                    resolutionSeconds: Swift.Int? = nil,
                     resource: Swift.String? = nil,
                     state: Operations.GetTaskRunsCompleted.Input.Query.StatePayload? = nil,
                     aggregateBy: Operations.GetTaskRunsCompleted.Input.Query.AggregateByPayload? = nil

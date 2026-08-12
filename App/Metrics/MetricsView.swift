@@ -102,7 +102,8 @@ private struct MetricChartCard: View {
         .background(.background.secondary, in: RoundedRectangle(cornerRadius: 14))
     }
 
-    private var lines: [MetricLine] { store.lines(for: chart) }
+    private var plot: MetricsStore.MetricPlot { store.plot(for: chart) }
+    private var lines: [MetricLine] { plot.lines }
 
     private var header: some View {
         HStack(alignment: .firstTextBaseline) {
@@ -130,15 +131,22 @@ private struct MetricChartCard: View {
                 unavailable("No data in this range.", systemImage: "chart.xyaxis.line")
             }
         } else {
-            plot
+            chartBody
             legend
         }
     }
 
-    private var plot: some View {
+    private var chartBody: some View {
         Chart {
             ForEach(Array(lines.enumerated()), id: \.element.id) { index, line in
                 ForEach(line.points, id: \.timestamp) { point in
+                    if line.isSinglePoint {
+                        PointMark(
+                            x: .value("Time", point.timestamp),
+                            y: .value(line.name, point.value)
+                        )
+                        .foregroundStyle(color(at: index, role: line.role))
+                    }
                     LineMark(
                         x: .value("Time", point.timestamp),
                         y: .value(line.name, point.value),
@@ -157,6 +165,9 @@ private struct MetricChartCard: View {
             }
         }
         .chartLegend(.hidden)
+        // Anchored at zero and topped just above the highest plotted value — see
+        // `MetricsStore.plot(for:)` for why a far-off limit isn't in this range.
+        .chartYScale(domain: 0...plot.upperBound)
         .chartYAxis {
             AxisMarks { value in
                 AxisGridLine()
@@ -197,6 +208,13 @@ private struct MetricChartCard: View {
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
+            }
+            // A limit too far above the readings to plot still belongs on the card — as the number it
+            // is, rather than as a line pinning the reading to the axis.
+            ForEach(plot.offScale, id: \.self) { reference in
+                Text(reference)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

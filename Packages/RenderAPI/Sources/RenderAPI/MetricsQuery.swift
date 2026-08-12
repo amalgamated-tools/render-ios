@@ -17,18 +17,23 @@ public struct MetricsQuery: Sendable, Hashable {
     public var endTime: Date
     /// Seconds per data point.
     ///
+    /// An `Int`, not a `Double`, because Render parses this as an integer and rejects a decimal
+    /// outright — `resolutionSeconds=60.0` comes back as
+    /// `could not parse input 60.0 for field resolutionSeconds`. The spec says `number`; see
+    /// `Scripts/number-params.py`.
+    ///
     /// Clamped to Render's documented floor of 30 on the way in, rather than passed through: the
     /// floor is an API constraint, and a coarser chart is a better outcome than a 400 from a range
     /// calculation that rounded down. The clamp lives on the property, not just the initializer, so
     /// it also holds for `query.resolutionSeconds = …` after the fact.
-    public var resolutionSeconds: Double {
+    public var resolutionSeconds: Int {
         get { clampedResolutionSeconds }
         set { clampedResolutionSeconds = max(Self.minimumResolutionSeconds, newValue) }
     }
 
-    public static let minimumResolutionSeconds: Double = 30
+    public static let minimumResolutionSeconds = 30
 
-    private var clampedResolutionSeconds: Double
+    private var clampedResolutionSeconds: Int
     /// Narrows to one instance. Only CPU and memory accept it; ignored elsewhere.
     public var instanceID: String?
     /// How to combine several instances' series into one. Only `/metrics/cpu` accepts it — an
@@ -45,7 +50,7 @@ public struct MetricsQuery: Sendable, Hashable {
         resourceID: String,
         startTime: Date,
         endTime: Date,
-        resolutionSeconds: Double,
+        resolutionSeconds: Int,
         instanceID: String? = nil,
         aggregationMethod: AggregationMethod? = nil
     ) {
@@ -198,8 +203,8 @@ extension RenderClient {
                     startTime: start, endTime: end, resolutionSeconds: resolution,
                     resource: resource,
                     // A Double, not the Float the spec's `format: float` would give — see
-                    // Scripts/widen-float-params.py. As a Float this went on the wire as
-                    // 0.949999988079071 instead of 0.95.
+                    // Scripts/number-params.py. As a Float this went on the wire as 0.949999988079071
+                    // instead of 0.95. (Render turned out to accept both; this is the honest spelling.)
                     quantile: quantile
                 )).ok.body.json
             )

@@ -11,6 +11,11 @@ struct MetricLine: Identifiable, Hashable, Sendable {
     let unit: MetricUnit
 
     var latest: MetricSeries.Point? { points.last }
+
+    /// A line through one point draws nothing at all. Real for bandwidth, which Render buckets itself
+    /// and which returned a single bucket for a one-hour window — the card showed a headline of
+    /// 3.39 MB above an empty plot. Such a series is drawn as a mark instead.
+    var isSinglePoint: Bool { points.count == 1 }
 }
 
 /// Backs the metrics screen: a time range, and every chart's series fetched for it.
@@ -147,14 +152,17 @@ final class MetricsStore {
     /// A series that came back empty contributes nothing, which is how a CPU chart on a service with
     /// autoscaling off simply has no target line rather than a flat zero one.
     func lines(for chart: MetricChartSpec) -> [MetricLine] {
-        chart.series.flatMap { spec -> [MetricLine] in
+        // Whether the spec names already distinguish the lines from each other (p50/p95/p99) decides
+        // whether a series label replaces the name or refines it.
+        let namesAreDistinct = chart.series.filter { $0.role == .measurement }.count > 1
+        return chart.series.flatMap { spec -> [MetricLine] in
             let series = seriesByKind[spec.kind.id] ?? []
             return series.map { one in
                 MetricLine(
                     // Suffixed with the series' own identity so several instances of one kind stay
                     // distinct rows in a ForEach.
                     id: series.count > 1 ? "\(spec.id)#\(one.id)" : spec.id,
-                    name: name(for: one, spec: spec, siblingCount: series.count),
+                    name: name(for: one, spec: spec, siblingCount: series.count, refining: namesAreDistinct),
                     role: spec.role,
                     points: one.points,
                     unit: MetricUnit(apiUnit: one.unit)
@@ -175,13 +183,62 @@ final class MetricsStore {
 
         switch chart.headline {
         case .latest:
-            // The most recent point across the measurement lines, not the first line's — with several
-            // instances reporting, one can lag a bucket behind.
-            guard let newest = latest.max(by: { $0.timestamp < $1.timestamp }) else { return nil }
-            return unit.formatted(newest.value)
+            // The *highest* of each line's newest values, not whichever line happens to have the
+            // freshest timestamp. On the latency chart that arbitrary pick read "1 ms" above a plot
+            // topping out at 4 ms — the p50 winning a race against the p99. The worst current reading
+            // is both the stable choice and the one worth knowing at 3am.
+            guard let worst = latest.map(\.value).max() else { return nil }
+            return unit.formatted(worst)
         case .sumOfLatest:
             return unit.formatted(latest.reduce(0) { $0 + $1.value })
         }
+    }
+
+    /// What to draw for a chart: the lines that fit on one scale, the upper bound to use, and the
+    /// reference values that had to be left off it.
+    struct MetricPlot {
+        var lines: [MetricLine] = []
+        /// Always anchored at zero — every metric here is a magnitude, and a memory chart that starts
+        /// at 24 MB exaggerates a flat line into a mountain range.
+        var upperBound: Double = 1
+        /// Reference lines excluded from the scale, already formatted — "Limit 0.5 cores".
+        var offScale: [String] = []
+    }
+
+    /// Fits a chart's lines onto one y-scale.
+    ///
+    /// **A distant limit is shown as text, not as a line.** An idle service uses 0.0001 of its 0.5-core
+    /// limit, and plotting both puts the reading flat on the axis: the first live pass produced a CPU
+    /// chart and a memory chart whose usage line was indistinguishable from zero. A reference line is
+    /// context, so it only earns a place on the scale when it's close enough to the readings to be
+    /// compared with them; past that it becomes a caption, which loses nothing but the false precision
+    /// of a line no one can read against.
+    func plot(for chart: MetricChartSpec) -> MetricPlot {
+        let all = lines(for: chart)
+        guard !all.isEmpty else { return MetricPlot() }
+
+        let measurements = all.filter { $0.role == .measurement }
+        let peak = measurements.flatMap(\.points).map(\.value).max() ?? 0
+
+        var plot = MetricPlot()
+        for line in all {
+            let lineMax = line.points.map(\.value).max() ?? 0
+            // Within 2.5x of the readings is close enough to read against; a limit 5000x above them
+            // is not.
+            if line.role == .reference, peak > 0, lineMax > peak * 2.5 {
+                plot.offScale.append("\(line.name) \(line.unit.formatted(lineMax))")
+            } else {
+                plot.lines.append(line)
+            }
+        }
+
+        let plotted = plot.lines.flatMap(\.points).map(\.value).max() ?? 0
+        // A little headroom so the peak isn't drawn on the frame, and never tighter than the unit can
+        // label: a bandwidth chart whose readings round to zero was drawing three gridlines all
+        // marked "0 MB".
+        let floor = plot.lines.first?.unit.axisFloor ?? 1
+        plot.upperBound = max(plotted * 1.15, floor)
+        return plot
     }
 
     /// Whether every series this chart needs failed to load. A chart with one line missing still
@@ -190,12 +247,20 @@ final class MetricsStore {
         chart.series.allSatisfy { failedKindIDs.contains($0.kind.id) }
     }
 
-    private func name(for series: MetricSeries, spec: MetricChartSpec.Series, siblingCount: Int) -> String {
+    private func name(
+        for series: MetricSeries,
+        spec: MetricChartSpec.Series,
+        siblingCount: Int,
+        refining: Bool
+    ) -> String {
         guard siblingCount > 1,
               let field = spec.distinguishingLabel,
               let value = series[label: field]
         else { return spec.name }
-        return field == "instance" ? shortInstance(value) : value
+        let label = field == "instance" ? shortInstance(value) : value
+        // On a chart whose spec names already carry meaning, the label refines them ("p95 · 500");
+        // on a chart with one spec, the generic name ("Requests") has nothing to add.
+        return refining ? "\(spec.name) · \(label)" : label
     }
 
     /// `srv-d1abc2de3f4g5h6i7j8k-59d7b8f9c-x4kzp` → `x4kzp`. The service prefix is the same on every

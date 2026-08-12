@@ -109,7 +109,10 @@ done
 # The one endpoint the generated client can't reach: a 101 upgrade, hand-written in LogStream.swift.
 # curl speaks enough of the handshake to prove the URL, auth, and query shape are right.
 echo "==> GET /logs/subscribe (WebSocket handshake)"
-handshake=$(curl -sS -o /dev/null -D - \
+# --http1.1 is required, not stylistic: a WebSocket upgrade is an HTTP/1.1 mechanism, and curl
+# negotiating HTTP/2 gets a 426 that looks exactly like a broken endpoint. URLSessionWebSocketTask
+# speaks 1.1 for the handshake itself, so the app was never affected.
+handshake=$(curl -sS --http1.1 -o /dev/null -D - \
   "${auth[@]}" \
   -H "Connection: Upgrade" -H "Upgrade: websocket" -H "Sec-WebSocket-Version: 13" \
   -H "Sec-WebSocket-Key: $(head -c 16 /dev/urandom | base64)" \
@@ -157,9 +160,10 @@ printf '  bandwidth        series=%s unit=%s points=%s\n' \
   "$(echo "$bandwidth" | jq -r '[.[].unit] | unique | join(",") | if . == "" then "-" else . end')" \
   "$(echo "$bandwidth" | jq -r '[.[].values | length] | add // 0')"
 
-# Scripts/widen-float-params.py exists because the spec's `format: float` made the generator send
-# quantile=0.949999988079071 instead of 0.95. This is the live check on whether that mattered: if the
-# two disagree, Render is matching on the literal and the patch is load-bearing.
+# Scripts/number-params.py drops `format: float` because it made the generator send
+# quantile=0.949999988079071 instead of 0.95. This is the live check on whether that mattered. As of the
+# Phase 4 live pass the two agree exactly, so Render tolerates the widened value — keep the check, since
+# a change here would silently mean requesting a quantile nobody asked for.
 echo "==> GET /metrics/http-latency — quantile literal fidelity"
 for q in 0.95 0.949999988079071; do
   printf '  quantile=%-20s points=%s\n' "$q" \

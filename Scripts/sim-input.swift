@@ -2,6 +2,12 @@
 //
 //   swift Scripts/sim-input.swift tap  <x> <y>
 //   swift Scripts/sim-input.swift drag <x1> <y1> <x2> <y2>
+//   swift Scripts/sim-input.swift type <text>
+//   printf '%s' "$SECRET" | swift Scripts/sim-input.swift type      # reads stdin
+//
+// `type` sends keystrokes to the focused field, which needs the Simulator's "Connect Hardware
+// Keyboard" (I/O menu) left on — it is by default. Prefer the stdin form for anything secret: an
+// argument is visible in the process list, which is the same reason smoke.sh reads its key from .env.
 //
 // Coordinates are in the pixel space of `xcrun simctl io booted screenshot`, so you can read a
 // target straight off a screenshot instead of converting anything by hand. The device screen's
@@ -98,8 +104,98 @@ for argument in arguments.dropFirst() {
     if let value = Double(argument) { numbers.append(CGFloat(value)) }
 }
 
+/// US-layout virtual key codes for the characters worth typing into a simulator.
+///
+/// A layout table, and not `keyboardSetUnicodeString`, because the Simulator's HID path honors the
+/// **key code** and ignores an attached Unicode string: every character posted with `virtualKey: 0`
+/// arrives as "a". That fails silently — a 32-character API key becomes 32 a's and the app reports a
+/// rejected key — which is why an unmappable character below is a hard error instead.
+let keyCodes: [Character: CGKeyCode] = [
+    "a": 0, "s": 1, "d": 2, "f": 3, "h": 4, "g": 5, "z": 6, "x": 7, "c": 8, "v": 9,
+    "b": 11, "q": 12, "w": 13, "e": 14, "r": 15, "y": 16, "t": 17,
+    "1": 18, "2": 19, "3": 20, "4": 21, "6": 22, "5": 23, "=": 24, "9": 25, "7": 26,
+    "-": 27, "8": 28, "0": 29, "]": 30, "o": 31, "u": 32, "[": 33, "i": 34, "p": 35,
+    "l": 37, "j": 38, "'": 39, "k": 40, ";": 41, "\\": 42, ",": 43, "/": 44, "n": 45,
+    "m": 46, ".": 47, " ": 49, "`": 50,
+]
+
+/// Characters reached by holding shift, mapped to the unshifted key that produces them.
+let shiftedKeyCodes: [Character: CGKeyCode] = [
+    "_": 27, ":": 41, "?": 44, "+": 24, "{": 33, "}": 30, "|": 42, "<": 43, ">": 47,
+    "\"": 39, "~": 50, "!": 18, "@": 19, "#": 20, "$": 21, "%": 23, "^": 22, "&": 26,
+    "*": 28, "(": 25, ")": 29,
+]
+
+func keystroke(for character: Character) -> (code: CGKeyCode, shift: Bool) {
+    if let code = keyCodes[character] { return (code, false) }
+    if character.isUppercase, let code = keyCodes[Character(character.lowercased())] {
+        return (code, true)
+    }
+    if let code = shiftedKeyCodes[character] { return (code, true) }
+    fail("can't type '\(character)' — no key code for it, and guessing would type the wrong character")
+}
+
+/// Left shift, pressed as a real key rather than only set as an event flag.
+let shiftKeyCode: CGKeyCode = 56
+
+/// Keyboard events need a **real event source**. Built with `nil`, the Simulator drops the shift
+/// modifier entirely — "_" arrives as "-" and every capital arrives lowercased, silently. Mouse
+/// events are unaffected, which is why `post(_:at:)` below still passes nil.
+let keyboardSource = CGEventSource(stateID: .hidSystemState)
+
+func postKey(_ code: CGKeyCode, down: Bool, flags: CGEventFlags = []) {
+    guard let event = CGEvent(keyboardEventSource: keyboardSource, virtualKey: code, keyDown: down)
+    else { return }
+    event.flags = flags
+    event.post(tap: .cghidEventTap)
+    // Slow enough that a SwiftUI TextField's per-keystroke work can keep up; a tight loop drops
+    // characters, which on an API key looks like the key being wrong.
+    usleep(12_000)
+}
+
+/// Sends `text` as keystrokes, one character at a time.
+///
+/// Shift is held as an actual key-down/key-up pair around the character *and* set as a flag on it.
+/// Both, because that's the combination that survives the trip into the device.
+func typeText(_ text: String) {
+    for character in text {
+        let (code, shift) = keystroke(for: character)
+        if shift { postKey(shiftKeyCode, down: true, flags: .maskShift) }
+        postKey(code, down: true, flags: shift ? .maskShift : [])
+        postKey(code, down: false, flags: shift ? .maskShift : [])
+        if shift { postKey(shiftKeyCode, down: false) }
+    }
+}
+
 simulator.activate()
 usleep(250_000)
+
+if command == "press" {
+    // Named keys a form needs: clearing a field, submitting it, moving on.
+    let namedKeys: [String: CGKeyCode] = ["delete": 51, "return": 36, "tab": 48, "escape": 53, "space": 49]
+    guard arguments.count > 1, let code = namedKeys[arguments[1]] else {
+        fail("usage: sim-input.swift press <\(namedKeys.keys.sorted().joined(separator: "|"))> [count]")
+    }
+    let count = arguments.count > 2 ? Int(arguments[2]) ?? 1 : 1
+    for _ in 0..<count {
+        postKey(code, down: true)
+        postKey(code, down: false)
+    }
+    print("pressed \(arguments[1]) \(count)x")
+    exit(0)
+}
+
+if command == "type" {
+    let text = arguments.count > 1
+        ? arguments[1]
+        : String(decoding: FileHandle.standardInput.readDataToEndOfFile(), as: UTF8.self)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !text.isEmpty else { fail("nothing to type — pass text as an argument or on stdin") }
+    typeText(text)
+    // The text itself is never echoed: this is the path an API key takes.
+    print("typed \(text.count) characters")
+    exit(0)
+}
 
 switch (command, numbers.count) {
 case ("tap", 2):
@@ -128,5 +224,5 @@ case ("drag", 4):
     print("dragged \(Int(numbers[0])),\(Int(numbers[1])) -> \(Int(numbers[2])),\(Int(numbers[3]))")
 
 default:
-    fail("usage: sim-input.swift tap <x> <y> | drag <x1> <y1> <x2> <y2>")
+    fail("usage: sim-input.swift tap <x> <y> | drag <x1> <y1> <x2> <y2> | type [text]")
 }

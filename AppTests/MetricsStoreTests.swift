@@ -80,7 +80,7 @@ struct MetricsStoreTests {
         await store.load()
 
         let path = try #require(transport.requests.first?.path)
-        #expect(path.contains("resolutionSeconds=900.0"))
+        #expect(path.contains("resolutionSeconds=900"))
         // 24h back from the injected clock.
         let start = Self.now.addingTimeInterval(-24 * 3600)
         #expect(path.contains("startTime=\(ISO8601DateFormatter().string(from: start).replacingOccurrences(of: ":", with: "%3A"))")
@@ -97,7 +97,7 @@ struct MetricsStoreTests {
         await store.select(.week)
 
         #expect(transport.callCount == 2)
-        #expect(try! #require(transport.requests.last?.path).contains("resolutionSeconds=3600.0"))
+        #expect(try! #require(transport.requests.last?.path).contains("resolutionSeconds=3600"))
         // Selecting the range that's already active is not a reason to spend a request.
         await store.select(.week)
         #expect(transport.callCount == 2)
@@ -212,6 +212,26 @@ struct MetricsStoreTests {
         #expect(store.lines(for: MetricsCatalog.httpRequests).map(\.name) == ["Requests"])
     }
 
+    @Test("on a chart whose names already differ, a label refines rather than replaces")
+    func refinesDistinctSpecNames() async {
+        // Render labels latency by statusCode and host, so one quantile can be several series. Three
+        // lines all reading "p95" would be worse than useless.
+        let (store, _) = store(charts: [MetricsCatalog.httpLatency]) { path in
+            guard path.contains("quantile=0.95") else { return (200, "[]") }
+            return (200, Fixtures.metricSeries(
+                [
+                    (labels: [("statusCode", "200")], points: [("2026-08-12T10:00:00Z", 0.002)]),
+                    (labels: [("statusCode", "500")], points: [("2026-08-12T10:00:00Z", 0.9)]),
+                ],
+                unit: "seconds"
+            ))
+        }
+
+        await store.load()
+
+        #expect(store.lines(for: MetricsCatalog.httpLatency).map(\.name) == ["p95 · 200", "p95 · 500"])
+    }
+
     @Test("instance IDs are shortened for the legend")
     func shortensInstanceNames() async {
         let (store, _) = store(charts: [MetricsCatalog.cpu]) { path in
@@ -280,6 +300,102 @@ struct MetricsStoreTests {
 
         // 10 and 6 is 16 requests; reporting 10 would understate the traffic by a third.
         #expect(store.headline(for: MetricsCatalog.httpRequests) == "16 requests")
+    }
+
+    @Test("with several measurement lines the headline is the worst current reading")
+    func headlineTakesTheWorstOfSeveralLines() async {
+        // The latency chart read "1 ms" above a plot topping out at 4 ms, because "newest timestamp"
+        // let the p50 win a race against the p99.
+        let (store, _) = store(charts: [MetricsCatalog.httpLatency]) { path in
+            let value = path.contains("quantile=0.99") ? 0.004 : 0.001
+            return (200, Fixtures.metricSeries(
+                [(labels: [("statusCode", "200")], points: [("2026-08-12T10:00:00Z", value)])],
+                unit: "seconds"
+            ))
+        }
+
+        await store.load()
+
+        #expect(store.headline(for: MetricsCatalog.httpLatency) == "4 ms")
+    }
+
+    // MARK: - Scale
+
+    @Test("a limit far above the readings becomes a caption, not a line")
+    func liftsDistantReferenceOffTheScale() async {
+        // Real numbers from the live pass: 0.0001 cores used against a 0.5-core limit. Plotting both
+        // put the usage line flat on the axis.
+        let (store, _) = store(charts: [MetricsCatalog.cpu]) { path in
+            if path.hasPrefix("/metrics/cpu?") {
+                return (200, Fixtures.metricSeries(unit: "cpu", value: 0.0001))
+            }
+            if path.contains("cpu-limit") {
+                return (200, Fixtures.metricSeries(unit: "cpu", value: 0.5))
+            }
+            return (200, "[]")
+        }
+
+        await store.load()
+
+        let plot = store.plot(for: MetricsCatalog.cpu)
+        #expect(plot.lines.map(\.name) == ["Usage"])
+        #expect(plot.offScale == ["Limit 0.5 cores"])
+        // Scaled to the reading, so it's visible rather than pinned to zero — and nowhere near the
+        // 0.5-core limit that was flattening it.
+        #expect(plot.upperBound < 0.01)
+    }
+
+    @Test("a limit near the readings stays on the chart")
+    func keepsNearbyReferenceOnTheScale() async {
+        // A service actually near its ceiling is the case where the line earns its place.
+        let (store, _) = store(charts: [MetricsCatalog.memory]) { path in
+            if path.hasPrefix("/metrics/memory?") {
+                return (200, Fixtures.metricSeries(unit: "bytes", value: 400_000_000))
+            }
+            if path.contains("memory-limit") {
+                return (200, Fixtures.metricSeries(unit: "bytes", value: 536_870_900))
+            }
+            return (200, "[]")
+        }
+
+        await store.load()
+
+        let plot = store.plot(for: MetricsCatalog.memory)
+        #expect(plot.lines.map(\.name) == ["Usage", "Limit"])
+        #expect(plot.offScale.isEmpty)
+        #expect(plot.upperBound > 536_870_900)
+    }
+
+    @Test("a near-zero series still gets a labellable scale", arguments: [0.0, 0.0000012])
+    func floorsDegenerateScales(value: Double) async {
+        // Bandwidth on a quiet service: readings that all round to "0 MB" left Charts drawing three
+        // gridlines with the same label.
+        let (store, _) = store(charts: [MetricsCatalog.bandwidth]) { _ in
+            (200, Fixtures.metricSeries(unit: "mb", value: value))
+        }
+
+        await store.load()
+
+        let plot = store.plot(for: MetricsCatalog.bandwidth)
+        #expect(plot.lines.count == 1)
+        #expect(plot.upperBound == 1)
+    }
+
+    @Test("a one-point series is flagged so it can be drawn as a mark")
+    func flagsSinglePointSeries() async {
+        // Bandwidth over an hour: Render buckets it itself and returned exactly one point, so the card
+        // showed a 3.39 MB headline above an empty plot — a line needs two points to exist.
+        let (store, _) = store(charts: [MetricsCatalog.bandwidth]) { _ in
+            (200, Fixtures.metricSeries(
+                [(labels: [], points: [("2026-08-12T10:00:00Z", 3.39)])],
+                unit: "mb"
+            ))
+        }
+
+        await store.load()
+
+        let line = store.plot(for: MetricsCatalog.bandwidth).lines.first
+        #expect(line?.isSinglePoint == true)
     }
 
     @Test("a chart with no data has no headline")

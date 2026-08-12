@@ -43,8 +43,9 @@ enum MetricRange: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    /// Seconds per point. Never below Render's floor of 30.
-    var resolutionSeconds: Double {
+    /// Seconds per point. Never below Render's floor of 30, and an integer because Render parses it
+    /// as one — it rejects `resolutionSeconds=60.0`.
+    var resolutionSeconds: Int {
         switch self {
         case .hour: 60      // 60 points
         case .sixHours: 300 // 72
@@ -55,7 +56,7 @@ enum MetricRange: String, CaseIterable, Identifiable, Sendable {
 
     /// How many points a full window yields, for tests and for sanity.
     var approximatePointCount: Int {
-        Int(duration / resolutionSeconds)
+        Int(duration) / resolutionSeconds
     }
 
     /// The x-axis stride that reads well for this window.
