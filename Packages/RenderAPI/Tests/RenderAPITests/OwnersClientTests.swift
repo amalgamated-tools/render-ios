@@ -1,6 +1,7 @@
 import Foundation
 import HTTPTypes
 import OpenAPIRuntime
+import RenderAPITestSupport
 import Testing
 
 @testable import RenderAPI

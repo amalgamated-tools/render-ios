@@ -44,14 +44,22 @@ final class ServicesStore {
 
     private let client: RenderClient
     private let ownerID: String
+    private let environmentIDs: [String]?
     private let pageSize: Int
     private var nextCursor: String?
 
-    init(client: RenderClient, ownerID: String, pageSize: Int = 50) {
+    /// - Parameter environmentIDs: The environments to restrict the list to, or `nil` for the whole
+    ///   workspace. A project scope arrives here as the project's environments, since services
+    ///   belong to environments rather than to projects.
+    init(client: RenderClient, ownerID: String, environmentIDs: [String]? = nil, pageSize: Int = 50) {
         self.client = client
         self.ownerID = ownerID
+        self.environmentIDs = environmentIDs
         self.pageSize = pageSize
     }
+
+    /// Whether the list is narrowed to a project, which the empty state words differently.
+    var isProjectScoped: Bool { environmentIDs != nil }
 
     /// Services after the active search text and type filter, sorted by name.
     var visibleServices: [ServiceSummary] {
@@ -77,6 +85,12 @@ final class ServicesStore {
     /// exhausted, so it's safe to call from an on-appear handler on the last row.
     func loadNextPage() async {
         guard hasMore, !isLoading else { return }
+        // A project with no environments holds no services, and an empty `environmentId` filter
+        // would be sent as no filter at all — i.e. the entire workspace.
+        if let environmentIDs, environmentIDs.isEmpty {
+            hasMore = false
+            return
+        }
         isLoading = true
         defer { isLoading = false }
 
@@ -95,11 +109,18 @@ final class ServicesStore {
     private func makePaginator() -> CursorPaginator<Components.Schemas.ServiceWithCursor, ServiceSummary> {
         let client = client
         let ownerID = ownerID
+        let environmentIDs = environmentIDs
         return CursorPaginator(pageSize: pageSize) { cursor, limit in
             try await client.api
                 // PR previews are excluded by default — on a busy account they drown out the real
                 // services this on-call view is for. A toggle to include them can come later.
-                .listServices(query: .init(ownerId: [ownerID], includePreviews: false, cursor: cursor, limit: limit))
+                .listServices(query: .init(
+                    environmentId: environmentIDs,
+                    ownerId: [ownerID],
+                    includePreviews: false,
+                    cursor: cursor,
+                    limit: limit
+                ))
                 .ok.body.json
         } unwrap: { envelope in
             (ServiceSummary(envelope.service), envelope.cursor)
