@@ -51,6 +51,12 @@ triggered from the app and watched transition to `live`. See the
 **Phase 3 (logs) is complete**, including live smoke: history, the server-side filter set, and a real
 WebSocket tail against a live service. See the [Phase 3 milestone](#phase-3--logs--done).
 
+**Phase 4 (metrics) is complete**, including live smoke against a real workspace: charts against real
+CPU, memory, instance, request, latency, and bandwidth series, a range change reloading at a new
+resolution, and the per-service-type catalog checked on both a web service and a static site. The live
+pass found **eight** defects, one of which made every chart fail. See the
+[Phase 4 milestone](#phase-4--metrics--done).
+
 ---
 
 ## Three spec gotchas that shape the design
@@ -187,15 +193,19 @@ Packages/
       LogQuery.swift                 one filter description, two transports     (Phase 3)
       LogStream.swift                URLSessionWebSocketTask log subscription   (Phase 3)
       ServiceDetails+Decode.swift    type-driven oneOf workaround               (Phase 1)
+      MetricSeries.swift             one series type for 14 response types      (Phase 4)
+      MetricSeries+Payloads.swift    the 42 empty conformances that collapse them (Phase 4)
+      MetricsQuery.swift             one window, 14 endpoints                   (Phase 4)
     Tests/RenderAPITests/            swift-testing; StubTransport, no network
 Scripts/
   generate-api.sh                    download → jq → flatten → patch → generate  (port of render-agent's generate.sh)
   flatten-path-refs.py               copied from render-agent, docstring aside
   relax-nullable.py                  drops `required` for fields the API returns as null   (Phase 1)
   order-oneof.py                     orders the serviceDetails oneOf for first-match decode (Phase 2)
+  number-params.py                   numeric query params Render will actually parse         (Phase 4)
   smoke.sh                           read-only live checks against a real key in .env
   run-simulator.sh                   build, install, launch
-  sim-input.swift                    tap/drag the booted simulator for the per-phase live pass
+  sim-input.swift                    tap/drag/type/press the booted simulator for the live pass
 Makefile                             check / build / test / run / generate / drift
 ```
 
@@ -299,6 +309,12 @@ needs a real API key at runtime.
    `Output`-enum switch. Feature stores just `RenderError.wrapping(_:)` in their catch blocks.
 5. **Filter is by type only, not status** — the list has no deploy status to filter on. Search and
    the type filter are client-side over loaded pages.
+6. **Scoping grew past the workspace picker, and this write-up hadn't caught up.** What shipped is
+   `ProjectsStore`, `ScopePickerView`, and `ServicesScreen` — pick a workspace *or* a project within it,
+   with the project scope sent as its `environmentId`s, since services hang off environments and not off
+   projects. There is no `OwnerPickerView`; it became the scope picker. Projects and environments are
+   still listed under Phase 5 as "org" work, and the *management* of them is; reading them to scope the
+   service list arrived early because a list of 190 services isn't usable without it.
 
 **Live smoke turned up two spec-vs-reality mismatches** (the app's list wouldn't decode until both
 were fixed — the generated client decodes the *whole* `Service` strictly before any domain mapping):
@@ -500,11 +516,149 @@ generic `.transport` failures. Nothing in the app is affected (it links the fram
 package's own suite tests error mapping properly; app tests just shouldn't assert on a specific
 `RenderError` case. Worth untangling in the pbxproj before it causes a subtler surprise.
 
-### Phase 4 — Metrics
+### Phase 4 — Metrics ✅ DONE
 - Swift Charts for CPU, memory, HTTP requests, HTTP latency, bandwidth, instance count,
   active connections, disk usage — each against its `-limit` / `-target` companion series where one
   exists.
 - Time-range picker; batched concurrent fetches with a single spinner.
+
+**Built:** `MetricSeries`, `MetricSeries+Payloads`, `MetricsQuery` (with `MetricKind` and
+`RenderClient.metricSeries(_:_:)`), and `Scripts/number-params.py` — plus a `routed` stub in
+`RenderAPITestSupport`, needed because this is the first store whose requests are concurrent;
+`MetricRange`, `MetricUnit`, `MetricChartSpec`/`MetricsCatalog`, `MetricsStore`, and `MetricsView` in
+the app target, reached from a `Metrics` drill-down on the service detail screen. `Scripts/smoke.sh`
+grew Phase 4 coverage; `Scripts/sim-input.swift` grew `type` and `press` so the live pass could sign the
+app in and drive a text field. `make check` green — **65 package tests in 11 suites and 78 app tests in
+8 suites**, `BUILD SUCCEEDED`, and the whole screen driven against a real workspace on the simulator.
+
+**Fourteen response types for one shape.** None of the `/metrics/*` schemas is a named component, so
+the generator emits a separate, unrelated response type per endpoint — fourteen copies of
+`{labels, values, unit}` with no common supertype, and fourteen unrelated `Input.Query` types besides.
+`MetricSeries` is the one type the app sees. The collapse is a protocol whose requirements are spelled
+with the *generated* property names (`labels`, `values`, `unit`), which makes all forty-two conformances
+empty declarations — no mapping code to drift, and a compile error rather than a silently blank chart if
+a spec change moves a field. The query side is a single `MetricsQuery` plus a fourteen-case switch,
+which is where the per-endpoint asymmetry has to live: only `/metrics/cpu` accepts
+`aggregationMethod`, only CPU and memory accept `instance`, and `/metrics/bandwidth` declares no
+`resolutionSeconds` at all — sending one is a 400.
+
+**PLAN.md was wrong about units, and it matters.** Phase 0 recorded that "`unit` is missing from *every*
+`/metrics/*` values payload" and concluded Phase 4 "cannot read a unit off the metrics response" and
+would have to hard-code one per series. Half right: the *datapoint* `unit` is indeed declared required and
+never defined, so the generator drops it — but the sibling `unit` on the **series** is well-formed,
+required, and present in all fourteen. So nothing hard-codes CPU as a percentage or memory as gigabytes;
+`MetricUnit(apiUnit:)` maps what Render says, and its fallback case renders an unrecognized unit verbatim
+rather than guessing (the failure mode being to read "MB/s" as bytes and report 4 MB/s as "4 bytes").
+
+**One new spec patch: `Scripts/number-params.py`.** The spec types every numeric query parameter as
+`number`, which the generator maps to `Double` (or `Float` under `format: float`) — and Render accepts
+neither serialization. Two rules, both from confirmed failures:
+1. **`resolutionSeconds` must be an integer.** As a `Double` it went out as `resolutionSeconds=60.0`, and
+   Render answers `invalid filter parameter: could not parse input 60.0 for field resolutionSeconds`.
+   **This 400'd every chart on the screen** — found by the live pass, not by the tests, which had pinned
+   the broken value as if it were correct. Retyped as `integer` (18 sites), which makes
+   `MetricsQuery.resolutionSeconds` an `Int`.
+2. **`quantile` loses its literal as a `Float`.** The generator's query serializer widens Float to Double
+   before printing, and `Double(Float(0.95))` is 0.949999988079071. Dropping `format: float` makes it a
+   `Double` that round-trips. The live pass showed Render *tolerates* the widened value — both spellings
+   returned identical points — so this rule is correctness, not a rescued feature.
+
+Rule 1 is a named list, because retyping a genuinely fractional parameter would break it; rule 2 walks
+the whole document, because a second float parameter would otherwise be a silent wrong-value bug. Tests
+assert on both serializations, so a re-vendor that loses the patch fails rather than degrades. Applying
+it to the vendored spec regenerated 38 lines of `Types.swift` and nothing else.
+
+**Deviations from the outline above, and why:**
+1. **No active-connections chart.** It's a datastore metric — the endpoint takes only `resource` and
+   `startTime`/`endTime`, with no `service` parameter and no per-instance labels. On a service screen it
+   would be a permanently empty chart. It ships in `MetricKind` and is fetchable today; the chart belongs
+   with the Postgres and Key Value screens in Phase 5.
+2. **Charts are chosen by service type, and the catalog is where that claim is written down.** A static
+   site has no CPU (it's CDN-served, so there's no instance to measure), a worker serves no HTTP, a cron
+   job's instance count would be a chart of ones and gaps. Where it's genuinely unclear whether Render
+   collects a series — HTTP metrics for a private service, which serves requests but only inside the
+   private network — the chart is **included**: an empty chart says "No data in this range", which is a
+   mild cost, while a chart wrongly withheld hides something real and gives the user no way to find out.
+   `MetricsCatalogTests` pins one case per type, so a wrong guess is one line to change.
+3. **HTTP requests are grouped by status code, not totalled.** At 3am the question isn't how many
+   requests there were, it's how many failed. That makes the headline a *sum* of the newest reading
+   across series rather than one series' value — 10 + 6 reported as 10 would understate traffic by a
+   third — which is why `MetricChartSpec.Headline` exists at all.
+4. **Latency is three quantiles on one chart** (p50/p95/p99, three requests). A p50 alone hides the
+   tail; a p99 alone can't say whether everything is slow or only a few things are.
+5. **Reference lines never reach the headline.** A limit and a target are drawn thin and dashed and are
+   excluded from the headline value: "512 MB" that turns out to be the plan's ceiling rather than the
+   current reading is worse than no number.
+6. **A failed series is a failed chart, not a failed screen.** Up to twelve requests means twelve chances
+   to fail, and losing CPU is no reason to hide memory. The takeover error is reserved for the case where
+   *nothing* arrived. `lastUpdated` is stamped only on a fully successful load, because it means "this is
+   a complete picture of the window".
+7. **Resolution is a property of the range, not a control.** The only reason to care is the point count,
+   and that follows from the window; each of the four pairings lands between 60 and 170 points, which a
+   test pins. `MetricsQuery` clamps to Render's 30-second floor on the *property*, not just the
+   initializer, so a range calculation that rounds down can't earn a 400.
+8. **The legend is hand-rolled and the colors are assigned explicitly**, rather than going through
+   `foregroundStyle(by:)` and a Charts scale. The built-in legend can't show that a reference line is
+   dashed, and a hand-rolled one whose swatch colors drift from the plot is worse than none — so one
+   function colors both.
+9. **No polling.** Pull-to-refresh only. A metrics screen left open is not a deploy in flight, and the
+   Phase 2 precedent is that polling has to earn itself.
+
+**Live smoke: done, driven from this repo** with `Scripts/sim-input.swift`, against a real workspace —
+a Go web service with traffic and a static site. Verified: CPU and memory against their plan limits,
+instance count, request count, p50/p95/p99 latency, and bandwidth; the range picker reloading 1H → 24H
+at the coarser resolution and redrawing the axis in 6-hour steps; the catalog's per-type claims (the
+static site offers bandwidth *only*, and it has real data — so that guess was right).
+
+**Eight defects the live pass turned up, all fixed.** The first two are the reason this phase wasn't
+called done without it:
+
+1. **Every chart failed with a 400.** `resolutionSeconds` is declared `number`, so the generated
+   parameter was a `Double` and the request said `resolutionSeconds=60.0` — which Render rejects:
+   `could not parse input 60.0 for field resolutionSeconds`. The screen showed eight cards all reading
+   "Couldn't load this metric". Worth dwelling on: a unit test *asserted* `resolutionSeconds=60.0`,
+   because a test can only pin what its author already believes. Fixed by retyping the parameter as
+   `integer` in `Scripts/number-params.py`.
+2. **`unitless` rendered as a suffix.** Render sends it for request and instance counts, and the
+   fallback case turned a one-instance service into "1.00 unitless". Now a plain count.
+3. **A distant limit flattened the reading.** An idle service uses 0.0001 of its 0.5-core limit, and
+   plotting both put the usage line indistinguishable from the axis — on CPU *and* memory, the two
+   charts most likely to be looked at first. A reference line now only joins the y-scale when it's
+   within 2.5× of the readings; past that it becomes a caption ("Limit 0.5 cores"), which loses only
+   the false precision of a line nobody can read against.
+4. **CPU axis labels all read "0".** Cores were abbreviated to three decimals to keep labels short,
+   which erased an entire axis living below 0.001. They now keep four.
+5. **The latency headline disagreed with its own chart** — "1 ms" above a plot topping out at 4 ms,
+   because "newest timestamp" let the p50 win a race against the p99. The headline is now the highest
+   current reading across the measurement lines, which is also the number worth knowing at 3am.
+6. **`ByteCountFormatter` renders zero as "Zero KB"**, so a quiet memory chart's baseline gridline was
+   a small puzzle. Now "0".
+7. **Bandwidth drew three gridlines all labelled "0 MB".** Its readings were non-zero but negligible,
+   giving a domain too small for any tick to differ. Each unit now declares an axis floor.
+8. **Bandwidth drew no line at all** — a 3.39 MB headline above an empty plot. Render buckets bandwidth
+   itself, and a one-hour window came back as a *single point*; a line through one point renders
+   nothing. A one-point series is now drawn as a mark.
+
+**Two findings outside Phase 4, both recorded rather than acted on:**
+- **`GET /services/{id}/events` now returns a cursor.** `Scripts/smoke.sh` flagged it: the envelope that
+  declared a `cursor` it never defined now has one. `ServiceEventsStore`'s `endTime` paging (Phase 2,
+  deviation 2) can be replaced with `CursorPaginator` on a re-vendor. Nothing is broken today.
+- **The smoke script's WebSocket check was wrong, not the API.** It reported `HTTP/2 426` because curl
+  negotiated HTTP/2, and a WebSocket upgrade is an HTTP/1.1 mechanism. With `--http1.1` it's `101` as
+  before. `URLSessionWebSocketTask` speaks 1.1 for the handshake, so the app was never affected — but a
+  check that cries wolf is worse than no check.
+
+**`Scripts/sim-input.swift` grew `type` and `press`**, since driving this phase meant signing the app in
+rather than tapping through a screen it was already on. Both had to be gotten wrong first, and both
+failure modes were silent: keyboard events built with a `nil` event source drop the shift modifier
+entirely (so "_" arrives as "-" and every capital arrives lowercased), and `keyboardSetUnicodeString` is
+ignored altogether — the Simulator honors the key *code*, so every character posted with `virtualKey: 0`
+arrives as "a". A 32-character API key became 32 a's and the app reported, accurately, that the key was
+rejected. `type` reads from stdin so a key stays out of argv and the shell history.
+
+**`make run` was launching onto the wrong simulator.** Since CI got its own device, the device lookup's
+substring match picked "CI iPhone 17 Pro" when asked for "iPhone 17 Pro" — which looks exactly like the
+app failing to launch on the simulator you're watching. Now anchored to the start of the name.
 
 ### Phase 5 — Full parity
 - **Config:** env vars (`GET/PUT`), secret files, env groups and their links, custom domains
@@ -531,6 +685,7 @@ package's own suite tests error mapping properly; app tests just shouldn't asser
 |---|---|
 | `Scripts/flatten-path-refs.py` | Makes the spec readable by OpenAPIKit at all; from `render-agent` |
 | `Scripts/order-oneof.py` | Orders the `serviceDetails` `oneOf` so the first-match decoder can't misclassify a cron job |
+| `Scripts/number-params.py` | Makes numeric query parameters serialize the way Render parses them — `resolutionSeconds=60`, not `60.0` |
 | `Packages/RenderAPI/openapi.json` | The pinned, flattened contract; the single point of upstream drift |
 | `Packages/RenderAPI/Sources/RenderAPI/ServiceDetails+Decode.swift` | Works around the undiscriminated `oneOf` — the highest-risk code in the app |
 | `Packages/RenderAPI/Sources/RenderAPI/RetryMiddleware.swift` | 429 handling; the app polls, so this is load-bearing |
@@ -587,6 +742,14 @@ workspace: Phase 1 — services list matches the dashboard; Phase 2 — a trigge
 transitions status; Phase 3 — live tail emits lines within seconds of a request; Phase 4 — charts
 match dashboard metrics; Phase 5 — an env var round-trips.
 
+Driving the app now includes signing it in, since the Keychain starts empty on a fresh simulator:
+
+```sh
+swift Scripts/sim-input.swift tap 600 1035              # the API key field
+printf '%s' "$RENDER_API_KEY" | swift Scripts/sim-input.swift type   # stdin, so it stays out of argv
+swift Scripts/sim-input.swift press return
+```
+
 **Spec drift check:** `Scripts/generate-api.sh` then `git diff --stat Packages/RenderAPI` —
 an empty diff means upstream is unchanged.
 
@@ -622,10 +785,12 @@ Everything in Phase 0 is built and verified. `make check` is green.
 
 - **The spec has typos that silently drop fields.** The generator warned on ~15 sites where a
   property appears in a `required` list but not in `properties`, so it is skipped entirely. These
-  cluster in the metrics endpoints (`unit` is missing from *every* `/metrics/*` values payload) and
-  in `GET /workflowversions/{id}` (`image`, `updatedAt`). **Phase 4 cannot read a unit off the
-  metrics response** and will have to hard-code units per series. Not a blocker, but it is a
-  surprise worth having in writing before charts get built.
+  cluster in the metrics endpoints (`unit` is missing from every `/metrics/*` **datapoint**) and
+  in `GET /workflowversions/{id}` (`image`, `updatedAt`).
+  ~~**Phase 4 cannot read a unit off the metrics response** and will have to hard-code units per
+  series.~~ **Corrected in Phase 4:** the dropped `unit` is the one on each *datapoint*; the
+  series-level `unit` beside it is well-formed and present on all fourteen endpoints, so units are
+  read from the response after all. See the [Phase 4 milestone](#phase-4--metrics--built-live-pass-outstanding).
 - **`RetryMiddleware` gates 5xx retries on HTTP method.** A 429 means the request was rejected
   unprocessed, so it is replayed for any method; a 5xx may mean the request *was* processed, so it
   is only replayed for GET/HEAD/PUT/DELETE/OPTIONS. Without that gate, a 500 on
@@ -652,3 +817,11 @@ Everything in Phase 0 is built and verified. `make check` is green.
 5. ~~**PR-preview services dominate the list.**~~ **Done.** `ServicesStore.makePaginator` now sends
    `includePreviews: false` so the list shows real services only. A toggle to show previews is a
    later refinement.
+6. **`GET /services/{id}/events` now returns a cursor.** Found by `Scripts/smoke.sh` during the Phase 4
+   live pass: the envelope that declared a `cursor` it never defined now carries one, so
+   `ServiceEventsStore`'s `endTime` paging (Phase 2, deviation 2) can become an ordinary
+   `CursorPaginator` after the next re-vendor. Nothing is broken today — the current paging still
+   works — so this is a simplification, not a fix.
+7. **The app test target links `RenderAPI` twice.** Noted in Phase 3 and still true: `error as?
+   RenderError` fails across that boundary, so app tests assert on error *presence* rather than case.
+   Worth untangling in the pbxproj before it causes a subtler surprise.

@@ -9828,7 +9828,7 @@
           "name": "resolutionSeconds",
           "in": "query",
           "schema": {
-            "type": "number",
+            "type": "integer",
             "minimum": 30,
             "example": 60,
             "default": 60
@@ -9984,7 +9984,7 @@
           "name": "resolutionSeconds",
           "in": "query",
           "schema": {
-            "type": "number",
+            "type": "integer",
             "minimum": 30,
             "example": 60,
             "default": 60
@@ -10126,7 +10126,7 @@
           "name": "resolutionSeconds",
           "in": "query",
           "schema": {
-            "type": "number",
+            "type": "integer",
             "minimum": 30,
             "example": 60,
             "default": 60
@@ -10268,7 +10268,7 @@
           "name": "resolutionSeconds",
           "in": "query",
           "schema": {
-            "type": "number",
+            "type": "integer",
             "minimum": 30,
             "example": 60,
             "default": 60
@@ -10410,7 +10410,7 @@
           "name": "resolutionSeconds",
           "in": "query",
           "schema": {
-            "type": "number",
+            "type": "integer",
             "minimum": 30,
             "example": 60,
             "default": 60
@@ -10552,7 +10552,7 @@
           "name": "resolutionSeconds",
           "in": "query",
           "schema": {
-            "type": "number",
+            "type": "integer",
             "minimum": 30,
             "example": 60,
             "default": 60
@@ -10694,7 +10694,7 @@
           "name": "resolutionSeconds",
           "in": "query",
           "schema": {
-            "type": "number",
+            "type": "integer",
             "minimum": 30,
             "example": 60,
             "default": 60
@@ -10859,7 +10859,7 @@
           "name": "resolutionSeconds",
           "in": "query",
           "schema": {
-            "type": "number",
+            "type": "integer",
             "minimum": 30,
             "example": 60,
             "default": 60
@@ -10913,7 +10913,6 @@
           "description": "The quantile of latencies to fetch. When multiple quantile query params are provided, they are ORed together",
           "schema": {
             "type": "number",
-            "format": "float",
             "example": 0.99
           }
         }
@@ -11308,7 +11307,7 @@
           "name": "resolutionSeconds",
           "in": "query",
           "schema": {
-            "type": "number",
+            "type": "integer",
             "minimum": 30,
             "example": 60,
             "default": 60
@@ -11440,7 +11439,7 @@
           "name": "resolutionSeconds",
           "in": "query",
           "schema": {
-            "type": "number",
+            "type": "integer",
             "minimum": 30,
             "example": 60,
             "default": 60
@@ -11572,7 +11571,7 @@
           "name": "resolutionSeconds",
           "in": "query",
           "schema": {
-            "type": "number",
+            "type": "integer",
             "minimum": 30,
             "example": 60,
             "default": 60
@@ -11704,7 +11703,7 @@
           "name": "resolutionSeconds",
           "in": "query",
           "schema": {
-            "type": "number",
+            "type": "integer",
             "minimum": 30,
             "example": 60,
             "default": 60
@@ -11826,7 +11825,7 @@
           "name": "resolutionSeconds",
           "in": "query",
           "schema": {
-            "type": "number",
+            "type": "integer",
             "minimum": 30,
             "example": 60,
             "default": 60
@@ -11948,7 +11947,7 @@
           "name": "resolutionSeconds",
           "in": "query",
           "schema": {
-            "type": "number",
+            "type": "integer",
             "minimum": 30,
             "example": 60,
             "default": 60
@@ -12037,7 +12036,7 @@
           "name": "resolutionSeconds",
           "in": "query",
           "schema": {
-            "type": "number",
+            "type": "integer",
             "minimum": 30,
             "example": 60,
             "default": 60
@@ -12147,7 +12146,7 @@
           "name": "resolutionSeconds",
           "in": "query",
           "schema": {
-            "type": "number",
+            "type": "integer",
             "minimum": 30,
             "example": 60,
             "default": 60
@@ -12252,7 +12251,7 @@
           "name": "resolutionSeconds",
           "in": "query",
           "schema": {
-            "type": "number",
+            "type": "integer",
             "minimum": 30,
             "example": 60,
             "default": 60
@@ -12374,7 +12373,7 @@
           "name": "resolutionSeconds",
           "in": "query",
           "schema": {
-            "type": "number",
+            "type": "integer",
             "minimum": 30,
             "example": 60,
             "default": 60

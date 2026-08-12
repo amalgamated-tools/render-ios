@@ -1,5 +1,6 @@
 import Foundation
 import HTTPTypes
+import OpenAPIRuntime
 import RenderAPI
 
 extension RenderClient {
@@ -33,6 +34,36 @@ extension RenderClient {
             logSocketConnector: logSocketConnector,
             // Same reasoning as `retryPolicy: .none`: a stubbed drop should surface as a failure the
             // test can assert on, not as a reconnect loop it has to wait out.
+            logReconnectPolicy: logReconnectPolicy
+        )
+        return (client, transport)
+    }
+
+    /// A client whose responses are chosen by looking at the request, rather than by arrival order.
+    ///
+    /// Needed as soon as a store fires several requests *concurrently* — the metrics screen issues
+    /// one per chart series — because then "the second body" is a race, not a fact. Routing on the
+    /// path makes the same test deterministic however the task group happens to schedule.
+    ///
+    /// - Parameter route: Receives each request's path (query string included) and returns the JSON
+    ///   body and status to answer with. Returning a non-2xx status is how a test makes one series
+    ///   fail while the others succeed.
+    public static func routed(
+        logSocketConnector: any LogSocketConnecting = StubLogSocketConnector.refusing(),
+        logReconnectPolicy: LogStream.ReconnectPolicy = .none,
+        route: @escaping @Sendable (String) -> (status: Int, body: String)
+    ) -> (client: RenderClient, transport: StubTransport) {
+        let transport = StubTransport { request, _, _ in
+            let answer = route(request.path ?? "")
+            var response = HTTPResponse(status: .init(code: answer.status))
+            response.headerFields = [.contentType: "application/json"]
+            return (response, HTTPBody(answer.body))
+        }
+        let client = RenderClient(
+            apiKeyProvider: StaticAPIKeyProvider("test-key"),
+            retryPolicy: .none,
+            transport: transport,
+            logSocketConnector: logSocketConnector,
             logReconnectPolicy: logReconnectPolicy
         )
         return (client, transport)

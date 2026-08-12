@@ -81,6 +81,69 @@ enum Fixtures {
         """
     }
 
+    /// A `/metrics/*` response. All fourteen metrics endpoints share this shape, which is the whole
+    /// reason `MetricSeries` exists.
+    static func metricSeries(
+        _ series: [(labels: [(String, String)], points: [(String, Double)])],
+        unit: String
+    ) -> String {
+        let elements = series.map { one in
+            let labels = one.labels.map { #"{"field":"\#($0.0)","value":"\#($0.1)"}"# }
+            let points = one.points.map { #"{"timestamp":"\#($0.0)","value":\#($0.1)}"# }
+            return """
+                {"labels":[\(labels.joined(separator: ","))],\
+                "values":[\(points.joined(separator: ","))],"unit":"\(unit)"}
+                """
+        }
+        return "[\(elements.joined(separator: ","))]"
+    }
+
+    /// A single-series metrics response with one point, for tests that only care that a request was
+    /// answered.
+    static func metricSeries(unit: String, value: Double = 1) -> String {
+        metricSeries([(labels: [("instance", "srv-1-abc")], points: [("2026-08-12T10:00:00Z", value)])], unit: unit)
+    }
+
+    /// A whole `service` payload, for building a `ServiceDetailModel`. `serviceDetails` is supplied
+    /// per type because that's the field whose shape depends on it.
+    static func serviceJSON(id: String = "srv-1", type: String, details: String) -> String {
+        """
+        {"id":"\(id)","name":"api","autoDeploy":"yes","createdAt":"2026-01-01T00:00:00Z",\
+        "updatedAt":"2026-01-02T00:00:00Z","ownerId":"\(ownerID)","slug":"api",\
+        "suspended":"not_suspended","suspenders":[],"notifyOnFail":"default","rootDir":"./",\
+        "type":"\(type)","dashboardUrl":"https://dashboard.render.com/web/\(id)",\
+        "serviceDetails":\(details)}
+        """
+    }
+
+    /// `serviceDetails` per service type. Only the required set plus whatever a test reads.
+    static func serviceDetailsJSON(for type: String, diskSizeGB: Int? = nil) -> String {
+        let disk = diskSizeGB.map {
+            #","disk":{"id":"dsk-1","name":"data","mountPath":"/data","sizeGB":\#($0)}"#
+        } ?? ""
+        let compute = """
+            "env":"node","runtime":"node",\
+            "envSpecificDetails":{"buildCommand":"npm ci","startCommand":"npm start"},\
+            "plan":"starter","region":"oregon","buildPlan":"starter"
+            """
+        switch type {
+        case "static_site":
+            return #"{"buildCommand":"npm run build","publishPath":"dist","url":"https://x.onrender.com","buildPlan":"starter"}"#
+        case "web_service":
+            return """
+                {\(compute),"numInstances":1,"healthCheckPath":"","url":"https://x.onrender.com"\(disk)}
+                """
+        case "private_service":
+            return #"{\#(compute),"numInstances":1,"url":"https://x.onrender.com"\#(disk)}"#
+        case "background_worker":
+            return "{\(compute),\"numInstances\":1\(disk)}"
+        case "cron_job":
+            return #"{\#(compute),"schedule":"0 * * * *"\#(disk)}"#
+        default:
+            fatalError("unhandled service type \(type)")
+        }
+    }
+
     static let ownerID = "tea-000000000000000000"
 
     /// `serviceDetails` is required on every service, even though the list projection reads none
