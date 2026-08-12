@@ -36,6 +36,12 @@ echo "==> Relaxing required for fields the API returns as null"
 # this the generated strict decoder rejects real responses. See the script for the field list.
 python3 "$REPO_ROOT/Scripts/relax-nullable.py" "$SPEC"
 
+echo "==> Ordering undiscriminated oneOf members"
+# service.serviceDetails has no discriminator, so the generated decoder takes the first member that
+# decodes — which makes the spec's ordering decide correctness. See the script for the one pair
+# (cron job vs background worker) where the spec's order is wrong.
+python3 "$REPO_ROOT/Scripts/order-oneof.py" "$SPEC"
+
 echo "==> Generating Swift client"
 # Invoked as a plain executable rather than as a build-tool plugin, so that the generated
 # sources can be committed and the spec kept outside Sources/. Also avoids Xcode's

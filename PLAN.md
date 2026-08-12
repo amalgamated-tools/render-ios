@@ -41,8 +41,12 @@ the phone you already have.
 **Phase 0 is complete and verified.** See [Phase 0 outcomes](#phase-0-outcomes) for what was built,
 what was measured, and where the implementation deviates from what is described below.
 
-**Phase 1 (auth + service list) is built** and passes `make check`; only the live smoke test
-against a real API key remains. See the [Phase 1 milestone](#phase-1--auth--service-list-first-runnable-app--done-pending-live-smoke).
+**Phase 1 (auth + service list) is complete**, including live smoke against a real workspace. See the
+[Phase 1 milestone](#phase-1--auth--service-list-first-runnable-app--done).
+
+**Phase 2 (service detail, deploys, actions) is built** and passes `make check`. Live smoke covers the
+list and the service payload; the deploy/event screens and the lifecycle actions still need a pass by
+hand. See the [Phase 2 milestone](#phase-2--service-detail-deploys-and-the-emergency-actions--done-pending-live-smoke).
 
 ---
 
@@ -181,8 +185,11 @@ Packages/
       ServiceDetails+Decode.swift    type-driven oneOf workaround               (Phase 1)
     Tests/RenderAPITests/            swift-testing; StubTransport, no network
 Scripts/
-  generate-api.sh                    download → jq → flatten → generate  (port of render-agent's generate.sh)
+  generate-api.sh                    download → jq → flatten → patch → generate  (port of render-agent's generate.sh)
   flatten-path-refs.py               copied from render-agent, docstring aside
+  relax-nullable.py                  drops `required` for fields the API returns as null   (Phase 1)
+  order-oneof.py                     orders the serviceDetails oneOf for first-match decode (Phase 2)
+  smoke.sh                           read-only live checks against a real key in .env
   run-simulator.sh                   build, install, launch
 Makefile                             check / build / test / run / generate / drift
 ```
@@ -262,7 +269,7 @@ Each phase builds, runs, and is independently useful. Full parity is reached at 
 - `RenderClient`, `RenderError`, `AuthMiddleware`, `RetryMiddleware`, `Pagination`.
 - **Gate:** `xcodebuild build` for the simulator succeeds; `swift test` in the package passes.
 
-### Phase 1 — Auth + service list (first runnable app) ✅ DONE (pending live smoke)
+### Phase 1 — Auth + service list (first runnable app) ✅ DONE
 - Onboarding / API-key entry, Keychain storage, `GET /owners` validation, workspace picker.
 - `GET /services` with cursor paging, pull-to-refresh, search, filter by type.
 - Status design system: label/icon/tint for the 5 service types + a suspended badge.
@@ -302,12 +309,77 @@ were fixed — the generated client decodes the *whole* `Service` strictly befor
 Both are the kind of drift PLAN.md predicted; the vendored-spec pipeline absorbed them as a
 reviewable spec diff + regeneration, exactly as intended.
 
-### Phase 2 — Service detail, deploys, and the emergency actions
+### Phase 2 — Service detail, deploys, and the emergency actions ✅ DONE (pending live smoke)
 - Detail screen: current deploy, health, instance count, repo/branch, dashboard deep link.
 - `GET /services/{id}/deploys` history and `GET .../deploys/{deployId}` detail.
 - Actions with confirmation sheets: **deploy**, **rollback**, **cancel deploy**, **restart**,
   **suspend / resume**, **scale**, **purge cache**, **trigger cron run**.
 - `GET /services/{id}/events` timeline.
+
+**Built:** `ServiceDetails+Decode.swift` and `Scripts/order-oneof.py` (the `oneOf` fix, below);
+`ServiceDetailStore`/`ServiceDetailView` with the actions menu and confirmation dialogs;
+`ServiceAction`; `DeploySummary`, `DeploysStore`, `DeploysListView`, `DeployRow`, `DeployDetailView`;
+`ServiceEventsStore`, `ServiceEventsView`; `DeployStatus+Display` (all 11 statuses, the 10 deploy
+triggers, and all 42 event types); service list rows now push the detail screen instead of opening the
+dashboard. `Scripts/smoke.sh` grew Phase 2 endpoint coverage plus assertions on the two spec
+assumptions below. `make check` green — **43 tests in 8 suites**, `BUILD SUCCEEDED`, and the app runs
+against a real workspace on the simulator.
+
+Re-vendoring for the `oneOf` patch also picked up the first real upstream spec drift: Render added a
+machine-readable `code` field to the error object and an `errorCode` enum listing its vocabulary
+(currently one value, `multiple_regions`). Purely additive — nothing in the app needed changing.
+
+**The `serviceDetails` `oneOf`, resolved — and it was worse than Phase 0 thought.** The generated
+decoder tries members in *spec declaration order* and keeps the first that decodes, which makes the
+spec's ordering load-bearing. `backgroundWorkerDetails` was declared before `cronJobDetails` and its
+`required` set is satisfied by any cron job response that includes `numInstances` (unknown keys like
+`schedule` are ignored), so **every such cron job would have decoded as a background worker**. Two-part
+fix:
+1. `Scripts/order-oneof.py`, a new spec-patch step in `generate-api.sh`, moves `cronJobDetails` ahead
+   of `backgroundWorkerDetails`. Safe in both directions — no worker payload carries a `schedule`.
+   Reordering `webServiceDetails`/`privateServiceDetails` would make things *worse* (private's required
+   set is a strict subset of web's), so only the one pair moves.
+2. `ServiceDetails` keys everything off the authoritative sibling `service.type` and keeps
+   `decodedType` purely to detect disagreement (`matchesDeclaredType`), which the detail screen surfaces
+   as "configuration may be incomplete" rather than presenting wrong fields as fact. Re-decoding the
+   payload correctly is impossible after the fact: the raw JSON is gone and re-encoding a misclassified
+   case has already dropped the fields that case's struct lacks — which is why the ordering patch, not
+   the projection, is the real fix.
+
+Seven fixture tests cover one case per service type plus both failure modes (the cron-job-with-
+`numInstances` regression, and mismatch detection). They run through the real generated client with only
+the transport stubbed, so they test the actual decoder rather than a re-implementation of it.
+
+**Deviations from the outline above, and why:**
+1. **Event rows show type + timestamp only.** `serviceEvent.details` is an undiscriminated *44*-member
+   `oneOf` whose **second member has no required properties at all** — so the first-match decoder
+   matches that empty member for nearly every event and calls it a success. Any field read out of it
+   would be a value the decoder never looked for. (The silver lining: the union therefore cannot fail,
+   so events always load.) Making details usable needs another spec patch — replace that `oneOf` with a
+   free-form object so the generator emits a dictionary — which belongs with the first feature that
+   needs the fields, not here.
+2. **Events page by time window, not by cursor.** `serviceEventWithCursor` lists `cursor` in its
+   `required` array and never defines the property, so the generator drops it and the envelope has no
+   cursor at all — `CursorPaginator` is unusable. `ServiceEventsStore` instead requests each page with
+   `endTime` set to the oldest event it holds, de-duplicates by ID, and stops when a page adds nothing
+   new (which is also the guard against events sharing a timestamp).
+3. **Rollback lives on the deploy list, not the detail screen.** The target has to be picked from
+   history, and a confirmation dialog raised on a screen the user has navigated away from doesn't show.
+   Same reason the scale sheet confirms in-sheet rather than handing off to the shared dialog.
+4. **A failed deploy fetch doesn't blank the detail screen.** The two calls are independent, so the
+   deploy leg reports its own failure ("Deploy status unavailable") — "never deployed" is a claim only a
+   successful empty reply can support.
+5. **Detail-screen polling only runs while a deploy is in progress**, and stops the moment it settles,
+   so an idle service costs zero requests. 6s interval.
+6. **No unit tests for the app-target stores** (`DeploysStore`, `ServiceEventsStore`, the action→endpoint
+   mapping). The app target still has no test target — the same gap Phase 1 had. The endTime paging
+   logic is the piece that most deserves one; adding an app test target to the hand-written pbxproj is a
+   follow-up worth doing before Phase 3's log stream, which has real state to test.
+
+**Live smoke still to do by hand** (needs a tap on a device — the simulator has no scriptable input):
+open a service, confirm the configuration block matches the dashboard, open Deploys and Events, then
+trigger a deploy and watch it transition. `Scripts/smoke.sh` now checks the same payloads read-only and
+will flag it if either spec assumption above stops holding.
 
 ### Phase 3 — Logs
 - Historical `GET /logs` with the full filter set (resource, instance, level, statusCode, method,
@@ -346,6 +418,7 @@ reviewable spec diff + regeneration, exactly as intended.
 | File | Role |
 |---|---|
 | `Scripts/flatten-path-refs.py` | Makes the spec readable by OpenAPIKit at all; from `render-agent` |
+| `Scripts/order-oneof.py` | Orders the `serviceDetails` `oneOf` so the first-match decoder can't misclassify a cron job |
 | `Packages/RenderAPI/openapi.json` | The pinned, flattened contract; the single point of upstream drift |
 | `Packages/RenderAPI/Sources/RenderAPI/ServiceDetails+Decode.swift` | Works around the undiscriminated `oneOf` — the highest-risk code in the app |
 | `Packages/RenderAPI/Sources/RenderAPI/RetryMiddleware.swift` | 429 handling; the app polls, so this is load-bearing |
