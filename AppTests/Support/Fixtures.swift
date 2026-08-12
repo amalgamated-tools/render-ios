@@ -38,6 +38,49 @@ enum Fixtures {
         return "[\(elements.joined(separator: ","))]"
     }
 
+    /// One page of `GET /logs`.
+    ///
+    /// Unlike every other list endpoint this one is an *object* with its own paging metadata rather
+    /// than an array of cursor envelopes, so the window and `hasMore` are part of the fixture.
+    static func logsPage(
+        _ logs: [(id: String, message: String)],
+        hasMore: Bool,
+        nextStartTime: String = "2026-08-12T09:00:00Z",
+        nextEndTime: String = "2026-08-12T10:00:00Z",
+        level: String = "info",
+        instance: String = "srv-1-abc"
+    ) -> String {
+        let elements = logs.map { logEntry(id: $0.id, message: $0.message, level: level, instance: instance) }
+        return """
+            {"hasMore":\(hasMore),"nextStartTime":"\(nextStartTime)","nextEndTime":"\(nextEndTime)",\
+            "logs":[\(elements.joined(separator: ","))]}
+            """
+    }
+
+    /// A single frame as `GET /logs/subscribe` sends it — the same shape as one element of a page,
+    /// which is exactly why `LogLine` has two initializers.
+    static func logFrame(
+        id: String,
+        message: String,
+        level: String = "error",
+        timestamp: String = "2026-08-12T09:30:00.123456Z"
+    ) -> String {
+        logEntry(id: id, message: message, level: level, instance: "srv-1-abc", timestamp: timestamp)
+    }
+
+    private static func logEntry(
+        id: String,
+        message: String,
+        level: String,
+        instance: String,
+        timestamp: String = "2026-08-12T09:30:00.123456Z"
+    ) -> String {
+        """
+        {"id":"\(id)","message":"\(message)","timestamp":"\(timestamp)",\
+        "labels":[{"name":"level","value":"\(level)"},{"name":"instance","value":"\(instance)"}]}
+        """
+    }
+
     static let ownerID = "tea-000000000000000000"
 
     /// `serviceDetails` is required on every service, even though the list projection reads none

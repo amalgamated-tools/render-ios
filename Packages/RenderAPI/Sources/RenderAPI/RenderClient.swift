@@ -13,6 +13,10 @@ public struct RenderClient: Sendable {
     /// The generated client. Middleware is already attached.
     public let api: Client
 
+    /// Live log tail. Separate from ``api`` because a `101` upgrade is the one thing the generator
+    /// can't emit — see ``LogStream``. It shares this client's base URL and API key.
+    public let logs: LogStream
+
     /// `servers` in the spec declares exactly one URL, so this is not configurable in practice —
     /// it stays a parameter only so tests can point at a stub.
     public static let productionBaseURL = URL(string: "https://api.render.com/v1")!
@@ -21,8 +25,16 @@ public struct RenderClient: Sendable {
         baseURL: URL = RenderClient.productionBaseURL,
         apiKeyProvider: any APIKeyProvider,
         retryPolicy: RetryMiddleware.Policy = .default,
-        transport: any ClientTransport = URLSessionTransport()
+        transport: any ClientTransport = URLSessionTransport(),
+        logSocketConnector: any LogSocketConnecting = URLSessionLogSocketConnector(),
+        logReconnectPolicy: LogStream.ReconnectPolicy = .default
     ) {
+        self.logs = LogStream(
+            baseURL: baseURL,
+            apiKeyProvider: apiKeyProvider,
+            connector: logSocketConnector,
+            policy: logReconnectPolicy
+        )
         self.api = Client(
             serverURL: baseURL,
             // Render sends microsecond-precision timestamps the default transcoder rejects.

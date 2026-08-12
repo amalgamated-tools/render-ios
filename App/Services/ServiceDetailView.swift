@@ -10,12 +10,15 @@ struct ServiceDetailView: View {
     @State private var isShowingScaleSheet = false
 
     private let client: RenderClient
+    /// Needed by the log screen: `/logs` is scoped by workspace, and a service ID alone won't do.
+    private let ownerID: String
     private let serviceName: String
 
     /// - Parameter serviceName: The name already shown in the list, used as the title until the
     ///   detail request lands so the screen doesn't open blank.
-    init(client: RenderClient, serviceID: String, serviceName: String) {
+    init(client: RenderClient, ownerID: String, serviceID: String, serviceName: String) {
         self.client = client
+        self.ownerID = ownerID
         self.serviceName = serviceName
         _store = State(initialValue: ServiceDetailStore(client: client, serviceID: serviceID))
     }
@@ -181,6 +184,11 @@ struct ServiceDetailView: View {
                 DeploysListView(client: client, store: store)
             } label: {
                 Label("Deploys", systemImage: "shippingbox")
+            }
+            NavigationLink {
+                LogsView(client: client, ownerID: ownerID, resourceIDs: [service.id])
+            } label: {
+                Label("Logs", systemImage: "text.alignleft")
             }
             NavigationLink {
                 ServiceEventsView(client: client, serviceID: service.id)

@@ -13,9 +13,9 @@ purge cache, trigger a cron job.
 Built with SwiftUI, Swift 6 strict concurrency, and a code-generated client over Render's public
 OpenAPI spec. No third-party UI or networking dependencies.
 
-> **Status:** Phases 0–2 are complete (auth, service list, service detail, deploys, events,
-> lifecycle actions). Logs, metrics, and full dashboard parity are planned — see
-> [`PLAN.md`](PLAN.md) for the roadmap.
+> **Status:** Phases 0–3 are complete (auth, service list, service detail, deploys, events,
+> lifecycle actions, and logs with a live WebSocket tail). Metrics and full dashboard parity are
+> planned — see [`PLAN.md`](PLAN.md) for the roadmap.
 
 ---
 
@@ -30,6 +30,11 @@ OpenAPI spec. No third-party UI or networking dependencies.
 |---|---|---|---|
 | ![Actions menu](docs/screenshots/actions-menu.png) | ![Deploys](docs/screenshots/deploys.png) | ![Deploy detail](docs/screenshots/deploy-detail.png) | ![Events](docs/screenshots/events.png) |
 | The action set is computed per service: an image-backed service gets "Deploy Latest Image" and no cache-clearing build; a cron job gets "Run Now". Every action is confirmed first. | Newest first, paging as you scroll. Roll back from a leading swipe — full-swipe is disabled deliberately, so a careless thumb can't fire one. | Status, trigger, timing, and the commit or image that shipped. Refetched on open so an in-flight deploy shows current status. | What Render did to this service and when. 42 event types, colour-coded by whether something broke, something is moving, or it's bookkeeping. |
+
+| Logs | Live tail | Log filters |
+|---|---|---|
+| ![Logs](docs/screenshots/logs.png) | ![Live tail](docs/screenshots/logs-live.png) | ![Log filters](docs/screenshots/logs-filter.png) |
+| Newest first, paging backwards through the window Render hands back. Severity down the left edge, request logs summarised as `POST 200 /webhook`. Tap a line for its full label set. | A WebSocket tail over `GET /logs/subscribe` — the one endpoint the generator can't express, so it's hand-written. Reconnects with backoff; pause holds lines without dropping them. | The filter set is server-side, and its vocabulary comes from `GET /logs/values` — so it offers the levels and types *this* service actually emits, not a hard-coded list. |
 
 ---
 

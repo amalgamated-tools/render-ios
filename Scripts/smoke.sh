@@ -1,12 +1,12 @@
 #!/bin/bash
 # Live smoke test against the real Render API using the key in .env.
 #
-# Read-only: it only issues GETs (owners, services, deploys, events) so it can be run safely against
-# a real account. Nothing here triggers a deploy, restart, or any other lifecycle action — those are
-# smoke-tested by hand from the app, deliberately.
+# Read-only: it only issues GETs (owners, services, deploys, events, logs) so it can be run safely
+# against a real account. Nothing here triggers a deploy, restart, or any other lifecycle action —
+# those are smoke-tested by hand from the app, deliberately.
 #
-#   Scripts/smoke.sh            # owners + services, then Phase 2 payload checks
-#   Scripts/smoke.sh srv-xxxx   # Phase 2 checks against one specific service
+#   Scripts/smoke.sh            # owners + services, then the per-phase payload checks
+#   Scripts/smoke.sh srv-xxxx   # the same checks against one specific service
 #
 # The key is read from .env (gitignored), never passed on the command line (so it stays out of the
 # shell history and process list of other users).
@@ -83,4 +83,40 @@ event_keys=$(curl -fsS "${auth[@]}" "$API/services/$service_id/events?limit=1" |
 echo "  events envelope keys: ${event_keys:-none}"
 case "$event_keys" in
   *cursor*) echo "  !!! events now return a cursor — ServiceEventsStore can use CursorPaginator" ;;
+esac
+
+# --- Phase 3: logs -------------------------------------------------------------------------------
+
+echo "==> GET /logs?resource=$service_id (last 5)"
+logs=$(curl -fsS "${auth[@]}" "$API/logs?ownerId=$first_owner&resource=$service_id&direction=backward&limit=5")
+echo "$logs" | jq -r '.logs[] | "  \(.timestamp)\t\((.labels[] | select(.name == "level") | .value) // "-")\t\(.message | split("\n")[0][0:100])"'
+echo "  hasMore=$(echo "$logs" | jq -r .hasMore) nextStartTime=$(echo "$logs" | jq -r .nextStartTime) nextEndTime=$(echo "$logs" | jq -r .nextEndTime)"
+
+# LogsStore pages on the window Render hands back rather than a cursor, so the response has to carry
+# all three. A null in any of them would silently stop paging after the first page.
+for field in hasMore nextStartTime nextEndTime; do
+  if [ "$(echo "$logs" | jq -r ".$field")" = "null" ]; then
+    echo "  !!! /logs returned null for $field — LogsStore cannot page"
+  fi
+done
+
+echo "==> GET /logs/values (the filter sheet's vocabulary)"
+for label in level type statusCode method instance host; do
+  values=$(curl -fsS "${auth[@]}" "$API/logs/values?ownerId=$first_owner&resource=$service_id&label=$label" | jq -r 'join(", ")')
+  echo "  $label: ${values:-(none)}"
+done
+
+# The one endpoint the generated client can't reach: a 101 upgrade, hand-written in LogStream.swift.
+# curl speaks enough of the handshake to prove the URL, auth, and query shape are right.
+echo "==> GET /logs/subscribe (WebSocket handshake)"
+handshake=$(curl -sS -o /dev/null -D - \
+  "${auth[@]}" \
+  -H "Connection: Upgrade" -H "Upgrade: websocket" -H "Sec-WebSocket-Version: 13" \
+  -H "Sec-WebSocket-Key: $(head -c 16 /dev/urandom | base64)" \
+  --max-time 10 \
+  "$API/logs/subscribe?ownerId=$first_owner&resource=$service_id" 2>/dev/null | head -1 || true)
+echo "  ${handshake:-no response}"
+case "$handshake" in
+  *101*) ;;
+  *) echo "  !!! expected 101 Switching Protocols — LogStream's live tail will not connect" ;;
 esac
