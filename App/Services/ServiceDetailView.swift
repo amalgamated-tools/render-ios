@@ -49,6 +49,7 @@ struct ServiceDetailView: View {
         .onDisappear { store.stopPolling() }
         .overlay { errorState }
         .safeAreaInset(edge: .bottom) { actionBanner }
+        .actionOutcomeFeedback(store.actionResult)
         .confirmationDialog(
             pendingAction?.confirmationTitle(serviceName: store.service?.name ?? serviceName) ?? "",
             isPresented: .init(get: { pendingAction != nil }, set: { if !$0 { pendingAction = nil } }),
@@ -405,7 +406,7 @@ struct ServiceDetailView: View {
                     .labelStyle(.iconOnly)
             }
             .padding(12)
-            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 12))
+            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: Theme.Radius.card))
             .foregroundStyle(result.isFailure ? .red : .green)
             .padding(.horizontal)
             .transition(.move(edge: .bottom).combined(with: .opacity))

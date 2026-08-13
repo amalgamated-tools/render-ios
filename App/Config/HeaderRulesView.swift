@@ -44,6 +44,7 @@ struct HeaderRulesView: View {
         }
         .overlay { emptyOrErrorState }
         .safeAreaInset(edge: .bottom) { banner }
+        .actionOutcomeFeedback(store.actionResult)
         .sheet(isPresented: $isAdding) {
             HeaderRuleAddSheet(store: store)
         }

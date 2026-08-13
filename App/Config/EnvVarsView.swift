@@ -50,6 +50,7 @@ struct EnvVarsView: View {
         }
         .overlay { emptyOrErrorState }
         .safeAreaInset(edge: .bottom) { banner }
+        .actionOutcomeFeedback(store.actionResult)
         .sheet(item: $editing) { subject in
             EnvVarEditor(subject: subject, store: store)
         }

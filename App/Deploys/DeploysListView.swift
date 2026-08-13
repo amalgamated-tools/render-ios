@@ -51,6 +51,7 @@ struct DeploysListView: View {
         .task { if deploysStore.deploys.isEmpty { await deploysStore.refresh() } }
         .overlay { emptyState }
         .safeAreaInset(edge: .bottom) { banner }
+        .actionOutcomeFeedback(store.actionResult)
         .confirmationDialog(
             pendingRollback.map { rollbackAction(for: $0).confirmationTitle(serviceName: serviceName) } ?? "",
             isPresented: .init(get: { pendingRollback != nil }, set: { if !$0 { pendingRollback = nil } }),

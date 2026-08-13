@@ -61,6 +61,7 @@ struct ServiceEnvGroupsView: View {
         .task { await store.load() }
         .overlay { emptyOrErrorState }
         .safeAreaInset(edge: .bottom) { banner }
+        .actionOutcomeFeedback(store.actionResult)
         .sheet(isPresented: $isLinking) {
             NavigationStack {
                 List(store.availableGroups) { group in

@@ -64,6 +64,7 @@ struct SecretFilesView: View {
         }
         .overlay { emptyOrErrorState }
         .safeAreaInset(edge: .bottom) { banner }
+        .actionOutcomeFeedback(store.actionResult)
         .sheet(isPresented: $isAddingFile) {
             NavigationStack {
                 SecretFileEditor(file: nil, store: store)

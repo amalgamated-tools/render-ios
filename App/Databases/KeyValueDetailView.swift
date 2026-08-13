@@ -46,6 +46,7 @@ struct KeyValueDetailView: View {
         .onDisappear { store.stopPolling() }
         .overlay { errorState }
         .safeAreaInset(edge: .bottom) { actionBanner }
+        .actionOutcomeFeedback(store.actionResult)
         .confirmationDialog(
             pendingAction?.confirmationTitle(instanceName: store.instance?.name ?? instanceName) ?? "",
             isPresented: .init(get: { pendingAction != nil }, set: { if !$0 { pendingAction = nil } }),

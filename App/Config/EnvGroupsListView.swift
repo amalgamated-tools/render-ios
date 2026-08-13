@@ -52,6 +52,7 @@ struct EnvGroupsListView: View {
         }
         .overlay { emptyOrErrorState }
         .safeAreaInset(edge: .bottom) { banner }
+        .actionOutcomeFeedback(store.actionResult)
         .sheet(isPresented: $isCreating) {
             EnvGroupCreateSheet(store: store)
         }

@@ -75,7 +75,8 @@ struct DeployStatusChip: View {
             title: status.displayName,
             systemImage: status.systemImage,
             tint: status.tint,
-            isCompact: isCompact
+            isCompact: isCompact,
+            isActive: status.isInProgress
         )
         .accessibilityLabel("Deploy status: \(status.displayName)")
     }

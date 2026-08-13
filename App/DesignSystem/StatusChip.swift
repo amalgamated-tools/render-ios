@@ -11,6 +11,9 @@ struct StatusChip: View {
     let systemImage: String
     let tint: Color
     var isCompact = false
+    /// Pulses the glyph. Set while the thing being described is still moving — a deploy building,
+    /// a database restarting — so a screen you're watching says so without a second spinner.
+    var isActive = false
 
     @Environment(\.colorScheme) private var colorScheme
 
@@ -19,6 +22,7 @@ struct StatusChip: View {
             Text(title)
         } icon: {
             Image(systemName: systemImage)
+                .symbolEffect(.pulse, isActive: isActive)
         }
         .font(isCompact ? .caption.weight(.medium) : .subheadline.weight(.medium))
         .foregroundStyle(tint)

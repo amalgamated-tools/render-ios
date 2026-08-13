@@ -37,6 +37,7 @@ struct CustomDomainsView: View {
         }
         .overlay { emptyOrErrorState }
         .safeAreaInset(edge: .bottom) { banner }
+        .actionOutcomeFeedback(store.actionResult)
         .sheet(isPresented: $isAdding) {
             CustomDomainAddSheet(store: store)
         }

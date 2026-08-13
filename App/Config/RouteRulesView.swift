@@ -46,6 +46,7 @@ struct RouteRulesView: View {
         }
         .overlay { emptyOrErrorState }
         .safeAreaInset(edge: .bottom) { banner }
+        .actionOutcomeFeedback(store.actionResult)
         .sheet(isPresented: $isAdding) {
             RouteRuleAddSheet(store: store)
         }
