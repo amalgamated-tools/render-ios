@@ -37,6 +37,16 @@ test-app:
 run:
 	@Scripts/run-simulator.sh "$(SIMULATOR)"
 
+## walkthrough: record a scripted tour of the app (signs in with the key in .env)
+.PHONY: walkthrough
+walkthrough:
+	@SIMULATOR="$(SIMULATOR)" Scripts/record-walkthrough.sh
+
+## walkthrough-oauth: the same tour, signing in through the OAuth device flow (waits for you)
+.PHONY: walkthrough-oauth
+walkthrough-oauth:
+	@SIMULATOR="$(SIMULATOR)" Scripts/record-walkthrough-oauth.sh
+
 ## generate: re-vendor the OpenAPI spec and regenerate the client
 .PHONY: generate
 generate:

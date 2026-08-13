@@ -21,6 +21,11 @@ Packages/*/.build/
 # Conductor
 .context/
 
+# Walkthrough recordings. Tens of MB apiece, and every frame is real workspace data — service
+# names, log lines, request paths. Publish one deliberately; don't let a `make walkthrough` stage it.
+docs/walkthrough*.mov
+docs/walkthrough*.txt
+
 # Secrets — never commit. A real Render API key for local live smoke tests lives in .env.
 .env
 .env.local
