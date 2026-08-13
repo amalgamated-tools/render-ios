@@ -45,13 +45,22 @@ final class SecretFilesStore {
     private(set) var writeInFlight: String?
     private(set) var actionResult: ConfigActionResult?
 
+    /// Starts a deploy from the success banner. `nil` when the service can't be deployed.
+    let deployer: ConfigDeployer?
+
     private let client: RenderClient
     private let serviceID: String
     private let pageSize: Int
 
-    init(client: RenderClient, serviceID: String, pageSize: Int = 100) {
+    init(
+        client: RenderClient,
+        serviceID: String,
+        deployer: ConfigDeployer? = nil,
+        pageSize: Int = 100
+    ) {
         self.client = client
         self.serviceID = serviceID
+        self.deployer = deployer
         self.pageSize = pageSize
     }
 
@@ -98,7 +107,10 @@ final class SecretFilesStore {
                 body: .json(.init(content: content))
             ).created.body.json
             apply(SecretFileEntry(updated))
-            actionResult = .success("\(name) saved. It takes effect on the next deploy.")
+            actionResult = .success(
+                "\(name) saved. It takes effect on the next deploy.",
+                offersDeploy: deployer != nil
+            )
             return true
         } catch {
             actionResult = .failure(error)
@@ -118,11 +130,22 @@ final class SecretFilesStore {
                 path: .init(serviceId: serviceID, envVarKey: name)
             ).noContent
             files.removeAll { $0.name == name }
-            actionResult = .success("\(name) deleted. It takes effect on the next deploy.")
+            actionResult = .success(
+                "\(name) deleted. It takes effect on the next deploy.",
+                offersDeploy: deployer != nil
+            )
             return true
         } catch {
             actionResult = .failure(error)
             return false
+        }
+    }
+
+    /// Deploys the service, so the change the banner is reporting becomes the one that's running.
+    func deployNow() async {
+        guard writeInFlight == nil, let deployer else { return }
+        if let result = await deployer.deploy() {
+            actionResult = result
         }
     }
 

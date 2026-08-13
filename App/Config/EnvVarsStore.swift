@@ -47,13 +47,23 @@ final class EnvVarsStore {
     /// and there is no server-side search to prefer.
     var searchText = ""
 
+    /// Starts a deploy from the success banner, since a saved variable isn't a live one. `nil` when
+    /// the service can't be deployed, and the banner then only reports.
+    let deployer: ConfigDeployer?
+
     private let client: RenderClient
     private let serviceID: String
     private let pageSize: Int
 
-    init(client: RenderClient, serviceID: String, pageSize: Int = 100) {
+    init(
+        client: RenderClient,
+        serviceID: String,
+        deployer: ConfigDeployer? = nil,
+        pageSize: Int = 100
+    ) {
         self.client = client
         self.serviceID = serviceID
+        self.deployer = deployer
         self.pageSize = pageSize
     }
 
@@ -121,7 +131,10 @@ final class EnvVarsStore {
             ).ok.body.json
             // Apply the *response*, not the request: Render is the authority on what it stored.
             apply(EnvVarEntry(updated))
-            actionResult = .success("\(key) saved. It takes effect on the next deploy.")
+            actionResult = .success(
+                "\(key) saved. It takes effect on the next deploy.",
+                offersDeploy: deployer != nil
+            )
             return true
         } catch {
             actionResult = .failure(error)
@@ -142,11 +155,22 @@ final class EnvVarsStore {
                 path: .init(serviceId: serviceID, envVarKey: key)
             ).noContent
             entries.removeAll { $0.key == key }
-            actionResult = .success("\(key) deleted. It takes effect on the next deploy.")
+            actionResult = .success(
+                "\(key) deleted. It takes effect on the next deploy.",
+                offersDeploy: deployer != nil
+            )
             return true
         } catch {
             actionResult = .failure(error)
             return false
+        }
+    }
+
+    /// Deploys the service, so the change the banner is reporting becomes the one that's running.
+    func deployNow() async {
+        guard writeInFlight == nil, let deployer else { return }
+        if let result = await deployer.deploy() {
+            actionResult = result
         }
     }
 

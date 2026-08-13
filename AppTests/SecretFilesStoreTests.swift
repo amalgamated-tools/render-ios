@@ -76,6 +76,28 @@ struct SecretFilesStoreTests {
         #expect(!message.localizedCaseInsensitiveContains("redeploying"))
     }
 
+    @Test("a saved file offers a deploy, and deploying reports in the same banner")
+    func offersAndStartsDeploy() async {
+        // Same affordance as env vars, for the same reason: a secret file the service hasn't
+        // reloaded is a file that isn't in effect.
+        let (client, transport) = RenderClient.routed { path in
+            path.hasSuffix("/deploys") ? (201, Fixtures.deploy()) : (201, Fixtures.secretFile(name: "a.pem", content: "KEY"))
+        }
+        let store = SecretFilesStore(
+            client: client,
+            serviceID: "srv-1",
+            deployer: ConfigDeployer(client: client, serviceID: "srv-1", serviceName: "api", source: .commit)
+        )
+
+        await store.save(name: "a.pem", content: "KEY")
+        #expect(store.actionResult?.offersDeploy == true)
+
+        await store.deployNow()
+        #expect(transport.requests.last?.path == "/services/srv-1/deploys")
+        #expect(store.actionResult?.message.contains("Deploy started") == true)
+        #expect(store.actionResult?.offersDeploy == false)
+    }
+
     @Test("deleting sends a DELETE and drops the file")
     func deleteRemovesFile() async throws {
         let (client, transport) = RenderClient.routed { path in

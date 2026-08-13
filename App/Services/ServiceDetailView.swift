@@ -207,12 +207,22 @@ struct ServiceDetailView: View {
                 Label("Events", systemImage: "list.bullet.rectangle")
             }
             NavigationLink {
-                EnvVarsView(client: client, serviceID: service.id)
+                // A config write saves without deploying, so both screens carry a deployer: the
+                // success banner offers Deploy rather than sending the user back here for it.
+                EnvVarsView(
+                    client: client,
+                    serviceID: service.id,
+                    deployer: ConfigDeployer.make(client: client, service: service)
+                )
             } label: {
                 Label("Environment", systemImage: "key")
             }
             NavigationLink {
-                SecretFilesView(client: client, serviceID: service.id)
+                SecretFilesView(
+                    client: client,
+                    serviceID: service.id,
+                    deployer: ConfigDeployer.make(client: client, service: service)
+                )
             } label: {
                 Label("Secret Files", systemImage: "doc.text")
             }

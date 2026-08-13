@@ -746,8 +746,9 @@ delete against a live service produced **no new deploy row and no deploy event**
 So the running instances keep the old value until something else deploys them, and every message in
 these screens says when the change actually takes effect rather than claiming a redeploy. A
 "saved" that silently means "not live yet" is exactly the misunderstanding that costs an hour at 3am.
-*(Follow-up worth doing: offer **Deploy** straight from the success banner, since "I changed a
-variable" is almost always followed by "…and now I need it live".)*
+*(Follow-up: offer **Deploy** straight from the success banner, since "I changed a variable" is
+almost always followed by "…and now I need it live". Built — see
+[the follow-up below](#phase-5a-follow-up--deploy-from-the-config-banner--built-live-pass-pending).)*
 
 **Live pass: done, both sides.** Read side against `render-oidc-discovery-dev` in Render-Prod — env
 vars loaded masked and alphabetized, per-row reveal showed one value and left the others masked, and
@@ -777,6 +778,45 @@ of them were visible without it:
    Render env var. `.textContentType(.oneTimeCode)` did *not* suppress it (tried, and re-tested
    live); dropping `SecureField` did — which is the same fix as defect 4. The masking that matters
    happens in the list, where a value sits on screen without anyone having asked for it.
+
+#### Phase 5a follow-up — Deploy from the config banner ✅ BUILT (live pass pending)
+
+The other half of 5a's central finding. The banner already said a saved change waits for the next
+deploy; now it can *be* that deploy. A successful write — save or delete, env var or secret file —
+offers **Deploy Latest Commit** (or **Latest Image**) right there, behind the same confirmation the
+detail screen's action menu uses. The alternative was backing out of two screens to find the menu,
+which is exactly the friction that leaves a variable saved and not running.
+
+**Built:** `ConfigDeployer` and a shared `ConfigResultBanner` in `App/Config/`;
+`ConfigActionResult` gained `offersDeploy`; both stores gained a `deployer` and `deployNow()`;
+`DeploysStore.createDeploy` now owns the create-deploy call that `ServiceDetailStore` used to hold
+privately. `make check` green — **65 package tests in 11 suites and 113 app tests in 11 suites**,
+`BUILD SUCCEEDED`.
+
+**Decisions worth naming:**
+1. **The deploy call moved to `DeploysStore`, not copied.** Two screens now start deploys, and
+   `POST /deploys` is the one operation with two documented success codes (201 created, 202 accepted
+   with nothing to build). That nuance is worth exactly one implementation.
+2. **No cache-clearing variant in the banner.** A clean build is a debugging tool, not what someone
+   wants after editing a variable, and two buttons would turn the quick path into a decision.
+3. **Confirmed, like every other action that touches a live service.** This one is a single tap from
+   a banner, which is the reason it isn't a single tap from a build. The dialog names the service,
+   since the banner doesn't. Copy comes from the existing `ServiceAction.deploy` case, so the two
+   confirmations can't drift — including the image-vs-commit wording that Phase 2's live pass had to
+   fix once already.
+4. **Cron jobs get no button.** A cron job runs, it doesn't deploy, so `ConfigDeployer.make` returns
+   `nil` and the banner stays a report.
+5. **"Deploy started", not "deployed".** The endpoint is asynchronous and a build takes minutes.
+   Claiming the change is live the moment the request returns would repeat, one step later, the exact
+   misunderstanding this affordance exists to correct. The result of a deploy also stops offering a
+   deploy, so the banner can't invite a second build of the same commit.
+6. **The banner became one shared view.** Both config screens reported identically already; the
+   deploy path — confirmation copy, in-flight spinner, per-service wording — is more than either
+   screen should be carrying its own copy of.
+
+**Not yet done: the live pass.** Every claim above is from the unit tests and the simulator. The
+write side needs the same treatment 5a itself got — an add against a real service, Deploy from the
+banner, and the API checked for the deploy row that 5a proved a config write does *not* create.
 
 ### Phase 6 — Polish
 - Widgets / Live Activity for an in-flight deploy.

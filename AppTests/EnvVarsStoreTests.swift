@@ -197,6 +197,72 @@ struct EnvVarsStoreTests {
         #expect(!message.localizedCaseInsensitiveContains("redeploying"))
     }
 
+    @Test("a successful write offers a deploy, which is what makes it live")
+    func successOffersDeploy() async {
+        // The banner is where "saved but not running" gets resolved: the change is one tap from
+        // live, instead of two screens back at the action menu.
+        let recorder = BodyRecorder()
+        let client = recorder.client(answering: Fixtures.envVar(key: "PORT", value: "3000"))
+        let store = EnvVarsStore(
+            client: client,
+            serviceID: "srv-1",
+            deployer: ConfigDeployer(client: client, serviceID: "srv-1", serviceName: "api", source: .commit)
+        )
+
+        await store.save(key: "PORT", value: "3000")
+
+        #expect(store.actionResult?.offersDeploy == true)
+    }
+
+    @Test("a service that can't be deployed is never offered a deploy")
+    func noDeployerNoOffer() async {
+        // A cron job runs, it doesn't deploy — its banner has to stay a report.
+        let recorder = BodyRecorder()
+        let store = EnvVarsStore(
+            client: recorder.client(answering: Fixtures.envVar(key: "PORT", value: "3000")),
+            serviceID: "srv-1"
+        )
+
+        await store.save(key: "PORT", value: "3000")
+
+        #expect(store.actionResult?.isFailure == false)
+        #expect(store.actionResult?.offersDeploy == false)
+    }
+
+    @Test("a failed write offers no deploy — there's nothing to make live")
+    func failedWriteOffersNoDeploy() async {
+        let (client, _) = RenderClient.routed { _ in (403, "{}") }
+        let store = EnvVarsStore(
+            client: client,
+            serviceID: "srv-1",
+            deployer: ConfigDeployer(client: client, serviceID: "srv-1", serviceName: "api", source: .commit)
+        )
+
+        await store.save(key: "PORT", value: "3000")
+
+        #expect(store.actionResult?.isFailure == true)
+        #expect(store.actionResult?.offersDeploy == false)
+    }
+
+    @Test("deploying from the banner replaces it with the deploy's own outcome")
+    func deployNowReportsInTheBanner() async {
+        let (client, transport) = RenderClient.routed { path in
+            path.hasSuffix("/deploys") ? (201, Fixtures.deploy()) : (200, Fixtures.envVar(key: "PORT", value: "3000"))
+        }
+        let store = EnvVarsStore(
+            client: client,
+            serviceID: "srv-1",
+            deployer: ConfigDeployer(client: client, serviceID: "srv-1", serviceName: "api", source: .commit)
+        )
+        await store.save(key: "PORT", value: "3000")
+
+        await store.deployNow()
+
+        #expect(transport.requests.last?.path == "/services/srv-1/deploys")
+        #expect(store.actionResult?.message.contains("Deploy started") == true)
+        #expect(store.actionResult?.offersDeploy == false)
+    }
+
     @Test("deleting sends a DELETE and drops the row")
     func deleteRemovesRow() async throws {
         let (client, transport) = RenderClient.routed { path in

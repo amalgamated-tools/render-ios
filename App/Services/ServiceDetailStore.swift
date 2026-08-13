@@ -164,23 +164,12 @@ final class ServiceDetailStore {
     private func send(_ action: ServiceAction) async throws {
         switch action {
         case .deploy(let clearCache, _):
-            // The only operation with two documented success codes: 201 when Render created a deploy,
-            // 202 when it accepted the request but had nothing new to build. Both are successes.
-            let output = try await client.api.createDeploy(
-                path: .init(serviceId: serviceID),
-                body: .json(.init(clearCache: clearCache ? .clear : .doNotClear))
+            // Shared with the config screens' banner, which starts the same deploy.
+            try await DeploysStore.createDeploy(
+                client: client,
+                serviceID: serviceID,
+                clearCache: clearCache
             )
-            switch output {
-            case .created, .accepted:
-                break
-            case .undocumented(let statusCode, _):
-                throw RenderError.from(statusCode: statusCode, message: nil)
-            default:
-                // Unreachable: StatusMappingMiddleware turns every documented 4xx/5xx into a thrown
-                // RenderError before the client ever builds an `Output`. Failing loudly rather than
-                // silently reporting success keeps that true if the middleware stack changes.
-                throw RenderError.server(statusCode: 500, message: "Render rejected the deploy request.")
-            }
         case .rollback(let deployID):
             _ = try await client.api.rollbackDeploy(
                 path: .init(serviceId: serviceID),

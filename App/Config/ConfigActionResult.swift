@@ -10,15 +10,22 @@ struct ConfigActionResult: Identifiable, Equatable {
     let id = UUID()
     let message: String
     let isFailure: Bool
+    /// Whether the banner should offer to deploy.
+    ///
+    /// Set on a write that Render has saved but that isn't running yet — which is every successful
+    /// config write, since the API applies the change without deploying. It's false once the deploy
+    /// has been started, and false for failures: there is nothing to make live.
+    let offersDeploy: Bool
 
-    static func success(_ message: String) -> ConfigActionResult {
-        ConfigActionResult(message: message, isFailure: false)
+    static func success(_ message: String, offersDeploy: Bool = false) -> ConfigActionResult {
+        ConfigActionResult(message: message, isFailure: false, offersDeploy: offersDeploy)
     }
 
     static func failure(_ error: any Error) -> ConfigActionResult {
         ConfigActionResult(
             message: RenderError.wrapping(error).errorDescription ?? "Something went wrong.",
-            isFailure: true
+            isFailure: true,
+            offersDeploy: false
         )
     }
 }
