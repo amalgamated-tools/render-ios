@@ -118,15 +118,9 @@ struct DeploysListView: View {
     @ViewBuilder
     private var emptyState: some View {
         if let message = deploysStore.errorMessage, deploysStore.deploys.isEmpty {
-            ContentUnavailableView {
-                Label("Couldn't load deploys", systemImage: "exclamationmark.triangle")
-            } description: {
-                Text(message)
-            } actions: {
-                Button("Retry") { Task { await deploysStore.refresh() } }
-            }
+            ErrorStateView(subject: "deploys", message: message) { await deploysStore.refresh() }
         } else if deploysStore.deploys.isEmpty && deploysStore.isLoading {
-            ProgressView()
+            SkeletonList()
         } else if deploysStore.deploys.isEmpty {
             ContentUnavailableView(
                 "No Deploys",

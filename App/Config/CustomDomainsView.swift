@@ -117,15 +117,9 @@ struct CustomDomainsView: View {
     private var emptyOrErrorState: some View {
         if store.domains.isEmpty {
             if let message = store.errorMessage {
-                ContentUnavailableView {
-                    Label("Couldn't load custom domains", systemImage: "exclamationmark.triangle")
-                } description: {
-                    Text(message)
-                } actions: {
-                    Button("Retry") { Task { await store.refresh() } }
-                }
+                ErrorStateView(subject: "custom domains", message: message) { await store.refresh() }
             } else if store.isLoading {
-                ProgressView()
+                SkeletonList()
             } else {
                 ContentUnavailableView {
                     Label("No Custom Domains", systemImage: "globe")

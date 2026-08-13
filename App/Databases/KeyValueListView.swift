@@ -69,15 +69,9 @@ struct KeyValueListView: View {
     @ViewBuilder
     private var emptyState: some View {
         if let message = store.errorMessage, store.instances.isEmpty {
-            ContentUnavailableView {
-                Label("Couldn't load instances", systemImage: "exclamationmark.triangle")
-            } description: {
-                Text(message)
-            } actions: {
-                Button("Retry") { Task { await store.refresh() } }
-            }
+            ErrorStateView(subject: "instances", message: message) { await store.refresh() }
         } else if store.instances.isEmpty && store.isLoading {
-            ProgressView()
+            SkeletonList()
         } else if store.instances.isEmpty {
             ContentUnavailableView(
                 "No Key Value Instances",

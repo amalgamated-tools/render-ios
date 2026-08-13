@@ -69,13 +69,7 @@ struct MetricsView: View {
                 Text("Render doesn't report metrics for this kind of service.")
             }
         } else if let message = store.errorMessage {
-            ContentUnavailableView {
-                Label("Couldn't load metrics", systemImage: "exclamationmark.triangle")
-            } description: {
-                Text(message)
-            } actions: {
-                Button("Retry") { Task { await store.refresh() } }
-            }
+            ErrorStateView(subject: "metrics", message: message) { await store.refresh() }
         } else if store.isLoading && !store.hasAnyData {
             // The single spinner the concurrent fetch is for.
             ProgressView()

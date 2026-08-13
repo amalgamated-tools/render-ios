@@ -365,13 +365,7 @@ struct ServiceDetailView: View {
     @ViewBuilder
     private var errorState: some View {
         if let message = store.errorMessage, store.service == nil {
-            ContentUnavailableView {
-                Label("Couldn't load service", systemImage: "exclamationmark.triangle")
-            } description: {
-                Text(message)
-            } actions: {
-                Button("Retry") { Task { await store.refresh() } }
-            }
+            ErrorStateView(subject: "service", message: message) { await store.refresh() }
         }
     }
 

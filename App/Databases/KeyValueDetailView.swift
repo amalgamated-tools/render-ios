@@ -212,13 +212,7 @@ struct KeyValueDetailView: View {
     @ViewBuilder
     private var errorState: some View {
         if let message = store.errorMessage, store.instance == nil {
-            ContentUnavailableView {
-                Label("Couldn't load instance", systemImage: "exclamationmark.triangle")
-            } description: {
-                Text(message)
-            } actions: {
-                Button("Retry") { Task { await store.refresh() } }
-            }
+            ErrorStateView(subject: "instance", message: message) { await store.refresh() }
         }
     }
 }

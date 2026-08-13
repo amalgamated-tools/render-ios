@@ -264,13 +264,7 @@ struct PostgresDetailView: View {
     @ViewBuilder
     private var errorState: some View {
         if let message = store.errorMessage, store.database == nil {
-            ContentUnavailableView {
-                Label("Couldn't load database", systemImage: "exclamationmark.triangle")
-            } description: {
-                Text(message)
-            } actions: {
-                Button("Retry") { Task { await store.refresh() } }
-            }
+            ErrorStateView(subject: "database", message: message) { await store.refresh() }
         }
     }
 }

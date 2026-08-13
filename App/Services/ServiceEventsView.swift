@@ -50,13 +50,7 @@ struct ServiceEventsView: View {
     @ViewBuilder
     private var emptyState: some View {
         if let message = store.errorMessage, store.events.isEmpty {
-            ContentUnavailableView {
-                Label("Couldn't load events", systemImage: "exclamationmark.triangle")
-            } description: {
-                Text(message)
-            } actions: {
-                Button("Retry") { Task { await store.refresh() } }
-            }
+            ErrorStateView(subject: "events", message: message) { await store.refresh() }
         } else if store.events.isEmpty && store.isLoading {
             ProgressView()
         } else if store.events.isEmpty {

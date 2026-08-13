@@ -101,15 +101,9 @@ struct EnvVarsView: View {
     private var emptyOrErrorState: some View {
         if store.entries.isEmpty {
             if let message = store.errorMessage {
-                ContentUnavailableView {
-                    Label("Couldn't load environment variables", systemImage: "exclamationmark.triangle")
-                } description: {
-                    Text(message)
-                } actions: {
-                    Button("Retry") { Task { await store.refresh() } }
-                }
+                ErrorStateView(subject: "environment variables", message: message) { await store.refresh() }
             } else if store.isLoading {
-                ProgressView()
+                SkeletonList()
             } else {
                 ContentUnavailableView {
                     Label("No Environment Variables", systemImage: "key")
