@@ -957,11 +957,8 @@ resolves." → removed, with the confirmation stating that traffic stops immedia
 *Headers and routes, read side*, against real static sites in Render-Prod-Internal: `policy-css`'s two
 real CORS rules rendered grouped by path (`Access-Control-Allow-Methods: GET, OPTIONS` on
 `/custom.css`), and the routes screen loaded `200` — which is what proves the catalog gate is right,
-since the same call 400s on a web service. **The write side of headers and routes was not live-tested,
-and a populated route list wasn't seen:** every static site reachable from this key belongs to a Render
-production workspace, and adding or deleting rules there isn't a smoke test to run. Route ordering,
-reordering, and the add path are covered by unit tests only. Creating a scratch static site would close
-this gap.
+since the same call 400s on a web service. The write side had to wait for a scratch site; see the
+[edge-rule write pass](#edge-rule-write-pass--done) below.
 
 **Three defects the live pass turned up, all fixed. The first is the one that mattered:**
 1. **An unlink that succeeded was reported as a failure.**
@@ -979,6 +976,50 @@ this gap.
 3. **The navigation title was squeezed to "Servic…" on one tab and dropped entirely on the other.** The
    scope picker and an inline title can't share the bar. The picker now takes the *title* slot, which is
    also the more useful thing to read there — the tab bar already names both screens.
+
+#### Edge-rule write pass ✅ DONE
+
+Run against `nextjs-static` (`srv-d9ujumajobas73b0k1i0`) in Patrick's Workspace — a scratch static site
+created for exactly this, which is what open item 8 was waiting for. Every screen state was driven from
+the simulator and every write checked against `GET` afterwards.
+
+*Routes:* a populated list rendered in evaluation order for the first time on a device (rewrite `/api/*`
+before redirect `/old`) → added `/docs → https://render.com/docs` from the app, which appended at
+priority 3 → swiped **Up**, which swapped it with `/old` (two `PATCH`es; screen and API agreed on
+2/3 afterwards) → swipe-deleted `/old`. *Headers:* the list loaded, `X-App-Live: bangui` on `/*` was
+added from the app and sorted **above** the pre-existing `X-Smoke-One` as the by-path-then-name order
+promises, then `X-Smoke-One` was removed. Every banner offered Deploy and named the rule it had changed.
+
+**No defects in the app. Four things about the API worth writing down:**
+1. **The spec's `{"headers": …}` wrapper is fiction on both writes.** `POST .../headers` returns a **bare
+   header** and `PATCH .../routes/{id}` a **bare route**, not the object-under-a-plural-key the spec
+   declares. Both stores already treat that field as optional — the header add falls back to re-reading
+   the list, the reorder to recording what it asked for — so the *fallback* is the path that runs every
+   time, and the live pass is what proves it. The primary path is dead code until Render ships the
+   documented shape.
+2. **`DELETE` on a route or header is idempotent: an unknown ID answers `204`.** Deleting a rule that had
+   already been deleted out from under the screen reported success, and that report is *true* — the rule
+   is gone. This is the one write in the app that can't produce the "lied about a write" failure the
+   Phase 5b unlink did.
+3. **`PATCH` on a missing route answers `404`, and the reorder failure branch handles it correctly.**
+   Deleting a rule behind the app's back and then swiping **Up** on it produced a red banner and a list
+   reloaded to the server's true state, exactly as designed for a half-applied swap. The banner reads
+   "Not found." — Render's own message, honest but terse; see open item 10.
+4. **Render validates none of this and renumbers priorities on its own.** Duplicate route sources,
+   duplicate header name+path, and `priority: 0` are all accepted with `201`; deleting one rule shifted
+   the surviving rules' priorities (1, 2, 9 → 2, 3, 10) without changing their relative order. The screen
+   shows order, not numbers, so nothing was visibly wrong — but the app's "append at max+1" reads a
+   possibly-stale max, and `sorted(by: <)` on a tie is unspecified. See open item 11.
+
+**The pass also found a hazard in the tooling, not the app.** Two Conductor workspaces both built and
+launched `com.veverkap.RenderiOS` onto the shared `iPhone 17 Pro` simulator, so a sibling agent's install
+replaced the bundle and terminated the app mid-pass — and for several screenshots the app under test was
+*another branch's build*, which read exactly like four missing drill-down rows. `Scripts/sim-input.swift`
+now takes `SIM_DEVICE` (a device name, matched against the Simulator's window title) so a workspace can
+drive its own device: `Scripts/run-simulator.sh "bangui iPhone 17 Pro"` then
+`SIM_DEVICE="bangui iPhone 17 Pro" swift Scripts/sim-input.swift tap …`. Unset behaves as before. **A live
+pass on the shared device while another workspace is building is not trustworthy** — the first symptom is
+an app that dies on a tap and a UI missing things the source clearly has.
 
 **One of Phase 3's open items closed itself in the process.** The app test target linked `RenderAPI`
 twice, which made `error as? RenderError` fail across the boundary; that broke the very tests that pin
@@ -1069,6 +1110,17 @@ printf '%s' "$RENDER_API_KEY" | swift Scripts/sim-input.swift type   # stdin, so
 swift Scripts/sim-input.swift press return
 ```
 
+**One simulator per workspace, if another agent is working in parallel.** Every workspace builds the same
+bundle ID, so a sibling's install replaces the app under your taps and `booted` stops meaning the device
+you're watching. Give the pass its own device and name it in both places:
+
+```sh
+xcrun simctl create "bangui iPhone 17 Pro" \
+  com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro com.apple.CoreSimulator.SimRuntime.iOS-26-5
+Scripts/run-simulator.sh "bangui iPhone 17 Pro"
+export SIM_DEVICE="bangui iPhone 17 Pro"          # sim-input + `simctl io "$SIM_DEVICE" screenshot`
+```
+
 **Spec drift check:** `Scripts/generate-api.sh` then `git diff --stat Packages/RenderAPI` —
 an empty diff means upstream is unchanged.
 
@@ -1146,10 +1198,22 @@ Everything in Phase 0 is built and verified. `make check` is green.
    failed because `error as? RenderError` returned nil across the boundary. Removing the test target's
    duplicate package link fixed them — the framework comes from the app host, and
    `RenderAPITestSupport` already depends on it.
-8. **The write side of header and route rules is untested live.** Every static site this key can reach
-   belongs to a Render production workspace, so adding and deleting rules there wasn't an acceptable
-   smoke test; the add, delete, and reorder paths are covered by unit tests only, and a populated route
-   list has never been seen on a device. A scratch static site in a personal workspace would close it.
+8. ~~**The write side of header and route rules is untested live.**~~ **Done.** A scratch static site
+   (`nextjs-static` in Patrick's Workspace) closed it: add, reorder, and delete were all driven from the
+   app against a populated list and verified against the API, and the reorder's failure branch was
+   exercised by deleting a rule behind the app's back. No app defects; four API findings and one
+   simulator-isolation fix in the [edge-rule write pass](#edge-rule-write-pass--done).
 9. **`GET /env-groups` needs a spec patch to decode at all.** `Scripts/envelope-env-groups.py` supplies
    the cursor envelope the live API sends and the spec omits. If Render ever ships the documented shape,
    `Scripts/smoke.sh` says so and the patch has to go.
+10. **A failed write shows Render's raw message, and for a `404` that's just "Not found."** Seen live on
+    a reorder whose rule had been deleted elsewhere. The list reloads correctly, so the state is right and
+    only the sentence is thin; loads already get plain sentences for `406`/`410` via
+    `ServiceConfigCatalog.loadFailureMessage`, and writes want the same treatment for `404` ("That rule no
+    longer exists") and `409`. Not urgent — the banner is accurate, just terse.
+11. **Route priorities are Render's to renumber, and the app assumes otherwise in two small ways.**
+    Deleting one rule shifted the others (1, 2, 9 → 2, 3, 10), relative order intact. So `add()`'s
+    `max + 1` can be computed from a stale maximum and collide — which Render accepts, since it validates
+    neither duplicate priorities nor duplicate sources — and `sortedRules`' `sorted { $0.priority <
+    $1.priority }` gives no defined order for a tie. Reloading before an add, or breaking ties on ID,
+    would make the screen deterministic. Nothing observed to be wrong today.

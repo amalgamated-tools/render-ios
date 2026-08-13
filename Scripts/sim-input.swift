@@ -15,6 +15,15 @@
 // the screen as an `iOSContentGroup`), which means the window can be moved, resized, or on a second
 // display and this still lands in the right place.
 //
+// `SIM_DEVICE` picks which device to drive, by name, when more than one is booted:
+//
+//   SIM_DEVICE="bangui iPhone 17 Pro" swift Scripts/sim-input.swift tap 100 200
+//
+// Unset means `booted` and the frontmost window, which is right for one device. It stops being right
+// the moment a second workspace boots its own: `booted` then resolves to *a* device rather than the
+// one you are watching, and the first Simulator window is whichever the window server hands over. The
+// name is matched against the window title, which the Simulator formats as "<device> – <runtime>".
+//
 // Requirements, both of which fail confusingly rather than loudly:
 //   1. The calling process needs Accessibility permission (System Settings → Privacy & Security →
 //      Accessibility). Without it CGEventPost silently does nothing.
@@ -58,12 +67,17 @@ func findDeviceScreen(_ element: AXUIElement, depth: Int = 0) -> CGRect? {
     return nil
 }
 
+/// The device to drive: a name from `SIM_DEVICE`, or whatever `booted` resolves to.
+let deviceTarget = ProcessInfo.processInfo.environment["SIM_DEVICE"].flatMap {
+    $0.isEmpty ? nil : $0
+}
+
 /// Width of the current screenshot in pixels, to derive the point-per-pixel scale.
 func screenshotWidth() -> CGFloat {
     let path = NSTemporaryDirectory() + "sim-input-probe.png"
     let process = Process()
     process.executableURL = URL(fileURLWithPath: "/usr/bin/xcrun")
-    process.arguments = ["simctl", "io", "booted", "screenshot", path]
+    process.arguments = ["simctl", "io", deviceTarget ?? "booted", "screenshot", path]
     process.standardOutput = FileHandle.nullDevice
     process.standardError = FileHandle.nullDevice
     try? process.run()
@@ -83,8 +97,20 @@ guard let simulator = NSWorkspace.shared.runningApplications
 else { fail("Simulator isn't running — try `make run`") }
 
 let axApp = AXUIElementCreateApplication(simulator.processIdentifier)
-guard let window = (attribute(axApp, kAXWindowsAttribute) as? [AXUIElement])?.first,
-      let screen = findDeviceScreen(window)
+let windows = attribute(axApp, kAXWindowsAttribute) as? [AXUIElement] ?? []
+// With `SIM_DEVICE` set, the window has to be the one titled for that device — taking the first
+// window would land every tap on another workspace's simulator, which looks like the app ignoring
+// input rather than like input going somewhere else.
+let candidates: [AXUIElement]
+if let deviceTarget {
+    candidates = windows.filter { (attribute($0, kAXTitleAttribute) as? String ?? "").contains(deviceTarget) }
+    if candidates.isEmpty {
+        fail("no Simulator window titled for '\(deviceTarget)' — is that device booted?")
+    }
+} else {
+    candidates = windows
+}
+guard let screen = candidates.lazy.compactMap({ findDeviceScreen($0) }).first
 else { fail("couldn't find the simulator's device screen") }
 
 let scale = screenshotWidth() / screen.width
