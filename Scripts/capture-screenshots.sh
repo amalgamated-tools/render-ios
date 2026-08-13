@@ -84,8 +84,10 @@ back
 tap "${DETAIL_LOGS[@]}"
 shot logs 5
 tap "${LOGS_FILTER[@]}"
-# /logs/values has to answer before the sheet is worth photographing — it opens on placeholders.
-shot logs-filter 8
+# /logs/values has to answer before the sheet is worth photographing — it opens on five "Loading
+# values…" rows, and a shot of those says the opposite of what the caption beside it claims. 8s was
+# not enough on a cold service; 25 is.
+shot logs-filter 25
 tap "${LOGS_FILTER_CANCEL[@]}"
 sleep 1.5
 tap "${LOGS_MENU[@]}"
