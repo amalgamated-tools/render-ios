@@ -188,9 +188,13 @@ Render publishes its OpenAPI spec unversioned and warns that it changes without 
 properties actively break or degrade naive code generation, and `Scripts/generate-api.sh` works
 around all four before the generator ever sees the file:
 
+> The complete inventory of spec-vs-reality mismatches — every relaxed field, wrong status code,
+> undocumented response shape, and behavioural surprise, with what each one broke — is in
+> [`docs/api-accommodations.md`](docs/api-accommodations.md).
+
 ```
 download → jq pretty-print → flatten-path-refs.py → relax-nullable.py → order-oneof.py
-         → number-params.py → generate
+         → envelope-env-groups.py → number-params.py → generate
 ```
 
 1. **Unresolvable `$ref`s.** OpenAPIKit only resolves refs into `#/components/…`, and the spec has
