@@ -206,6 +206,16 @@ struct ServiceDetailView: View {
             } label: {
                 Label("Events", systemImage: "list.bullet.rectangle")
             }
+            NavigationLink {
+                EnvVarsView(client: client, serviceID: service.id)
+            } label: {
+                Label("Environment", systemImage: "key")
+            }
+            NavigationLink {
+                SecretFilesView(client: client, serviceID: service.id)
+            } label: {
+                Label("Secret Files", systemImage: "doc.text")
+            }
         }
     }
 

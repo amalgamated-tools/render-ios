@@ -170,3 +170,31 @@ for q in 0.95 0.949999988079071; do
     "$(curl -fsS "${auth[@]}" "$API/metrics/http-latency?$metrics_window&resolutionSeconds=60&quantile=$q" 2>/dev/null \
        | jq -r '[.[].values | length] | add // 0')"
 done
+
+# --- Phase 5: service config (read-only) -----------------------------------------------------------
+
+# Values are secrets, so nothing here prints one: only key names, counts, and shapes. The app's own
+# write paths (PUT/DELETE per key) are exercised by hand from the simulator, deliberately — a smoke
+# script that mutates a real service would redeploy it.
+
+echo "==> GET /services/$service_id/env-vars"
+env_vars=$(curl -fsS "${auth[@]}" "$API/services/$service_id/env-vars?limit=100")
+echo "  count=$(echo "$env_vars" | jq -r 'length')  keys: $(echo "$env_vars" | jq -r '[.[].envVar.key] | join(", ")')"
+
+# EnvVarEntry reads both fields unconditionally; the spec marks them required, and a null value would
+# fail the decode before the screen ever sees it.
+if [ "$(echo "$env_vars" | jq -r '[.[].envVar | has("key") and has("value")] | all')" != "true" ]; then
+  echo "  !!! an envVar came back without key/value — EnvVarEntry won't decode it"
+fi
+
+echo "==> GET /services/$service_id/secret-files"
+secret_files=$(curl -fsS "${auth[@]}" "$API/services/$service_id/secret-files?limit=100")
+echo "  count=$(echo "$secret_files" | jq -r 'length')  names: $(echo "$secret_files" | jq -r '[.[].secretFile.name] | join(", ")')"
+
+# The list endpoint returning contents is what lets the editor open a file without a second request.
+# If Render ever stops sending it, `content` is required in the spec and the whole list stops
+# decoding — which is the failure this line is here to catch early.
+if [ "$(echo "$secret_files" | jq -r 'length')" != "0" ]; then
+  echo "  contents present in list: $(echo "$secret_files" | jq -r '[.[].secretFile | has("content")] | all')"
+  echo "  sizes: $(echo "$secret_files" | jq -r '[.[].secretFile | "\(.name)=\(.content | length)B"] | join(", ")')"
+fi
