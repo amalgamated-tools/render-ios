@@ -63,8 +63,9 @@ find_device() {
     echo "!!! No available simulator named '$SIMULATOR'" >&2
     exit 1
   fi
+  # sim-input.swift drives the window titled for this device; everything here targets simctl by
+  # UDID, which stays unambiguous even if two devices ever share a name.
   export SIM_DEVICE="$SIMULATOR"
-  export SIM_DEVICE_ID="$DEVICE"
 }
 
 preflight() {

@@ -15,10 +15,18 @@
 // the screen as an `iOSContentGroup`), which means the window can be moved, resized, or on a second
 // display and this still lands in the right place.
 //
-// With more than one simulator booted, set `SIM_DEVICE` to the device name to say which window to
-// drive (and `SIM_DEVICE_ID` to its UDID, so the screenshot probe measures the same device). Left
-// unset with several windows open, this stops rather than guessing: picking the wrong window sends
-// every tap to another workspace's simulator and looks exactly like the app ignoring input.
+// `SIM_DEVICE` picks which device to drive, by name, when more than one is booted:
+//
+//   SIM_DEVICE="bangui iPhone 17 Pro" swift Scripts/sim-input.swift tap 100 200
+//
+// Unset means `booted` and the only window, which is right for one device. It stops being right the
+// moment a second workspace boots its own: `booted` then resolves to *a* device rather than the one
+// you are watching, and the first Simulator window is whichever the window server hands over. So
+// with several windows open and no name given, this stops rather than guessing — a tap that lands on
+// another workspace's simulator looks exactly like the app ignoring input.
+//
+// The name is matched against the window title, which the Simulator formats as "<device> – <runtime>",
+// and only at the start: "iPhone 17 Pro" must not match the window titled "bangui iPhone 17 Pro".
 //
 // Requirements, both of which fail confusingly rather than loudly:
 //   1. The calling process needs Accessibility permission (System Settings → Privacy & Security →
@@ -63,17 +71,17 @@ func findDeviceScreen(_ element: AXUIElement, depth: Int = 0) -> CGRect? {
     return nil
 }
 
-/// The device to drive, when more than one simulator is booted. `SIM_DEVICE` is matched against
-/// window titles ("iPhone 17 Pro – iOS 26.5"); `SIM_DEVICE_ID` targets `simctl` at the same device.
-let deviceName = ProcessInfo.processInfo.environment["SIM_DEVICE"]
-let deviceID = ProcessInfo.processInfo.environment["SIM_DEVICE_ID"] ?? "booted"
+/// The device to drive: a name from `SIM_DEVICE`, or whatever `booted` resolves to.
+let deviceTarget = ProcessInfo.processInfo.environment["SIM_DEVICE"].flatMap {
+    $0.isEmpty ? nil : $0
+}
 
 /// Width of the current screenshot in pixels, to derive the point-per-pixel scale.
 func screenshotWidth() -> CGFloat {
     let path = NSTemporaryDirectory() + "sim-input-probe.png"
     let process = Process()
     process.executableURL = URL(fileURLWithPath: "/usr/bin/xcrun")
-    process.arguments = ["simctl", "io", deviceID, "screenshot", path]
+    process.arguments = ["simctl", "io", deviceTarget ?? "booted", "screenshot", path]
     process.standardOutput = FileHandle.nullDevice
     process.standardError = FileHandle.nullDevice
     try? process.run()
@@ -96,23 +104,30 @@ let axApp = AXUIElementCreateApplication(simulator.processIdentifier)
 let windows = attribute(axApp, kAXWindowsAttribute) as? [AXUIElement] ?? []
 func title(of window: AXUIElement) -> String { attribute(window, kAXTitleAttribute) as? String ?? "" }
 
-let window: AXUIElement
-if let deviceName {
-    // Anchored at the start, and only on a whole name: "iPhone 17 Pro" must not match the window
-    // titled "bangui iPhone 17 Pro".
-    guard let match = windows.first(where: { title(of: $0).hasPrefix(deviceName + " ") })
-    else { fail("no simulator window for '\(deviceName)' — open: \(windows.map(title).joined(separator: ", "))") }
-    window = match
+// With `SIM_DEVICE` set, the window has to be the one titled for that device — taking the first
+// window would land every tap on another workspace's simulator, which looks like the app ignoring
+// input rather than like input going somewhere else. Matched on a whole name at the start rather
+// than anywhere in the title, so "iPhone 17 Pro" doesn't also select "bangui iPhone 17 Pro".
+let candidates: [AXUIElement]
+if let deviceTarget {
+    candidates = windows.filter { title(of: $0).hasPrefix(deviceTarget + " ") }
+    if candidates.isEmpty {
+        fail("""
+            no Simulator window titled for '\(deviceTarget)' — is that device booted? \
+            open: \(windows.map(title).joined(separator: ", "))
+            """)
+    }
 } else if windows.count > 1 {
+    // The same wrong-window tap, arrived at by saying nothing rather than by saying the wrong thing.
     fail("""
-        \(windows.count) simulator windows are open (\(windows.map(title).joined(separator: ", "))) \
+        \(windows.count) Simulator windows are open (\(windows.map(title).joined(separator: ", "))) \
         — set SIM_DEVICE to the device name so this doesn't drive the wrong one
         """)
 } else {
-    guard let only = windows.first else { fail("Simulator has no open window — try `make run`") }
-    window = only
+    candidates = windows
 }
-guard let screen = findDeviceScreen(window) else { fail("couldn't find the simulator's device screen") }
+guard let screen = candidates.lazy.compactMap({ findDeviceScreen($0) }).first
+else { fail("couldn't find the simulator's device screen") }
 
 let scale = screenshotWidth() / screen.width
 func screenPoint(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
