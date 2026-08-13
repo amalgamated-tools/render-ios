@@ -46,7 +46,7 @@ struct PostgresDetailModel: Identifiable, Hashable, Sendable {
         self.databaseUser = detail.databaseUser
         self.primaryPostgresID = detail.primaryPostgresID
         self.readReplicaNames = detail.readReplicas.map(\.name)
-        self.ipAllowListCount = detail.ipAllowList.count
+        self.ipAllowListCount = detail.ipAllowList?.count ?? 0
         self.maintenanceScheduledAt = detail.maintenance?.scheduledAt
         self.environmentID = detail.environmentId
         self.dashboardURL = URL(string: detail.dashboardUrl)

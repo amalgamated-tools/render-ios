@@ -22511,7 +22511,6 @@
           "name",
           "owner",
           "options",
-          "ipAllowList",
           "version",
           "dashboardUrl"
         ],
@@ -22598,7 +22597,6 @@
           "name",
           "owner",
           "options",
-          "ipAllowList",
           "version"
         ],
         "properties": {
@@ -23861,7 +23859,6 @@
         "type": "object",
         "required": [
           "id",
-          "ipAllowList",
           "createdAt",
           "updatedAt",
           "databaseName",
@@ -23952,7 +23949,8 @@
               "accelerated_384gb",
               "accelerated_512gb",
               "accelerated_768gb",
-              "accelerated_1024gb"
+              "accelerated_1024gb",
+              "starter_legacy"
             ]
           },
           "diskSizeGB": {
@@ -24006,7 +24004,6 @@
         "type": "object",
         "required": [
           "id",
-          "ipAllowList",
           "createdAt",
           "updatedAt",
           "dashboardUrl",
@@ -24015,7 +24012,6 @@
           "highAvailabilityEnabled",
           "name",
           "owner",
-          "project",
           "plan",
           "region",
           "readReplicas",
@@ -24141,7 +24137,8 @@
               "accelerated_384gb",
               "accelerated_512gb",
               "accelerated_768gb",
-              "accelerated_1024gb"
+              "accelerated_1024gb",
+              "starter_legacy"
             ]
           },
           "diskSizeGB": {
@@ -24201,7 +24198,8 @@
           "15",
           "16",
           "17",
-          "18"
+          "18",
+          "10"
         ]
       },
       "databaseRole": {

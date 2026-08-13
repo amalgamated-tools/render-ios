@@ -21,6 +21,13 @@ RELAXATIONS = {
     "buildFilter": ["paths", "ignoredPaths"],   # API returns ignoredPaths: null (paths too, defensively)
     "webServiceDetails": ["openPorts"],          # API returns openPorts: null
     "privateServiceDetails": ["openPorts"],
+    # A datastore with no allow-list rules comes back as `ipAllowList: null`, not `[]` — true for
+    # every Key Value instance in the sample workspace, which left both datastore tabs showing
+    # "Render returned data this version of the app doesn't understand" instead of a list.
+    "postgres": ["ipAllowList"],
+    "postgresDetail": ["ipAllowList", "project"],  # `project` is simply absent on an unprojected database
+    "keyValue": ["ipAllowList"],
+    "keyValueDetail": ["ipAllowList"],
 }
 
 # The same mismatch, for responses whose body schema is inline under components/responses rather
