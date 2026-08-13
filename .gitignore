@@ -24,7 +24,10 @@ Packages/*/.build/
 # Walkthrough recordings. Tens of MB apiece, and every frame is real workspace data — service
 # names, log lines, request paths. Publish one deliberately; don't let a `make walkthrough` stage it.
 docs/walkthrough*.mov
+docs/walkthrough*.mp4
 docs/walkthrough*.txt
+# docs/walkthrough.srt is tracked on purpose: it's a few KB of caption text, it diffs, and it's the
+# one artifact of a recording worth reviewing. The video it belongs to is not.
 
 # Secrets — never commit. A real Render API key for local live smoke tests lives in .env.
 .env
