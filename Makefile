@@ -52,6 +52,11 @@ walkthrough-oauth:
 walkthrough-captions:
 	@Scripts/burn-captions.sh
 
+## walkthrough-verify: one frame per beat, tiled — check the tour visited what it narrates
+.PHONY: walkthrough-verify
+walkthrough-verify:
+	@Scripts/verify-walkthrough.sh
+
 ## generate: re-vendor the OpenAPI spec and regenerate the client
 .PHONY: generate
 generate:

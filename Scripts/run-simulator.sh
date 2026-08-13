@@ -3,7 +3,9 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+echo "==> Repo root: $REPO_ROOT"
 SIMULATOR="${1:-iPhone 17 Pro}"
+echo "==> Simulator: $SIMULATOR"
 DERIVED_DATA="$REPO_ROOT/build/DerivedData"
 BUNDLE_ID="com.veverkap.RenderiOS"
 
