@@ -47,6 +47,11 @@ walkthrough:
 walkthrough-oauth:
 	@SIMULATOR="$(SIMULATOR)" Scripts/record-walkthrough-oauth.sh
 
+## walkthrough-captions: burn the recorder's beats file into the picture as subtitles
+.PHONY: walkthrough-captions
+walkthrough-captions:
+	@Scripts/burn-captions.sh
+
 ## generate: re-vendor the OpenAPI spec and regenerate the client
 .PHONY: generate
 generate:

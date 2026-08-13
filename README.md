@@ -336,6 +336,21 @@ Each run reinstalls with the Keychain wiped so the tour starts from onboarding �
 restores the last screen on launch and a blind coordinate script drifts. Alongside the movie it
 writes a `.txt` of timestamped beats: `simctl` records no audio, so that is the narration script.
 
+To put the two together:
+
+```sh
+make walkthrough-captions               # docs/walkthrough-captioned.mp4, subtitles burned in
+PRESET=veryfast CRF=28 make walkthrough-captions   # a quick proof before the good encode
+```
+
+`Scripts/beats-to-srt.py` converts the beats file to SRT — each cue runs until the next beat starts,
+since the recorder writes start times only — and `Scripts/burn-captions.sh` hard-subs it with libass.
+Hard subs rather than a `mov_text` track because a README, a PR, and Slack all render video without
+subtitle controls, so a soft track is invisible exactly where it's wanted. **Homebrew's plain
+`ffmpeg` bottle has no libass**: the `subtitles` filter is missing and the parser reports it as
+`No option name near '<file>'`, which reads like a quoting bug. `brew install ffmpeg-full` provides a
+build that has it, and the script finds it.
+
 The OAuth variant stops and waits for you to approve in a browser, because that step is a human by
 design. By default you approve on the Mac and the recording only ever shows the code and the
 spinner; `OPEN_IN_SIM=1` puts the whole approval in the simulator's Safari instead.
