@@ -1,14 +1,15 @@
 import Foundation
 import Security
 
-/// A minimal wrapper over the Keychain for a single kind of secret: the Render API key.
+/// A minimal wrapper over the Keychain for this app's secrets: the Render API key and, when the
+/// user signs in with OAuth instead, the token pair issued by the device-authorization flow.
 ///
-/// Uses a generic-password item scoped by `service` + `account`. Items are
+/// Uses generic-password items scoped by `service` + `account`. Items are
 /// `kSecAttrAccessibleAfterFirstUnlock` so a background refresh after the first unlock can still
-/// read the key, but the key never leaves the device and is not included in unencrypted backups.
+/// read them, but they never leave the device and are not included in unencrypted backups.
 ///
-/// The API key is the *only* thing that belongs here — everything non-secret (the selected owner
-/// id, for instance) lives in `UserDefaults`.
+/// Secrets are the *only* thing that belongs here — everything non-secret (the selected owner id,
+/// for instance) lives in `UserDefaults`.
 public enum Keychain {
     /// Raised when the Keychain returns a status other than success or "item not found".
     public struct Error: Swift.Error, Sendable, Hashable {
@@ -16,7 +17,10 @@ public enum Keychain {
     }
 
     private static let service = "com.veverkap.RenderiOS.apiKey"
-    private static let account = "render-api-key"
+    private static let apiKeyAccount = "render-api-key"
+    private static let oauthTokenAccount = "render-oauth-token"
+
+    // MARK: - API key (legacy paste-a-key path)
 
     /// Stores `value`, replacing any existing key. Passing `nil`/empty deletes instead.
     public static func saveAPIKey(_ value: String?) throws {
@@ -24,12 +28,54 @@ public enum Keychain {
             try deleteAPIKey()
             return
         }
-        let data = Data(value.utf8)
-        let query: [String: Any] = [
+        try save(Data(value.utf8), account: apiKeyAccount)
+    }
+
+    /// Returns the stored key, or `nil` if none has been saved.
+    public static func readAPIKey() throws -> String? {
+        guard let data = try read(account: apiKeyAccount) else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
+    /// Removes the stored key. A missing item is not an error.
+    public static func deleteAPIKey() throws {
+        try delete(account: apiKeyAccount)
+    }
+
+    // MARK: - OAuth token pair
+
+    /// Stores the token pair as one JSON blob, replacing any existing one. `nil` deletes instead.
+    public static func saveOAuthToken(_ token: OAuthToken?) throws {
+        guard let token else {
+            try deleteOAuthToken()
+            return
+        }
+        try save(try JSONEncoder().encode(token), account: oauthTokenAccount)
+    }
+
+    /// Returns the stored token pair, or `nil` if none has been saved.
+    public static func readOAuthToken() throws -> OAuthToken? {
+        guard let data = try read(account: oauthTokenAccount) else { return nil }
+        return try JSONDecoder().decode(OAuthToken.self, from: data)
+    }
+
+    /// Removes the stored token pair. A missing item is not an error.
+    public static func deleteOAuthToken() throws {
+        try delete(account: oauthTokenAccount)
+    }
+
+    // MARK: - Generic-password plumbing
+
+    private static func query(for account: String) -> [String: Any] {
+        [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: account,
         ]
+    }
+
+    private static func save(_ data: Data, account: String) throws {
+        let query = query(for: account)
         let attributes: [String: Any] = [
             kSecValueData as String: data,
             kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock,
@@ -49,21 +95,15 @@ public enum Keychain {
         }
     }
 
-    /// Returns the stored key, or `nil` if none has been saved.
-    public static func readAPIKey() throws -> String? {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne,
-        ]
+    private static func read(account: String) throws -> Data? {
+        var query = query(for: account)
+        query[kSecReturnData as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
         var result: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
         switch status {
         case errSecSuccess:
-            guard let data = result as? Data else { return nil }
-            return String(data: data, encoding: .utf8)
+            return result as? Data
         case errSecItemNotFound:
             return nil
         default:
@@ -71,14 +111,8 @@ public enum Keychain {
         }
     }
 
-    /// Removes the stored key. A missing item is not an error.
-    public static func deleteAPIKey() throws {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-        ]
-        let status = SecItemDelete(query as CFDictionary)
+    private static func delete(account: String) throws {
+        let status = SecItemDelete(query(for: account) as CFDictionary)
         guard status == errSecSuccess || status == errSecItemNotFound else {
             throw Error(status: status)
         }

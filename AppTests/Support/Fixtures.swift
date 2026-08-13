@@ -301,6 +301,17 @@ enum Fixtures {
 
     static let ownerID = "tea-000000000000000000"
 
+    /// One page of `GET /owners`, as `AuthStore` validates credentials with.
+    static func ownersPage(_ owners: [(id: String, name: String)]) -> String {
+        let elements = owners.map { entry in
+            """
+            {"owner":{"id":"\(entry.id)","name":"\(entry.name)","email":"team@render.com",\
+            "type":"team"},"cursor":"cursor-\(entry.id)"}
+            """
+        }
+        return "[\(elements.joined(separator: ","))]"
+    }
+
     /// `serviceDetails` is required on every service, even though the list projection reads none
     /// of it.
     private static let webServiceDetails = """

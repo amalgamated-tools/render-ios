@@ -18,6 +18,12 @@ struct RootView: View {
             ProgressView("Connecting…")
         case .needsKey, .authenticating:
             OnboardingView(authStore: authStore)
+        case .awaitingAuthorization(let userCode, let verificationURL):
+            DeviceAuthorizationView(
+                authStore: authStore,
+                userCode: userCode,
+                verificationURL: verificationURL
+            )
         case .authenticated:
             authenticatedView
         }
