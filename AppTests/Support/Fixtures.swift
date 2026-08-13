@@ -144,6 +144,32 @@ enum Fixtures {
         }
     }
 
+    /// One page of `GET /services/{id}/env-vars`.
+    static func envVarsPage(_ vars: [(key: String, value: String)]) -> String {
+        let elements = vars.map { one in
+            #"{"envVar":{"key":"\#(one.key)","value":"\#(one.value)"},"cursor":"cursor-\#(one.key)"}"#
+        }
+        return "[\(elements.joined(separator: ","))]"
+    }
+
+    /// A single `envVar`, as `PUT /services/{id}/env-vars/{key}` answers with.
+    static func envVar(key: String, value: String) -> String {
+        #"{"key":"\#(key)","value":"\#(value)"}"#
+    }
+
+    /// One page of `GET /services/{id}/secret-files`.
+    static func secretFilesPage(_ files: [(name: String, content: String)]) -> String {
+        let elements = files.map { one in
+            #"{"secretFile":{"name":"\#(one.name)","content":"\#(one.content)"},"cursor":"cursor-\#(one.name)"}"#
+        }
+        return "[\(elements.joined(separator: ","))]"
+    }
+
+    /// A single `secretFile`, as `PUT /services/{id}/secret-files/{name}` answers with.
+    static func secretFile(name: String, content: String) -> String {
+        #"{"name":"\#(name)","content":"\#(content)"}"#
+    }
+
     static let ownerID = "tea-000000000000000000"
 
     /// `serviceDetails` is required on every service, even though the list projection reads none
