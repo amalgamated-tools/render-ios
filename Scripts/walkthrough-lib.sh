@@ -10,9 +10,12 @@
 # live pass; a different device size needs a new pass. They also assume a **web service** — the
 # drill-down card is a different height on a static site, so the row offsets move.
 #
-# The ONBOARD_* triple was re-measured after the onboarding hero landed. The in-app coordinates
-# below it have NOT been re-measured since the list rows grew glyph tiles and the service detail
-# screen grew a header — both move things. Re-read them off a live pass before trusting a recording.
+# Re-measured after the visual redesign, against a live workspace. Two things moved and one
+# usefully didn't: the ONBOARD_* triple all shifted (the hero rebuilt that screen), and
+# LIST_FIRST_RESULT dropped 30px as list rows grew glyph tiles. The DETAIL_* block did NOT move
+# despite the detail screen gaining a header, because those rows are read with the screen scrolled
+# to the bottom — see scroll_to_bottom. The LOGS_* coordinates were not re-checked; that screen was
+# not touched by the redesign.
 
 set -euo pipefail
 
@@ -30,7 +33,7 @@ ONBOARD_APIKEY=(282 2024)     # "Use an API key instead" — expanding it focuse
 ONBOARD_CONTINUE=(601 2343)
 DEVICE_AUTH_OPEN=(641 1589)   # "Open render.com to approve", on the device-flow waiting screen
 LIST_SEARCH=(346 417)
-LIST_FIRST_RESULT=(406 447)   # first row once the search field is active
+LIST_FIRST_RESULT=(406 477)   # first row once the search field is active
 LIST_ACCOUNT=(916 252)
 LIST_SIGNOUT=(714 278)
 NAV_BACK=(113 252)
