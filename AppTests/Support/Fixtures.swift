@@ -299,6 +299,103 @@ enum Fixtures {
         #"{"headers":\#(route(id: id, type: type, source: source, destination: destination, priority: priority))}"#
     }
 
+    /// A whole `postgres` payload. The schema marks nearly everything required, so the fixture is
+    /// chunky even though the list projection reads a fraction of it.
+    static func postgresJSON(
+        id: String = "dpg-1",
+        name: String = "db",
+        status: String = "available",
+        suspended: String = "not_suspended",
+        suspenders: [String] = [],
+        role: String = "primary",
+        highAvailability: Bool = false,
+        diskSizeGB: Int? = 10,
+        readReplicaNames: [String] = [],
+        expiresAt: String? = nil,
+        maintenanceScheduledAt: String? = nil
+    ) -> String {
+        let replicas = readReplicaNames.enumerated().map {
+            #"{"id":"dpg-replica-\#($0.offset)","name":"\#($0.element)"}"#
+        }
+        let disk = diskSizeGB.map { #","diskSizeGB":\#($0)"# } ?? ""
+        let expires = expiresAt.map { #","expiresAt":"\#($0)""# } ?? ""
+        let maintenance = maintenanceScheduledAt.map {
+            #","maintenance":{"id":"mrn-1","type":"postgres","scheduledAt":"\#($0)","state":"scheduled"}"#
+        } ?? ""
+        let suspenderList = suspenders.map { "\"\($0)\"" }.joined(separator: ",")
+        return """
+            {"id":"\(id)","name":"\(name)","status":"\(status)","suspended":"\(suspended)",\
+            "owner":\(owner),"suspenders":[\(suspenderList)],"role":"\(role)",\
+            "highAvailabilityEnabled":\(highAvailability),"plan":"basic_1gb","region":"oregon",\
+            "version":"16","createdAt":"2026-01-01T00:00:00Z","updatedAt":"2026-01-02T00:00:00Z",\
+            "databaseName":"appdb","databaseUser":"appuser","ipAllowList":[],\
+            "readReplicas":[\(replicas.joined(separator: ","))],\
+            "dashboardUrl":"https://dashboard.render.com/d/\(id)",\
+            "diskAutoscalingEnabled":true,"connectionPool":""\(disk)\(expires)\(maintenance)}
+            """
+    }
+
+    /// One page of `GET /postgres`.
+    static func postgresPage(_ databases: [(id: String, name: String)]) -> String {
+        let elements = databases.map { database in
+            #"{"postgres":\#(postgresJSON(id: database.id, name: database.name)),"cursor":"cursor-\#(database.id)"}"#
+        }
+        return "[\(elements.joined(separator: ","))]"
+    }
+
+    /// `GET /postgres/{id}/connection-info`.
+    static func postgresConnectionInfo(withPoolStrings: Bool = false) -> String {
+        let pool = withPoolStrings
+            ? #","internalConnectionPoolString":"postgres://pool-internal","externalConnectionPoolString":"postgres://pool-external""#
+            : ""
+        return """
+            {"password":"hunter2","internalConnectionString":"postgres://internal",\
+            "externalConnectionString":"postgres://external","psqlCommand":"PGPASSWORD=hunter2 psql"\(pool)}
+            """
+    }
+
+    /// A whole `keyValue` payload. Note the asymmetries with Postgres the store has to live with:
+    /// no `suspended` field, and `dashboardUrl` exists here but not on the *detail* schema.
+    static func keyValueJSON(
+        id: String = "red-1",
+        name: String = "cache",
+        status: String = "available",
+        maxmemoryPolicy: String? = "allkeys_lru",
+        persistenceMode: String? = "snapshot",
+        maintenanceScheduledAt: String? = nil,
+        includeDashboardURL: Bool = true
+    ) -> String {
+        var options: [String] = []
+        if let maxmemoryPolicy { options.append(#""maxmemoryPolicy":"\#(maxmemoryPolicy)""#) }
+        if let persistenceMode { options.append(#""persistenceMode":"\#(persistenceMode)""#) }
+        let dashboard = includeDashboardURL
+            ? #","dashboardUrl":"https://dashboard.render.com/r/\#(id)""#
+            : ""
+        let maintenance = maintenanceScheduledAt.map {
+            #","maintenance":{"id":"mrn-1","type":"key_value","scheduledAt":"\#($0)","state":"scheduled"}"#
+        } ?? ""
+        return """
+            {"id":"\(id)","name":"\(name)","status":"\(status)","owner":\(owner),\
+            "plan":"starter","region":"oregon",\
+            "version":"8","createdAt":"2026-01-01T00:00:00Z","updatedAt":"2026-01-02T00:00:00Z",\
+            "options":{\(options.joined(separator: ","))},"ipAllowList":[]\(dashboard)\(maintenance)}
+            """
+    }
+
+    /// One page of `GET /key-value`.
+    static func keyValuePage(_ instances: [(id: String, name: String)]) -> String {
+        let elements = instances.map { instance in
+            #"{"keyValue":\#(keyValueJSON(id: instance.id, name: instance.name)),"cursor":"cursor-\#(instance.id)"}"#
+        }
+        return "[\(elements.joined(separator: ","))]"
+    }
+
+    /// `GET /key-value/{id}/connection-info`.
+    static let keyValueConnectionInfo = """
+        {"internalConnectionString":"rediss://internal","externalConnectionString":"rediss://external",\
+        "cliCommand":"valkey-cli -u rediss://external"}
+        """
+
     static let ownerID = "tea-000000000000000000"
 
     /// One page of `GET /owners`, as `AuthStore` validates credentials with.

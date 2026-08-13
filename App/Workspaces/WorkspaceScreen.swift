@@ -5,11 +5,11 @@ import SwiftUI
 ///
 /// Tabs arrived with env groups, which are the first resource in the app that belongs to the
 /// *workspace* rather than to a service — there is no service-side listing of them, so they can't be a
-/// drill-down. A second toolbar item on the service list would have hidden them; the tab bar is also
-/// where Phase 5c's datastores go.
+/// drill-down. A second toolbar item on the service list would have hidden them; Phase 5c's datastores
+/// (Postgres and Key Value) live here for the same reason.
 ///
 /// This screen owns what is per-workspace rather than per-list: the scope picker, the account menu, and
-/// the `ProjectsStore` behind them. Both tabs then agree about the active scope, and switching tabs
+/// the `ProjectsStore` behind them. Every tab then agrees about the active scope, and switching tabs
 /// doesn't re-fetch the project list.
 struct WorkspaceScreen: View {
     @Bindable var authStore: AuthStore
@@ -30,6 +30,18 @@ struct WorkspaceScreen: View {
             Tab("Services", systemImage: "square.stack.3d.up") {
                 NavigationStack {
                     ServicesScreen(client: client, ownerID: ownerID, projectsStore: projectsStore)
+                        .toolbar { sharedToolbar }
+                }
+            }
+            Tab("Postgres", systemImage: "cylinder.split.1x2") {
+                NavigationStack {
+                    PostgresScreen(client: client, ownerID: ownerID, projectsStore: projectsStore)
+                        .toolbar { sharedToolbar }
+                }
+            }
+            Tab("Key Value", systemImage: "bolt.horizontal.circle") {
+                NavigationStack {
+                    KeyValueScreen(client: client, ownerID: ownerID, projectsStore: projectsStore)
                         .toolbar { sharedToolbar }
                 }
             }

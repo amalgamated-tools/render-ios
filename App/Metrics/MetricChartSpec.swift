@@ -108,6 +108,21 @@ enum MetricsCatalog {
         return charts
     }
 
+    /// Datastore charts are a fixed set rather than type-driven: every Postgres instance has CPU,
+    /// memory, and connections. Disk only exists on plans with a fixed disk — flexible plans
+    /// report no `diskSizeGB`, so there is nothing to chart against.
+    static func charts(forPostgres database: PostgresDetailModel) -> [MetricChartSpec] {
+        var charts: [MetricChartSpec] = [cpu, memory, activeConnections]
+        if database.diskSizeGB != nil {
+            charts.append(disk)
+        }
+        return charts
+    }
+
+    static func charts(forKeyValue instance: KeyValueDetailModel) -> [MetricChartSpec] {
+        [cpu, memory, activeConnections]
+    }
+
     // MARK: - Applicability
 
     private static func runsOnInstances(_ type: Components.Schemas.ServiceType) -> Bool {
@@ -204,6 +219,15 @@ enum MetricsCatalog {
         // The one series endpoint that takes no resolution, so Render chooses the buckets.
         footnote: "Outbound transfer, bucketed by Render.",
         series: [.init(.bandwidth, name: "Egress", distinguishingLabel: nil)]
+    )
+
+    // Datastore-only: services never chart connections, so this spec ships with the Postgres and
+    // Key Value screens even though the endpoint predates them.
+    static let activeConnections = MetricChartSpec(
+        id: "active-connections",
+        title: "Connections",
+        systemImage: "point.3.connected.trianglepath.dotted",
+        series: [.init(.activeConnections, name: "Connections", distinguishingLabel: nil)]
     )
 
     static let disk = MetricChartSpec(

@@ -260,3 +260,43 @@ if [ "$headers_code" = "200" ]; then
 else
   echo "  HTTP $headers_code"
 fi
+
+# --- Phase 5c: datastores (read-only) --------------------------------------------------------------
+
+echo "==> GET /postgres?ownerId=$first_owner"
+postgres_list=$(curl -fsS "${auth[@]}" "$API/postgres?ownerId=$first_owner&includeReplicas=true&limit=100")
+echo "  count=$(echo "$postgres_list" | jq -r 'length')"
+echo "$postgres_list" | jq -r '.[] | "  \(.postgres.status)\t\(.postgres.plan)\t\(.postgres.role)\t\(.postgres.name)\t(\(.postgres.id))"'
+
+postgres_id=$(echo "$postgres_list" | jq -r '.[0].postgres.id // empty')
+if [ -n "$postgres_id" ]; then
+  echo "==> GET /postgres/$postgres_id"
+  pg=$(curl -fsS "${auth[@]}" "$API/postgres/$postgres_id")
+  echo "  $(echo "$pg" | jq -r '"\(.name)\tstatus=\(.status)\tversion=\(.version)\tha=\(.highAvailabilityEnabled)\tdiskSizeGB=\(.diskSizeGB // "none")"')"
+
+  echo "==> GET /postgres/$postgres_id/connection-info"
+  # Assert the shape without printing the body — every field is a credential.
+  pg_conn_code=$(curl -sS -o /dev/null -w '%{http_code}' "${auth[@]}" "$API/postgres/$postgres_id/connection-info")
+  echo "  HTTP $pg_conn_code (body suppressed: credentials)"
+fi
+
+echo "==> GET /key-value?ownerId=$first_owner"
+kv_list=$(curl -fsS "${auth[@]}" "$API/key-value?ownerId=$first_owner&limit=100")
+echo "  count=$(echo "$kv_list" | jq -r 'length')"
+echo "$kv_list" | jq -r '.[] | "  \(.keyValue.status)\t\(.keyValue.plan)\t\(.keyValue.name)\t(\(.keyValue.id))"'
+
+kv_id=$(echo "$kv_list" | jq -r '.[0].keyValue.id // empty')
+if [ -n "$kv_id" ]; then
+  echo "==> GET /key-value/$kv_id"
+  kv=$(curl -fsS "${auth[@]}" "$API/key-value/$kv_id")
+  echo "  $(echo "$kv" | jq -r '"\(.name)\tstatus=\(.status)\tversion=\(.version)\tpolicy=\(.options.maxmemoryPolicy // "unset")"')"
+  # The detail payload documents no dashboardUrl, which is why the app carries the list's copy into
+  # the detail screen. If it ever starts arriving, that plumbing can go.
+  if [ "$(echo "$kv" | jq -r 'has("dashboardUrl")')" = "true" ]; then
+    echo "  !!! /key-value/{id} now returns dashboardUrl — KeyValueDetailView no longer needs it passed in"
+  fi
+
+  echo "==> GET /key-value/$kv_id/connection-info"
+  kv_conn_code=$(curl -sS -o /dev/null -w '%{http_code}' "${auth[@]}" "$API/key-value/$kv_id/connection-info")
+  echo "  HTTP $kv_conn_code (body suppressed: credentials)"
+fi
