@@ -328,13 +328,35 @@ The same driver, with `simctl io recordVideo` rolling, produces a video tour of 
 
 ```sh
 make walkthrough                        # docs/walkthrough.mov, signs in with the key in .env
-SERVICE=my-api make walkthrough         # tour a different service
+SERVICE=my-api make walkthrough         # tour a different web service
+STATIC_SERVICE=my-site make walkthrough # and a different static site
 make walkthrough-oauth                  # the same tour, through the OAuth device flow
 ```
+
+The tour is about six minutes and covers every screen: the list and its workspace/project scope, a
+web service in full (deploys, logs and the live tail, metrics, events, environment, secret files, env
+groups, custom domains), then a static site for the two drill-downs only it has — redirects and
+headers — then the Postgres and Key Value tabs, the workspace's env groups, and signing out. It needs
+**two** services to do that, which is why `SERVICE` and `STATIC_SERVICE` are separate.
+
+**Nothing in it writes.** Every tap navigates or opens something that is then cancelled, so it is safe
+to point at a workspace you can't afford to change. The datastore action menus are the one thing it
+deliberately never opens: on Postgres and Key Value the destructive item renders directly under the
+toolbar, close enough that a mistimed dismiss tap could suspend a real database.
 
 Each run reinstalls with the Keychain wiped so the tour starts from onboarding — without that, iOS
 restores the last screen on launch and a blind coordinate script drifts. Alongside the movie it
 writes a `.txt` of timestamped beats: `simctl` records no audio, so that is the narration script.
+
+A blind coordinate script fails quietly — a single swallowed tap aims every later tap at the wrong
+screen while the console still prints the whole tour — so check the result before publishing it:
+
+```sh
+Scripts/verify-walkthrough.sh           # one frame per beat, tiled, in .context/verify/
+```
+
+Each frame should show the screen its caption describes. A leg of the tour went missing this way once
+already, from one second of settle after a scroll instead of two.
 
 To put the two together:
 
@@ -345,6 +367,11 @@ PRESET=veryfast CRF=28 make walkthrough-captions   # a quick proof before the go
 
 `Scripts/beats-to-srt.py` converts the beats file to SRT — each cue runs until the next beat starts,
 since the recorder writes start times only — and `Scripts/burn-captions.sh` hard-subs it with libass.
+Cue times are wall-clock and **the recording's clock is not wall time**: `simctl` timestamps frames by
+when the screen changed and never pads the gaps, so a still simulator recorded for twenty seconds
+writes a *0.07-second* movie. Every pause in the tour is squeezed out of the timeline, which leaves
+cues running a few seconds behind the picture. The script corrects the total from the tour's wall
+duration, but the squeeze isn't evenly spread, so check the alignment rather than assume it.
 Hard subs rather than a `mov_text` track because a README, a PR, and Slack all render video without
 subtitle controls, so a soft track is invisible exactly where it's wanted. **Homebrew's plain
 `ffmpeg` bottle has no libass**: the `subtitles` filter is missing and the parser reports it as
@@ -356,9 +383,10 @@ design. By default you approve on the Mac and the recording only ever shows the 
 spinner; `OPEN_IN_SIM=1` puts the whole approval in the simulator's Safari instead.
 
 Two things worth knowing before publishing a recording. It shows **real data** — workspace name,
-service names, log lines, request paths — so point it at a workspace you're willing to publish. And
-the coordinates were read off an **iPhone 17 Pro** running a **web service**; another device size, or
-a static site's shorter drill-down card, needs a fresh pass.
+service names, env var names and values, log lines, request paths — so point it at a workspace you're
+willing to publish. And the coordinates were read off an **iPhone 17 Pro**; another device size needs
+a fresh pass, and so does a service type whose drill-down list is a different length than the web
+service and static site the tour expects.
 
 ---
 

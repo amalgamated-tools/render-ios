@@ -10492,7 +10492,7 @@ public enum Components {
             /// The IP allow list for the Key Value instance
             ///
             /// - Remark: Generated from `#/components/schemas/keyValue/ipAllowList`.
-            public var ipAllowList: [Components.Schemas.CidrBlockAndDescription]
+            public var ipAllowList: [Components.Schemas.CidrBlockAndDescription]?
             /// The ID of the environment the Key Value instance is associated with
             ///
             /// - Remark: Generated from `#/components/schemas/keyValue/environmentId`.
@@ -10531,7 +10531,7 @@ public enum Components {
                 name: Swift.String,
                 owner: Components.Schemas.Owner,
                 options: Components.Schemas.KeyValueOptions,
-                ipAllowList: [Components.Schemas.CidrBlockAndDescription],
+                ipAllowList: [Components.Schemas.CidrBlockAndDescription]? = nil,
                 environmentId: Swift.String? = nil,
                 version: Swift.String,
                 dashboardUrl: Swift.String
@@ -10622,7 +10622,7 @@ public enum Components {
             /// The IP allow list for the Key Value instance
             ///
             /// - Remark: Generated from `#/components/schemas/keyValueDetail/ipAllowList`.
-            public var ipAllowList: [Components.Schemas.CidrBlockAndDescription]
+            public var ipAllowList: [Components.Schemas.CidrBlockAndDescription]?
             /// The ID of the environment the Key Value instance is associated with
             ///
             /// - Remark: Generated from `#/components/schemas/keyValueDetail/environmentId`.
@@ -10711,7 +10711,7 @@ public enum Components {
                 name: Swift.String,
                 owner: Components.Schemas.Owner,
                 options: Components.Schemas.KeyValueOptions,
-                ipAllowList: [Components.Schemas.CidrBlockAndDescription],
+                ipAllowList: [Components.Schemas.CidrBlockAndDescription]? = nil,
                 environmentId: Swift.String? = nil,
                 version: Swift.String,
                 maintenance: Components.Schemas.KeyValueDetail.MaintenancePayload? = nil
@@ -12482,7 +12482,7 @@ public enum Components {
             /// - Remark: Generated from `#/components/schemas/postgres/id`.
             public var id: Swift.String
             /// - Remark: Generated from `#/components/schemas/postgres/ipAllowList`.
-            public var ipAllowList: [Components.Schemas.CidrBlockAndDescription]
+            public var ipAllowList: [Components.Schemas.CidrBlockAndDescription]?
             /// - Remark: Generated from `#/components/schemas/postgres/createdAt`.
             public var createdAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/postgres/updatedAt`.
@@ -12533,6 +12533,7 @@ public enum Components {
                 case accelerated512gb = "accelerated_512gb"
                 case accelerated768gb = "accelerated_768gb"
                 case accelerated1024gb = "accelerated_1024gb"
+                case starterLegacy = "starter_legacy"
             }
             /// - Remark: Generated from `#/components/schemas/postgres/plan`.
             public var plan: Components.Schemas.Postgres.PlanPayload
@@ -12598,7 +12599,7 @@ public enum Components {
             ///   - connectionPool: What connection pool to use (if any) out of 'pgbouncer' and 'none'
             public init(
                 id: Swift.String,
-                ipAllowList: [Components.Schemas.CidrBlockAndDescription],
+                ipAllowList: [Components.Schemas.CidrBlockAndDescription]? = nil,
                 createdAt: Foundation.Date,
                 updatedAt: Foundation.Date,
                 expiresAt: Foundation.Date? = nil,
@@ -12679,7 +12680,7 @@ public enum Components {
             /// - Remark: Generated from `#/components/schemas/postgresDetail/id`.
             public var id: Swift.String
             /// - Remark: Generated from `#/components/schemas/postgresDetail/ipAllowList`.
-            public var ipAllowList: [Components.Schemas.CidrBlockAndDescription]
+            public var ipAllowList: [Components.Schemas.CidrBlockAndDescription]?
             /// - Remark: Generated from `#/components/schemas/postgresDetail/createdAt`.
             public var createdAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/postgresDetail/updatedAt`.
@@ -12788,6 +12789,7 @@ public enum Components {
                 case accelerated512gb = "accelerated_512gb"
                 case accelerated768gb = "accelerated_768gb"
                 case accelerated1024gb = "accelerated_1024gb"
+                case starterLegacy = "starter_legacy"
             }
             /// - Remark: Generated from `#/components/schemas/postgresDetail/plan`.
             public var plan: Components.Schemas.PostgresDetail.PlanPayload
@@ -12853,7 +12855,7 @@ public enum Components {
             ///   - connectionPool: What connection pool to use (if any) out of 'pgbouncer' and 'none'
             public init(
                 id: Swift.String,
-                ipAllowList: [Components.Schemas.CidrBlockAndDescription],
+                ipAllowList: [Components.Schemas.CidrBlockAndDescription]? = nil,
                 createdAt: Foundation.Date,
                 updatedAt: Foundation.Date,
                 expiresAt: Foundation.Date? = nil,
@@ -12947,6 +12949,7 @@ public enum Components {
             case _16 = "16"
             case _17 = "17"
             case _18 = "18"
+            case _10 = "10"
         }
         /// - Remark: Generated from `#/components/schemas/databaseRole`.
         @frozen public enum DatabaseRole: String, Codable, Hashable, Sendable, CaseIterable {

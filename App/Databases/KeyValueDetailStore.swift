@@ -32,7 +32,7 @@ struct KeyValueDetailModel: Identifiable, Hashable, Sendable {
         self.version = detail.version
         self.maxmemoryPolicy = detail.options.maxmemoryPolicy
         self.persistenceMode = detail.options.persistenceMode
-        self.ipAllowListCount = detail.ipAllowList.count
+        self.ipAllowListCount = detail.ipAllowList?.count ?? 0
         self.maintenanceScheduledAt = detail.maintenance?.scheduledAt
         self.environmentID = detail.environmentId
         self.createdAt = detail.createdAt

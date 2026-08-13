@@ -36,6 +36,11 @@ echo "==> Relaxing required for fields the API returns as null"
 # this the generated strict decoder rejects real responses. See the script for the field list.
 python3 "$REPO_ROOT/Scripts/relax-nullable.py" "$SPEC"
 
+echo "==> Widening enums the live API overruns"
+# An enum value the spec doesn't list fails the whole response decode, and Render still runs
+# resources on plans and versions it no longer documents. See the script for the value list.
+python3 "$REPO_ROOT/Scripts/widen-enums.py" "$SPEC"
+
 echo "==> Ordering undiscriminated oneOf members"
 # service.serviceDetails has no discriminator, so the generated decoder takes the first member that
 # decodes — which makes the spec's ordering decide correctness. See the script for the one pair
