@@ -17652,7 +17652,7 @@ public enum Components {
                     /// - Remark: Generated from `#/components/responses/Logs200Response/content/json/logs`.
                     public typealias LogsPayload = [Components.Responses.Logs200Response.Body.JsonPayload.LogsPayloadPayload]
                     /// - Remark: Generated from `#/components/responses/Logs200Response/content/json/logs`.
-                    public var logs: Components.Responses.Logs200Response.Body.JsonPayload.LogsPayload
+                    public var logs: Components.Responses.Logs200Response.Body.JsonPayload.LogsPayload?
                     /// Creates a new `JsonPayload`.
                     ///
                     /// - Parameters:
@@ -17664,7 +17664,7 @@ public enum Components {
                         hasMore: Swift.Bool,
                         nextStartTime: Foundation.Date,
                         nextEndTime: Foundation.Date,
-                        logs: Components.Responses.Logs200Response.Body.JsonPayload.LogsPayload
+                        logs: Components.Responses.Logs200Response.Body.JsonPayload.LogsPayload? = nil
                     ) {
                         self.hasMore = hasMore
                         self.nextStartTime = nextStartTime

@@ -124,7 +124,8 @@ final class LogsStore {
                     .listLogsQuery(startTime: nextStartTime, endTime: nextEndTime, limit: pageSize))
                 .ok.body.json
 
-            append(page.logs.map(LogLine.init))
+            // A window with no lines comes back as `logs: null` rather than `[]` — same thing here.
+            append((page.logs ?? []).map(LogLine.init))
             // Render hands back the exact window to ask for next, so there's nothing to compute —
             // and nothing to get wrong when two lines share a timestamp.
             nextStartTime = page.nextStartTime

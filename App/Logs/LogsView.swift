@@ -225,10 +225,17 @@ private struct LogLineRow: View {
                 Text(line.message)
                     .font(.system(.caption, design: .monospaced))
                     .textSelection(.enabled)
+                    // Collapsed rows are capped so one long line can't own the screen: a service
+                    // whose paths carry a big query string (a renderer taking its input in the URL,
+                    // say) otherwise pushes every other line out of view, and scanning newest-first
+                    // is the whole point of this list. Tapping the row still shows all of it.
+                    .lineLimit(isExpanded ? nil : 4)
                 HStack(spacing: 6) {
                     Text(line.timestamp.formatted(date: .omitted, time: .standard))
                     if let subtitle = requestSubtitle {
                         Text(subtitle)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
                     }
                 }
                 .font(.caption2)
