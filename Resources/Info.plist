@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- The ONLY keys here are the ones GENERATE_INFOPLIST_FILE cannot express. Everything else is
+	     still generated from build settings and merged into this file at build time.
+
+	     UILaunchScreen is a nested dictionary, and the INFOPLIST_KEY_<X> mechanism only emits
+	     top-level keys, so there is no build setting that can describe a launch screen with art on
+	     it — INFOPLIST_KEY_UILaunchScreen_Generation (which produced the blank one) is the only
+	     UILaunchScreen setting that exists.
+
+	     UIImageName is drawn centred at the image's natural POINT size and is never scaled, so
+	     LaunchLogomark is authored at exactly 96pt by Scripts/make-brand-assets.swift. Dark mode is
+	     handled in LaunchBackground rather than in the image: the mark is white in both appearances.
+
+	     iOS caches the rendered launch screen against the app version, so edits here appear not to
+	     take effect. Reinstall (Scripts/run-simulator.sh UNINSTALL=1) to see them. -->
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UIColorName</key>
+		<string>LaunchBackground</string>
+		<key>UIImageName</key>
+		<string>LaunchLogomark</string>
+		<key>UIImageRespectsSafeAreaInsets</key>
+		<false/>
+	</dict>
+</dict>
+</plist>

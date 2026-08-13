@@ -30,6 +30,16 @@ xcrun simctl boot "$DEVICE" 2>/dev/null || true
 xcrun simctl bootstatus "$DEVICE" -b > /dev/null
 open -a Simulator
 
+if [ "${UNINSTALL:-0}" = "1" ]; then
+  # iOS caches the *rendered* launch screen and keys it to the app version, so editing
+  # LaunchLogomark or LaunchBackground and reinstalling over the top shows the stale art
+  # indefinitely — which looks exactly like the asset change not having compiled. Uninstalling is
+  # the only reliable way to clear it. Opt-in because it also wipes the Keychain entry, so a plain
+  # `make run` doesn't sign you out every time.
+  echo "==> Uninstalling first (clears the cached launch screen)"
+  xcrun simctl uninstall "$DEVICE" "$BUNDLE_ID" 2>/dev/null || true
+fi
+
 echo "==> Installing and launching"
 xcrun simctl install "$DEVICE" "$DERIVED_DATA/Build/Products/Debug-iphonesimulator/RenderiOS.app"
 xcrun simctl launch "$DEVICE" "$BUNDLE_ID"

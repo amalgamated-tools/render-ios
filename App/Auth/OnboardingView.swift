@@ -5,6 +5,9 @@ import SwiftUI
 /// errors inline, and a working key only stored on success.
 struct OnboardingView: View {
     @Bindable var authStore: AuthStore
+    /// Shared with ``SplashView`` so the logomark flies from the splash into this header rather
+    /// than cross-fading between two unrelated positions.
+    var brandNamespace: Namespace.ID
     @State private var apiKey = ""
     @State private var showsAPIKeyEntry = false
     @FocusState private var keyFieldFocused: Bool
@@ -46,9 +49,12 @@ struct OnboardingView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Image(systemName: "server.rack")
-                .font(.largeTitle)
+            Image(.logomark)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 44, height: 44)
                 .foregroundStyle(.tint)
+                .matchedGeometryEffect(id: SplashView.markID, in: brandNamespace)
             Text("Connect your account")
                 .font(.title2.bold())
             Text("Approve this device in your browser to see your services. Credentials are stored only in your device's Keychain.")
