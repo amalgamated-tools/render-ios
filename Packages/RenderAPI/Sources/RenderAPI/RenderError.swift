@@ -47,14 +47,25 @@ public enum RenderError: Error, Sendable, Hashable {
             let underlying = clientError.underlyingError
             if let renderError = underlying as? RenderError { return renderError }
             if underlying is DecodingError {
-                return .decoding(description: String(describing: underlying))
+                return .decoding(description: clamped(String(describing: underlying)))
             }
-            return .transport(description: underlying.localizedDescription)
+            return .transport(description: clamped(underlying.localizedDescription))
         }
         if error is DecodingError {
-            return .decoding(description: String(describing: error))
+            return .decoding(description: clamped(String(describing: error)))
         }
-        return .transport(description: error.localizedDescription)
+        return .transport(description: clamped(error.localizedDescription))
+    }
+
+    /// Long enough to name the problem, short enough that it stays a sentence.
+    ///
+    /// The runtime's "unexpected response" error stringifies the entire response — every header,
+    /// the rate-limit counters, the CDN's ray ID. A live pass put all of it on a phone screen in
+    /// red, wrapped over twenty lines, above a list. These messages are read by a person deciding
+    /// what to do next, not pasted into a bug report.
+    private static func clamped(_ description: String, limit: Int = 180) -> String {
+        guard description.count > limit else { return description }
+        return description.prefix(limit).trimmingCharacters(in: .whitespacesAndNewlines) + "…"
     }
 
     /// True when retrying the *same* request could plausibly succeed.

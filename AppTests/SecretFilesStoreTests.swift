@@ -29,8 +29,8 @@ struct SecretFilesStoreTests {
         // Same reasoning as env vars: the whole-list PUT would delete any file added elsewhere.
         let recorder = BodyRecorder()
         let store = SecretFilesStore(
-            // 201 for both create and update — see the next test.
-            client: recorder.client(answering: Fixtures.secretFile(name: "creds.json", content: "{}"), status: 201),
+            // Render answers 200 with an env-var-shaped body — see the next test.
+            client: recorder.client(answering: #"{"key":"creds.json","value":"{}"}"#, status: 200),
             serviceID: "srv-1"
         )
 
@@ -44,20 +44,53 @@ struct SecretFilesStoreTests {
         #expect(store.files.map(\.name) == ["creds.json"])
     }
 
-    @Test("a 201 response is what a create answers with, and it's applied like an update")
-    func appliesCreatedResponse() async {
-        // `PUT /secret-files/{name}` answers 201 for both create and update — the store reads
-        // `.created`, so a plain 200 would be an unexpected status and a thrown error.
+    @Test("the 200 Render really answers with is a success, not a failure to reach Render")
+    func acceptsTheUndocumentedTwoHundred() async {
+        // Measured live, 2026-08-12: `PUT /secret-files/{name}` answers **200**, not the 201 the
+        // spec documents, and its body is env-var shaped — `{"key","value"}`, not a secret file.
+        // Reading `.created` meant every real create threw, so a file Render had already written
+        // was reported as "Couldn't reach Render", with the whole HTTP response in the banner.
         let recorder = BodyRecorder()
         let store = SecretFilesStore(
-            client: recorder.client(answering: Fixtures.secretFile(name: "a.pem", content: "STORED"), status: 201),
+            client: recorder.client(answering: #"{"key":"a.pem","value":"SENT"}"#, status: 200),
             serviceID: "srv-1"
         )
 
         let saved = await store.save(name: "a.pem", content: "SENT")
 
         #expect(saved)
-        #expect(store.files.first?.content == "STORED")
+        #expect(store.actionResult?.isFailure == false)
+        // The request, not the response: the reply doesn't describe the file, so it can't be
+        // applied. This is the one write where Render isn't the authority on what it stored.
+        #expect(store.files == [SecretFileEntry(name: "a.pem", content: "SENT")])
+    }
+
+    @Test("the documented 201 is still accepted, in case Render starts sending it")
+    func stillAcceptsTheDocumentedCreated() async {
+        let recorder = BodyRecorder()
+        let store = SecretFilesStore(
+            client: recorder.client(answering: Fixtures.secretFile(name: "a.pem", content: "SENT"), status: 201),
+            serviceID: "srv-1"
+        )
+
+        let saved = await store.save(name: "a.pem", content: "SENT")
+
+        #expect(saved)
+        #expect(store.files.first?.content == "SENT")
+    }
+
+    @Test("an undocumented failure status is still a failure")
+    func undocumentedFailureStillFails() async {
+        // The 2xx tolerance is exactly that — tolerance for a success code, not for anything the
+        // server happens to return.
+        let (client, _) = RenderClient.routed { _ in (418, "{}") }
+        let store = SecretFilesStore(client: client, serviceID: "srv-1")
+
+        let saved = await store.save(name: "a.pem", content: "SENT")
+
+        #expect(saved == false)
+        #expect(store.files.isEmpty)
+        #expect(store.actionResult?.isFailure == true)
     }
 
     @Test("a successful write says when the change takes effect, not that it deployed")

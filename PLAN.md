@@ -747,8 +747,8 @@ So the running instances keep the old value until something else deploys them, a
 these screens says when the change actually takes effect rather than claiming a redeploy. A
 "saved" that silently means "not live yet" is exactly the misunderstanding that costs an hour at 3am.
 *(Follow-up: offer **Deploy** straight from the success banner, since "I changed a variable" is
-almost always followed by "…and now I need it live". Built — see
-[the follow-up below](#phase-5a-follow-up--deploy-from-the-config-banner--built-live-pass-pending).)*
+almost always followed by "…and now I need it live". Done — see
+[the follow-up below](#phase-5a-follow-up--deploy-from-the-config-banner--done).)*
 
 **Live pass: done, both sides.** Read side against `render-oidc-discovery-dev` in Render-Prod — env
 vars loaded masked and alphabetized, per-row reveal showed one value and left the others masked, and
@@ -779,7 +779,7 @@ of them were visible without it:
    live); dropping `SecureField` did — which is the same fix as defect 4. The masking that matters
    happens in the list, where a value sits on screen without anyone having asked for it.
 
-#### Phase 5a follow-up — Deploy from the config banner ✅ BUILT (live pass pending)
+#### Phase 5a follow-up — Deploy from the config banner ✅ DONE
 
 The other half of 5a's central finding. The banner already said a saved change waits for the next
 deploy; now it can *be* that deploy. A successful write — save or delete, env var or secret file —
@@ -790,8 +790,8 @@ which is exactly the friction that leaves a variable saved and not running.
 **Built:** `ConfigDeployer` and a shared `ConfigResultBanner` in `App/Config/`;
 `ConfigActionResult` gained `offersDeploy`; both stores gained a `deployer` and `deployNow()`;
 `DeploysStore.createDeploy` now owns the create-deploy call that `ServiceDetailStore` used to hold
-privately. `make check` green — **65 package tests in 11 suites and 113 app tests in 11 suites**,
-`BUILD SUCCEEDED`.
+privately. `make check` green — **65 package tests in 11 suites and 115 app tests in 11 suites**,
+`BUILD SUCCEEDED`, both screens driven against a real image-backed service.
 
 **Decisions worth naming:**
 1. **The deploy call moved to `DeploysStore`, not copied.** Two screens now start deploys, and
@@ -814,9 +814,30 @@ privately. `make check` green — **65 package tests in 11 suites and 113 app te
    deploy path — confirmation copy, in-flight spinner, per-service wording — is more than either
    screen should be carrying its own copy of.
 
-**Not yet done: the live pass.** Every claim above is from the unit tests and the simulator. The
-write side needs the same treatment 5a itself got — an add against a real service, Deploy from the
-banner, and the API checked for the deploy row that 5a proved a config write does *not* create.
+**Live pass: done, and it closed the loop 5a left open.** Against `bifrost:latest`
+(`srv-d9kgm85g1s2s739e6ft0`, image-backed) in Patrick's Workspace, checked against the API at every
+step. Add `IOS_SMOKE_DEPLOY=banner` → the banner read "saved. It takes effect on the next deploy."
+with **Deploy Latest Image** — the image wording, taken from the service, not assumed. The API
+confirmed the variable was written and, once again, that **no deploy had been created**. Tapping
+Deploy → "Deploy bifrost:latest? Pulls and deploys the latest image from the service's registry." →
+`dep-d9ui1uu417fc7388t1j0`, `deploy_started`, and the banner became "Deploy started. The change is
+live when it finishes." It reached `live` four minutes later — the first time in this app that a
+config change has actually become the running configuration. Both the save and the delete path offer
+it, on both screens. The service was left as found: no env vars, no secret files, and a second
+deploy from the delete banner to put the running instances back where they started.
+
+**Two defects, both found only because the live pass went through the write path:**
+1. **Creating a secret file reported a failure Render hadn't had.** `PUT /secret-files/{name}`
+   answers **200**, not the 201 its own spec documents — and the body it sends back describes an
+   *env var* (`{"key","value"}`), not a secret file. The store read `.created`, so every real create
+   threw: the file was written, and the app said "Couldn't reach Render". 5a's unit test had pinned
+   the spec's version of events rather than Render's, which is exactly the kind of claim only a live
+   pass can settle. Now any 2xx is accepted and the row is built from what was *sent* — the one write
+   in the app where Render isn't the authority on what it stored, because it doesn't say.
+2. **An error banner rendered the entire HTTP response.** The failure above surfaced as twenty lines
+   of red — every header, the rate-limit counters, Cloudflare's ray ID — over the list. `RenderError`
+   now clamps a wrapped description to 180 characters. These messages are read by someone deciding
+   what to do next, not pasted into a bug report.
 
 ### Phase 6 — Polish
 - Widgets / Live Activity for an in-flight deploy.
