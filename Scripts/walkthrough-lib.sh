@@ -9,6 +9,10 @@
 # (1206x2622), which is the same space sim-input.swift takes. They were read off screenshots during a
 # live pass; a different device size needs a new pass. They also assume a **web service** — the
 # drill-down card is a different height on a static site, so the row offsets move.
+#
+# The ONBOARD_* triple was re-measured after the onboarding hero landed. The in-app coordinates
+# below it have NOT been re-measured since the list rows grew glyph tiles and the service detail
+# screen grew a header — both move things. Re-read them off a live pass before trusting a recording.
 
 set -euo pipefail
 
@@ -21,9 +25,9 @@ BUNDLE_ID="com.veverkap.RenderiOS"
 APP="$REPO_ROOT/build/DerivedData/Build/Products/Debug-iphonesimulator/RenderiOS.app"
 
 # --- taps, in screenshot pixels ------------------------------------------------------------------
-ONBOARD_SIGNIN=(601 1093)     # "Sign in with Render"
-ONBOARD_APIKEY=(280 1267)     # "Use an API key instead" — expanding it focuses the field
-ONBOARD_CONTINUE=(601 1586)
+ONBOARD_SIGNIN=(603 1848)     # "Sign in with Render"
+ONBOARD_APIKEY=(282 2024)     # "Use an API key instead" — expanding it focuses the field
+ONBOARD_CONTINUE=(601 2343)
 DEVICE_AUTH_OPEN=(641 1589)   # "Open render.com to approve", on the device-flow waiting screen
 LIST_SEARCH=(346 417)
 LIST_FIRST_RESULT=(406 447)   # first row once the search field is active
@@ -112,7 +116,9 @@ reset_app() {
   xcrun simctl keychain "$DEVICE" reset
   xcrun simctl install "$DEVICE" "$APP"
   xcrun simctl launch "$DEVICE" "$BUNDLE_ID" > /dev/null
-  sleep 3
+  # 4, not 3: the splash holds the logomark for a 700ms minimum before the first tappable frame,
+  # and a tap that lands on the splash is silently swallowed.
+  sleep 4
 }
 
 start_recording() {
