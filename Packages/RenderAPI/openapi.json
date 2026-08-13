@@ -26616,8 +26616,7 @@
               "required": [
                 "hasMore",
                 "nextStartTime",
-                "nextEndTime",
-                "logs"
+                "nextEndTime"
               ],
               "properties": {
                 "hasMore": {

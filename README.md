@@ -314,7 +314,32 @@ printf '%s' "$RENDER_API_KEY" | swift Scripts/sim-input.swift type
 ```
 
 Both failure modes are silent, so check them first: the calling process needs **Accessibility**
-permission, and the **Mac must be unlocked with an awake display**.
+permission, and the **Mac must be unlocked with an awake display**. With more than one simulator
+booted, set `SIM_DEVICE` to the device name — otherwise the script stops rather than guess which
+window to drive.
+
+### Recording a walkthrough
+
+The same driver, with `simctl io recordVideo` rolling, produces a video tour of the app:
+
+```sh
+make walkthrough                        # docs/walkthrough.mov, signs in with the key in .env
+SERVICE=my-api make walkthrough         # tour a different service
+make walkthrough-oauth                  # the same tour, through the OAuth device flow
+```
+
+Each run reinstalls with the Keychain wiped so the tour starts from onboarding — without that, iOS
+restores the last screen on launch and a blind coordinate script drifts. Alongside the movie it
+writes a `.txt` of timestamped beats: `simctl` records no audio, so that is the narration script.
+
+The OAuth variant stops and waits for you to approve in a browser, because that step is a human by
+design. By default you approve on the Mac and the recording only ever shows the code and the
+spinner; `OPEN_IN_SIM=1` puts the whole approval in the simulator's Safari instead.
+
+Two things worth knowing before publishing a recording. It shows **real data** — workspace name,
+service names, log lines, request paths — so point it at a workspace you're willing to publish. And
+the coordinates were read off an **iPhone 17 Pro** running a **web service**; another device size, or
+a static site's shorter drill-down card, needs a fresh pass.
 
 ---
 

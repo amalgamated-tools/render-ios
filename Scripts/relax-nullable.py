@@ -23,20 +23,50 @@ RELAXATIONS = {
     "privateServiceDetails": ["openPorts"],
 }
 
+# The same mismatch, for responses whose body schema is inline under components/responses rather
+# than a named schema.
+#
+# response name -> properties to drop from the JSON body schema's `required` list
+RESPONSE_RELAXATIONS = {
+    # A window with no lines comes back as `logs: null`, not `[]` — true for 7 of 20 real services
+    # at the default range. Left required, that renders as "Couldn't load logs" on a service whose
+    # only problem is that it has been quiet.
+    "Logs200Response": ["logs"],
+}
+
+
+def relax(schema, drop):
+    """Drop `drop` from `schema`'s required list, so the generator emits optionals."""
+    schema["required"] = [r for r in schema.get("required", []) if r not in drop]
+
 
 def main():
     path = sys.argv[1] if len(sys.argv) > 1 else "openapi/render.json"
     with open(path) as f:
         spec = json.load(f)
 
-    schemas = spec.get("components", {}).get("schemas", {})
+    components = spec.get("components", {})
+
+    schemas = components.get("schemas", {})
     for name, drop in RELAXATIONS.items():
         schema = schemas.get(name)
         if schema is None:
             print(f"  warn: schema '{name}' not found — spec may have changed", file=sys.stderr)
             continue
-        required = schema.get("required", [])
-        schema["required"] = [r for r in required if r not in drop]
+        relax(schema, drop)
+
+    responses = components.get("responses", {})
+    for name, drop in RESPONSE_RELAXATIONS.items():
+        schema = (
+            responses.get(name, {})
+            .get("content", {})
+            .get("application/json", {})
+            .get("schema")
+        )
+        if schema is None:
+            print(f"  warn: response '{name}' has no JSON body schema — spec may have changed", file=sys.stderr)
+            continue
+        relax(schema, drop)
 
     with open(path, "w") as f:
         json.dump(spec, f, indent=2)

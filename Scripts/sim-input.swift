@@ -19,10 +19,14 @@
 //
 //   SIM_DEVICE="bangui iPhone 17 Pro" swift Scripts/sim-input.swift tap 100 200
 //
-// Unset means `booted` and the frontmost window, which is right for one device. It stops being right
-// the moment a second workspace boots its own: `booted` then resolves to *a* device rather than the
-// one you are watching, and the first Simulator window is whichever the window server hands over. The
-// name is matched against the window title, which the Simulator formats as "<device> – <runtime>".
+// Unset means `booted` and the only window, which is right for one device. It stops being right the
+// moment a second workspace boots its own: `booted` then resolves to *a* device rather than the one
+// you are watching, and the first Simulator window is whichever the window server hands over. So
+// with several windows open and no name given, this stops rather than guessing — a tap that lands on
+// another workspace's simulator looks exactly like the app ignoring input.
+//
+// The name is matched against the window title, which the Simulator formats as "<device> – <runtime>",
+// and only at the start: "iPhone 17 Pro" must not match the window titled "bangui iPhone 17 Pro".
 //
 // Requirements, both of which fail confusingly rather than loudly:
 //   1. The calling process needs Accessibility permission (System Settings → Privacy & Security →
@@ -98,15 +102,27 @@ else { fail("Simulator isn't running — try `make run`") }
 
 let axApp = AXUIElementCreateApplication(simulator.processIdentifier)
 let windows = attribute(axApp, kAXWindowsAttribute) as? [AXUIElement] ?? []
+func title(of window: AXUIElement) -> String { attribute(window, kAXTitleAttribute) as? String ?? "" }
+
 // With `SIM_DEVICE` set, the window has to be the one titled for that device — taking the first
 // window would land every tap on another workspace's simulator, which looks like the app ignoring
-// input rather than like input going somewhere else.
+// input rather than like input going somewhere else. Matched on a whole name at the start rather
+// than anywhere in the title, so "iPhone 17 Pro" doesn't also select "bangui iPhone 17 Pro".
 let candidates: [AXUIElement]
 if let deviceTarget {
-    candidates = windows.filter { (attribute($0, kAXTitleAttribute) as? String ?? "").contains(deviceTarget) }
+    candidates = windows.filter { title(of: $0).hasPrefix(deviceTarget + " ") }
     if candidates.isEmpty {
-        fail("no Simulator window titled for '\(deviceTarget)' — is that device booted?")
+        fail("""
+            no Simulator window titled for '\(deviceTarget)' — is that device booted? \
+            open: \(windows.map(title).joined(separator: ", "))
+            """)
     }
+} else if windows.count > 1 {
+    // The same wrong-window tap, arrived at by saying nothing rather than by saying the wrong thing.
+    fail("""
+        \(windows.count) Simulator windows are open (\(windows.map(title).joined(separator: ", "))) \
+        — set SIM_DEVICE to the device name so this doesn't drive the wrong one
+        """)
 } else {
     candidates = windows
 }

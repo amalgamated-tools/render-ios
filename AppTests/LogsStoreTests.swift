@@ -55,6 +55,24 @@ struct LogsStoreTests {
         #expect(!path.contains("startTime="))
     }
 
+    @Test("a quiet service returns logs: null, which is empty rather than broken")
+    func nullLogsIsEmptyNotAnError() async throws {
+        // Not hypothetical: at the default range, 7 of 20 real services answer with `logs: null`
+        // instead of `[]`. Decoded strictly, that failed the whole page and put "Couldn't load
+        // logs" in front of a service whose only problem was having nothing to say.
+        let (store, _) = store(bodies: [
+            """
+            {"hasMore":false,"nextStartTime":"2026-08-12T09:00:00Z",\
+            "nextEndTime":"2026-08-12T10:00:00Z","logs":null}
+            """
+        ])
+
+        await store.refresh()
+
+        #expect(store.lines.isEmpty)
+        #expect(store.errorMessage == nil)
+    }
+
     @Test("the next page uses the window Render handed back, not one we computed")
     func pagesByServerWindow() async throws {
         let (store, transport) = store(bodies: [
