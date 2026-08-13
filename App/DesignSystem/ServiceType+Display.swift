@@ -39,3 +39,23 @@ extension Components.Schemas.ServiceType {
         }
     }
 }
+
+/// The spec has a *second* service type enum with its own vocabulary (`web`, `pserv`, `static`), used
+/// where a service is referred to rather than described — env group links being the first place the app
+/// meets one. Mapping it onto the full enum rather than giving it its own labels means a linked service
+/// looks exactly like the same service in the service list.
+extension Components.Schemas.ServiceTypeShort {
+    var full: Components.Schemas.ServiceType {
+        switch self {
+        case ._static: .staticSite
+        case .web: .webService
+        case .pserv: .privateService
+        case .worker: .backgroundWorker
+        case .cron: .cronJob
+        }
+    }
+
+    var displayName: String { full.displayName }
+    var systemImage: String { full.systemImage }
+    var accent: Color { full.accent }
+}

@@ -198,3 +198,65 @@ if [ "$(echo "$secret_files" | jq -r 'length')" != "0" ]; then
   echo "  contents present in list: $(echo "$secret_files" | jq -r '[.[].secretFile | has("content")] | all')"
   echo "  sizes: $(echo "$secret_files" | jq -r '[.[].secretFile | "\(.name)=\(.content | length)B"] | join(", ")')"
 fi
+
+# --- Phase 5b: env groups, custom domains, headers, routes (read-only) -----------------------------
+
+echo "==> GET /env-groups?ownerId=$first_owner"
+env_groups=$(curl -fsS "${auth[@]}" "$API/env-groups?ownerId=$first_owner&limit=100")
+echo "  count=$(echo "$env_groups" | jq -r 'length')"
+echo "$env_groups" | jq -r '.[] | "  \(.envGroup.name)\tlinks=\(.envGroup.serviceLinks | length)\t(\(.envGroup.id))"'
+
+# The live API wraps each group in the usual {envGroup, cursor} envelope, but the *spec* declares a bare
+# array of envGroupMeta — which the strict decoder rejects outright, so the list wouldn't load at all
+# until Scripts/envelope-env-groups.py patched the spec to match. This guards the patch: if Render ever
+# ships the shape it documents, the envelope disappears and the patch has to go with it.
+if [ "$(echo "$env_groups" | jq -r '[.[] | has("envGroup")] | all')" != "true" ]; then
+  echo "  !!! /env-groups no longer wraps groups in a cursor envelope — drop Scripts/envelope-env-groups.py"
+fi
+# serviceLinks is the only record of which services use a group; there is no service-side endpoint.
+if [ "$(echo "$env_groups" | jq -r '[.[] | .envGroup | has("serviceLinks")] | all')" != "true" ]; then
+  echo "  !!! an env group came back without serviceLinks — the linked-services screens depend on it"
+fi
+
+group_id=$(echo "$env_groups" | jq -r '.[0].envGroup.id // empty')
+if [ -n "$group_id" ]; then
+  echo "==> GET /env-groups/$group_id"
+  group=$(curl -fsS "${auth[@]}" "$API/env-groups/$group_id")
+  # Both config screens for a group read out of *this* payload — there is no per-group list endpoint —
+  # so their loading breaks entirely if these two fields stop arriving inline.
+  echo "  envVars inline: $(echo "$group" | jq -r 'has("envVars")')  secretFiles inline: $(echo "$group" | jq -r 'has("secretFiles")')"
+  echo "  var count=$(echo "$group" | jq -r '.envVars | length')  file count=$(echo "$group" | jq -r '.secretFiles | length')"
+  echo "  keys: $(echo "$group" | jq -r '[.envVars[].key] | join(", ")')"
+fi
+
+echo "==> GET /services/$service_id/custom-domains"
+# A wrong service type fails these three. The spec advertises 406; the live API answers **400** with
+# "invalid service type. Only static sites have routes", which is what ServiceConfigCatalog gates on —
+# so a failure here is reported rather than fatal.
+domains=$(curl -sS -w '\n%{http_code}' "${auth[@]}" "$API/services/$service_id/custom-domains?limit=100")
+domains_code=$(echo "$domains" | tail -1)
+domains_body=$(echo "$domains" | sed '$d')
+if [ "$domains_code" = "200" ]; then
+  echo "  count=$(echo "$domains_body" | jq -r 'length')"
+  echo "$domains_body" | jq -r '.[] | "  \(.customDomain.verificationStatus)\t\(.customDomain.domainType)\t\(.customDomain.name)\tredirectFor=\(.customDomain.redirectForName)"'
+else
+  echo "  HTTP $domains_code (400/406 = not available for this service type, which the app gates on)"
+fi
+
+echo "==> GET /services/$service_id/routes"
+routes=$(curl -sS -w '\n%{http_code}' "${auth[@]}" "$API/services/$service_id/routes?limit=100")
+routes_code=$(echo "$routes" | tail -1)
+if [ "$routes_code" = "200" ]; then
+  echo "$routes" | sed '$d' | jq -r '.[] | "  \(.route.priority)\t\(.route.type)\t\(.route.source) -> \(.route.destination)"'
+else
+  echo "  HTTP $routes_code"
+fi
+
+echo "==> GET /services/$service_id/headers"
+headers=$(curl -sS -w '\n%{http_code}' "${auth[@]}" "$API/services/$service_id/headers?limit=100")
+headers_code=$(echo "$headers" | tail -1)
+if [ "$headers_code" = "200" ]; then
+  echo "$headers" | sed '$d' | jq -r '.[] | "  \(.header.path)\t\(.header.name): \(.header.value)"'
+else
+  echo "  HTTP $headers_code"
+fi

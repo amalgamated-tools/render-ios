@@ -1,36 +1,26 @@
 import RenderAPI
 import SwiftUI
 
-/// The authenticated home screen: the service list for the active workspace, plus the scope
-/// controls (workspace/project) and account menu around it.
+/// The service list for the active scope.
 ///
-/// Owns the `ProjectsStore` because the project scope outlives any single service list — the list
-/// is re-created whenever the scope changes, the project list isn't.
+/// The scope controls and the account menu live on ``WorkspaceScreen``, which owns the `ProjectsStore`
+/// and puts the same toolbar on every tab — this screen is the list and nothing else. It still holds
+/// the rule that the list waits for the project list when a remembered project is about to filter it.
 struct ServicesScreen: View {
-    @Bindable var authStore: AuthStore
-
     private let client: RenderClient
     private let ownerID: String
-    @State private var projectsStore: ProjectsStore
+    @Bindable private var projectsStore: ProjectsStore
 
-    init(authStore: AuthStore, client: RenderClient, ownerID: String) {
-        self.authStore = authStore
+    init(client: RenderClient, ownerID: String, projectsStore: ProjectsStore) {
         self.client = client
         self.ownerID = ownerID
-        _projectsStore = State(initialValue: ProjectsStore(client: client, ownerID: ownerID))
+        self.projectsStore = projectsStore
     }
 
     var body: some View {
         content
             .navigationTitle("Services")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                if !scopePicker.isEmpty {
-                    ToolbarItem(placement: .topBarLeading) { scopePicker }
-                }
-                ToolbarItem(placement: .topBarTrailing) { accountMenu }
-            }
-            .task { await projectsStore.load() }
     }
 
     @ViewBuilder
@@ -47,20 +37,6 @@ struct ServicesScreen: View {
             )
             // Re-create the list (and its store) when the project scope changes.
             .id(projectsStore.selectedProjectID ?? "")
-        }
-    }
-
-    private var scopePicker: ScopePickerView {
-        ScopePickerView(authStore: authStore, projectsStore: projectsStore)
-    }
-
-    private var accountMenu: some View {
-        Menu {
-            Button("Sign Out", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) {
-                authStore.signOut()
-            }
-        } label: {
-            Image(systemName: "person.crop.circle")
         }
     }
 }

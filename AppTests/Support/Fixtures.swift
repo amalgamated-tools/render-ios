@@ -179,6 +179,126 @@ enum Fixtures {
         #"{"name":"\#(name)","content":"\#(content)"}"#
     }
 
+    /// One `envGroupMeta`.
+    static func envGroupMeta(
+        id: String,
+        name: String,
+        links: [(id: String, name: String, type: String)] = [],
+        createdAt: String = "2026-01-01T00:00:00Z"
+    ) -> String {
+        let serviceLinks = links.map {
+            #"{"id":"\#($0.id)","name":"\#($0.name)","type":"\#($0.type)"}"#
+        }
+        return """
+            {"id":"\(id)","name":"\(name)","ownerId":"\(ownerID)",\
+            "createdAt":"\(createdAt)","updatedAt":"2026-01-02T00:00:00Z",\
+            "serviceLinks":[\(serviceLinks.joined(separator: ","))]}
+            """
+    }
+
+    /// A page of `GET /env-groups`.
+    ///
+    /// Each group arrives in a `{envGroup, cursor}` envelope — which is what the live API sends and what
+    /// `Scripts/envelope-env-groups.py` patches into the spec, since the spec claims a bare array.
+    static func envGroupsPage(_ groups: [String]) -> String {
+        let elements = groups.map { group in
+            // The ID doubles as the cursor value so a paging test can assert on what it sent.
+            let id = group.split(separator: "\"").first { $0.hasPrefix("evg-") } ?? "0"
+            return #"{"envGroup":\#(group),"cursor":"cursor-\#(id)"}"#
+        }
+        return "[\(elements.joined(separator: ","))]"
+    }
+
+    /// A whole `envGroup` — meta plus contents — which is what **every** group write answers with.
+    static func envGroup(
+        id: String = "evg-1",
+        name: String = "shared",
+        links: [(id: String, name: String, type: String)] = [],
+        envVars: [(key: String, value: String)] = [],
+        secretFiles: [(name: String, content: String)] = []
+    ) -> String {
+        let meta = envGroupMeta(id: id, name: name, links: links)
+        let vars = envVars.map { #"{"key":"\#($0.key)","value":"\#($0.value)"}"# }
+        let files = secretFiles.map { #"{"name":"\#($0.name)","content":"\#($0.content)"}"# }
+        // `envGroup` is an allOf, so meta and contents are siblings in one flat object.
+        return """
+            \(meta.dropLast())\
+            ,"envVars":[\(vars.joined(separator: ","))],\
+            "secretFiles":[\(files.joined(separator: ","))]}
+            """
+    }
+
+    /// A single `customDomain`.
+    static func customDomain(
+        id: String,
+        name: String,
+        domainType: String = "subdomain",
+        verificationStatus: String = "unverified",
+        redirectForName: String = ""
+    ) -> String {
+        """
+        {"id":"\(id)","name":"\(name)","domainType":"\(domainType)",\
+        "publicSuffix":"com","redirectForName":"\(redirectForName)",\
+        "verificationStatus":"\(verificationStatus)","createdAt":"2026-01-01T00:00:00Z"}
+        """
+    }
+
+    /// `POST /custom-domains` answers with an **array** — an apex add returns the apex and its `www`
+    /// redirect together.
+    static func customDomainsCreated(_ domains: [String]) -> String {
+        "[\(domains.joined(separator: ","))]"
+    }
+
+    /// A page of `GET /services/{id}/custom-domains`.
+    static func customDomainsPage(_ domains: [String]) -> String {
+        let elements = domains.enumerated().map { index, domain in
+            #"{"customDomain":\#(domain),"cursor":"cursor-\#(index)"}"#
+        }
+        return "[\(elements.joined(separator: ","))]"
+    }
+
+    /// A page of `GET /services/{id}/headers`.
+    static func headersPage(_ rules: [(id: String, path: String, name: String, value: String)]) -> String {
+        let elements = rules.map { rule in
+            """
+            {"header":{"id":"\(rule.id)","path":"\(rule.path)","name":"\(rule.name)",\
+            "value":"\(rule.value)"},"cursor":"cursor-\(rule.id)"}
+            """
+        }
+        return "[\(elements.joined(separator: ","))]"
+    }
+
+    /// `POST /services/{id}/headers` answers with the header under a key called `headers` — singular
+    /// payload, plural key, and optional besides.
+    static func headerCreated(id: String, path: String, name: String, value: String) -> String {
+        #"{"headers":{"id":"\#(id)","path":"\#(path)","name":"\#(name)","value":"\#(value)"}}"#
+    }
+
+    /// A page of `GET /services/{id}/routes`.
+    static func routesPage(_ routes: [(id: String, type: String, source: String, destination: String, priority: Int)]) -> String {
+        let elements = routes.map { route in
+            """
+            {"route":\(self.route(id: route.id, type: route.type, source: route.source,
+                                 destination: route.destination, priority: route.priority)),\
+            "cursor":"cursor-\(route.id)"}
+            """
+        }
+        return "[\(elements.joined(separator: ","))]"
+    }
+
+    static func route(id: String, type: String, source: String, destination: String, priority: Int) -> String {
+        """
+        {"id":"\(id)","type":"\(type)","source":"\(source)",\
+        "destination":"\(destination)","priority":\(priority)}
+        """
+    }
+
+    /// `PATCH /services/{id}/routes/{routeId}` answers with the route under a key called `headers` — a
+    /// copy-paste slip in the spec that the app has to read around.
+    static func routePatched(id: String, type: String, source: String, destination: String, priority: Int) -> String {
+        #"{"headers":\#(route(id: id, type: type, source: source, destination: destination, priority: priority))}"#
+    }
+
     static let ownerID = "tea-000000000000000000"
 
     /// `serviceDetails` is required on every service, even though the list projection reads none

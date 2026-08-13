@@ -42,6 +42,11 @@ echo "==> Ordering undiscriminated oneOf members"
 # (cron job vs background worker) where the spec's order is wrong.
 python3 "$REPO_ROOT/Scripts/order-oneof.py" "$SPEC"
 
+echo "==> Giving GET /env-groups its cursor envelope"
+# The spec says the response is a bare array of envGroupMeta; the live API returns the usual
+# {envGroup, cursor} envelope, whose shape the strict decoder rejects outright. See the script.
+python3 "$REPO_ROOT/Scripts/envelope-env-groups.py" "$SPEC"
+
 echo "==> Fixing numeric query parameter types"
 # The spec types every numeric query parameter as `number`, which the generator maps to Double or
 # Float — and Render accepts neither serialization: it rejects `resolutionSeconds=60.0` outright, and

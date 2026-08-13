@@ -344,15 +344,24 @@ final class BodyRecorder: @unchecked Sendable {
     ///   - json: The body every response carries.
     ///   - status: The status every response carries — 204 for the delete paths, which have no body.
     func client(answering json: String, status: Int = 200) -> RenderClient {
+        client { _ in (status, json) }
+    }
+
+    /// Records bodies *and* chooses the reply by path — needed when a test has to load a list first and
+    /// then assert on the body of the write that follows.
+    func client(
+        routing route: @escaping @Sendable (String) -> (status: Int, body: String)
+    ) -> RenderClient {
         let transport = StubTransport { [self] request, body, _ in
             let text = if let body { (try? await String(collecting: body, upTo: 1 << 20)) ?? "" } else { "" }
             lock.withLock {
                 _requests.append(request)
                 _bodies.append(text)
             }
-            var response = HTTPResponse(status: .init(code: status))
+            let answer = route(request.path ?? "")
+            var response = HTTPResponse(status: .init(code: answer.status))
             response.headerFields = [.contentType: "application/json"]
-            return (response, json.isEmpty ? nil : HTTPBody(json))
+            return (response, answer.body.isEmpty ? nil : HTTPBody(answer.body))
         }
         return RenderClient(
             apiKeyProvider: StaticAPIKeyProvider("test-key"),

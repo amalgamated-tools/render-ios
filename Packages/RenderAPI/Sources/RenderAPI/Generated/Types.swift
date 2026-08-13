@@ -10282,6 +10282,7 @@ public enum Components {
         /// - Remark: Generated from `#/components/schemas/errorCode`.
         @frozen public enum ErrorCode: String, Codable, Hashable, Sendable, CaseIterable {
             case multipleRegions = "multiple_regions"
+            case duplicateSavedSearchName = "duplicate_saved_search_name"
         }
         /// This field has been deprecated. previews.generation should be used in its place.
         ///
@@ -16937,6 +16938,29 @@ public enum Components {
                 case cursor
             }
         }
+        /// - Remark: Generated from `#/components/schemas/envGroupWithCursor`.
+        public struct EnvGroupWithCursor: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/envGroupWithCursor/envGroup`.
+            public var envGroup: Components.Schemas.EnvGroupMeta
+            /// - Remark: Generated from `#/components/schemas/envGroupWithCursor/cursor`.
+            public var cursor: Components.Schemas.Cursor
+            /// Creates a new `EnvGroupWithCursor`.
+            ///
+            /// - Parameters:
+            ///   - envGroup:
+            ///   - cursor:
+            public init(
+                envGroup: Components.Schemas.EnvGroupMeta,
+                cursor: Components.Schemas.Cursor
+            ) {
+                self.envGroup = envGroup
+                self.cursor = cursor
+            }
+            public enum CodingKeys: String, CodingKey {
+                case envGroup
+                case cursor
+            }
+        }
     }
     /// Types generated from the `#/components/parameters` section of the OpenAPI document.
     public enum Parameters {
@@ -17385,6 +17409,45 @@ public enum Components {
             }
         }
         public struct _429RateLimit: Sendable, Hashable {
+            /// - Remark: Generated from `#/components/responses/429RateLimit/headers`.
+            public struct Headers: Sendable, Hashable {
+                /// Seconds to wait before retrying the request.
+                ///
+                /// - Remark: Generated from `#/components/responses/429RateLimit/headers/Retry-After`.
+                public var retryAfter: Swift.Int?
+                /// Maximum number of requests allowed in the current window.
+                ///
+                /// - Remark: Generated from `#/components/responses/429RateLimit/headers/RateLimit-Limit`.
+                public var rateLimitLimit: Swift.Int?
+                /// Number of requests remaining in the current window. Always `0` for this response.
+                ///
+                /// - Remark: Generated from `#/components/responses/429RateLimit/headers/RateLimit-Remaining`.
+                public var rateLimitRemaining: Swift.Int?
+                /// Seconds until the current rate limit window resets.
+                ///
+                /// - Remark: Generated from `#/components/responses/429RateLimit/headers/RateLimit-Reset`.
+                public var rateLimitReset: Swift.Int?
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - retryAfter: Seconds to wait before retrying the request.
+                ///   - rateLimitLimit: Maximum number of requests allowed in the current window.
+                ///   - rateLimitRemaining: Number of requests remaining in the current window. Always `0` for this response.
+                ///   - rateLimitReset: Seconds until the current rate limit window resets.
+                public init(
+                    retryAfter: Swift.Int? = nil,
+                    rateLimitLimit: Swift.Int? = nil,
+                    rateLimitRemaining: Swift.Int? = nil,
+                    rateLimitReset: Swift.Int? = nil
+                ) {
+                    self.retryAfter = retryAfter
+                    self.rateLimitLimit = rateLimitLimit
+                    self.rateLimitRemaining = rateLimitRemaining
+                    self.rateLimitReset = rateLimitReset
+                }
+            }
+            /// Received HTTP response headers
+            public var headers: Components.Responses._429RateLimit.Headers
             /// - Remark: Generated from `#/components/responses/429RateLimit/content`.
             @frozen public enum Body: Sendable, Hashable {
                 /// - Remark: Generated from `#/components/responses/429RateLimit/content/application\/json`.
@@ -17407,8 +17470,13 @@ public enum Components {
             /// Creates a new `_429RateLimit`.
             ///
             /// - Parameters:
+            ///   - headers: Received HTTP response headers
             ///   - body: Received HTTP response body
-            public init(body: Components.Responses._429RateLimit.Body) {
+            public init(
+                headers: Components.Responses._429RateLimit.Headers = .init(),
+                body: Components.Responses._429RateLimit.Body
+            ) {
+                self.headers = headers
                 self.body = body
             }
         }
@@ -17905,6 +17973,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//blueprints/get(list-blueprints)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -18355,6 +18427,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//blueprints/validate/post(validate-blueprint)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -18682,6 +18758,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//owners/{ownerId}/members/{userId}/patch(update-workspace-member)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -18968,6 +19048,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//owners/{ownerId}/members/{userId}/delete(remove-workspace-member)/responses/429`.
             ///
@@ -19411,6 +19495,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//blueprints/{blueprintId}/get(retrieve-blueprint)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -19841,6 +19929,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//blueprints/{blueprintId}/patch(update-blueprint)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -20143,6 +20235,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//blueprints/{blueprintId}/delete(disconnect-blueprint)/responses/429`.
             ///
@@ -20488,6 +20584,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//blueprints/{blueprintId}/syncs/get(list-blueprint-syncs)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -20781,6 +20881,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//dedicated-ips/get(list-dedicated-ips)/responses/429`.
             ///
@@ -21115,6 +21219,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//dedicated-ips/post(create-dedicated-ip)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -21430,6 +21538,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//dedicated-ips/{dedicatedIpId}/get(retrieve-dedicated-ip)/responses/429`.
             ///
@@ -21803,6 +21915,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//dedicated-ips/{dedicatedIpId}/patch(update-dedicated-ip)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -22103,6 +22219,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//dedicated-ips/{dedicatedIpId}/delete(delete-dedicated-ip)/responses/429`.
             ///
@@ -22485,6 +22605,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//disks/get(list-disks)/responses/429`.
             ///
@@ -22907,6 +23031,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//disks/post(add-disk)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -23276,6 +23404,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//disks/{diskId}/get(retrieve-disk)/responses/429`.
             ///
@@ -23712,6 +23844,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//disks/{diskId}/patch(update-disk)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -24014,6 +24150,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//disks/{diskId}/delete(delete-disk)/responses/429`.
             ///
@@ -24354,6 +24494,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//disks/{diskId}/snapshots/get(list-snapshots)/responses/429`.
             ///
@@ -24761,6 +24905,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//disks/{diskId}/snapshots/restore/post(restore-snapshot)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -24988,6 +25136,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//users/get(get-user)/responses/429`.
             ///
@@ -25259,6 +25411,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//owners/get(list-owners)/responses/429`.
             ///
@@ -25556,6 +25712,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//owners/{ownerId}/get(retrieve-owner)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -25849,6 +26009,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//owners/{ownerId}/members/get(retrieve-owner-members)/responses/429`.
             ///
@@ -26245,6 +26409,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//owners/{ownerId}/audit-logs/get(list-owner-audit-logs)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -26640,6 +26808,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//organizations/{orgId}/audit-logs/get(list-organization-audit-logs)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -26936,6 +27108,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//notification-settings/owners/{ownerId}/get(retrieve-owner-notification-settings)/responses/429`.
             ///
@@ -27276,6 +27452,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//notification-settings/owners/{ownerId}/patch(patch-owner-notification-settings)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -27546,6 +27726,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//notification-settings/overrides/get(list-notification-overrides)/responses/429`.
             ///
@@ -27838,6 +28022,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//notification-settings/overrides/services/{serviceId}/get(retrieve-service-notification-overrides)/responses/429`.
             ///
@@ -28174,6 +28362,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//notification-settings/overrides/services/{serviceId}/patch(patch-service-notification-overrides)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -28486,6 +28678,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//registrycredentials/get(list-registry-credentials)/responses/429`.
             ///
@@ -28835,6 +29031,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//registrycredentials/post(create-registry-credential)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -29150,6 +29350,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//registrycredentials/{registryCredentialId}/get(retrieve-registry-credential)/responses/429`.
             ///
@@ -29580,6 +29784,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//registrycredentials/{registryCredentialId}/patch(update-registry-credential)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -29879,6 +30087,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//registrycredentials/{registryCredentialId}/delete(delete-registry-credential)/responses/429`.
             ///
@@ -30229,6 +30441,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//services/get(list-services)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -30560,6 +30776,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//services/post(create-service)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -30876,6 +31096,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/get(retrieve-service)/responses/429`.
             ///
@@ -31272,6 +31496,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/patch(update-service)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -31572,6 +31800,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/delete(delete-service)/responses/429`.
             ///
@@ -31896,6 +32128,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/cache/purge/post(purge-cache)/responses/429`.
             ///
@@ -32289,6 +32525,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/deploys/get(list-deploys)/responses/429`.
             ///
@@ -32732,6 +32972,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/deploys/post(create-deploy)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -33058,6 +33302,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/deploys/{deployId}/get(retrieve-deploy)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -33362,6 +33610,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/deploys/{deployId}/cancel/post(cancel-deploy)/responses/429`.
             ///
@@ -33686,6 +33938,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/rollback/post(rollback-deploy)/responses/429`.
             ///
@@ -34030,6 +34286,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/env-vars/get(get-env-vars-for-service)/responses/429`.
             ///
@@ -34464,6 +34724,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/env-vars/put(update-env-vars-for-service)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -34791,6 +35055,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/env-vars/{envVarKey}/get(retrieve-env-var)/responses/429`.
             ///
@@ -35152,6 +35420,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/env-vars/{envVarKey}/put(update-env-var)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -35463,6 +35735,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/env-vars/{envVarKey}/delete(delete-env-var)/responses/429`.
             ///
@@ -35807,6 +36083,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/secret-files/get(list-secret-files-for-service)/responses/429`.
             ///
@@ -36186,6 +36466,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/secret-files/put(update-secret-files-for-service)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -36513,6 +36797,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/secret-files/{envVarKey}/get(retrieve-secret-file)/responses/429`.
             ///
@@ -36889,6 +37177,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/secret-files/{envVarKey}/put(add-or-update-secret-file)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -37200,6 +37492,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/secret-files/{envVarKey}/delete(delete-secret-file)/responses/429`.
             ///
@@ -37562,6 +37858,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/events/get(list-events)/responses/429`.
             ///
@@ -37928,6 +38228,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/headers/get(list-headers)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -38268,6 +38572,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/headers/post(add-headers)/responses/429`.
             ///
@@ -38620,6 +38928,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/headers/put(update-headers)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -38929,6 +39241,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/headers/{headerId}/delete(delete-header)/responses/429`.
             ///
@@ -39302,6 +39618,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/routes/get(list-routes)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -39650,6 +39970,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/routes/post(add-route)/responses/429`.
             ///
@@ -40003,6 +40327,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/routes/put(put-routes)/responses/429`.
             ///
@@ -40358,6 +40686,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/routes/{routeId}/patch(patch-route)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -40667,6 +40999,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/routes/{routeId}/delete(delete-route)/responses/429`.
             ///
@@ -41080,6 +41416,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/custom-domains/get(list-custom-domains)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -41490,6 +41830,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/custom-domains/post(create-custom-domain)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -41839,6 +42183,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/custom-domains/{customDomainNameOrID}/get(retrieve-custom-domain)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -42171,6 +42519,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/custom-domains/{customDomainNameOrID}/delete(delete-custom-domain)/responses/429`.
             ///
@@ -42505,6 +42857,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/custom-domains/{customDomainNameOrID}/verify/post(refresh-custom-domain)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -42829,6 +43185,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/suspend/post(suspend-service)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -43152,6 +43512,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/resume/post(resume-service)/responses/429`.
             ///
@@ -43478,6 +43842,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/restart/post(restart-service)/responses/429`.
             ///
@@ -43828,6 +44196,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/scale/post(scale-service)/responses/429`.
             ///
@@ -44406,6 +44778,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/autoscaling/put(autoscale-service)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -44706,6 +45082,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/autoscaling/delete(delete-autoscaling-config)/responses/429`.
             ///
@@ -45013,6 +45393,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/preview/post(preview-service)/responses/429`.
             ///
@@ -45370,6 +45754,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/jobs/get(list-job)/responses/429`.
             ///
@@ -45741,6 +46129,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/jobs/post(post-job)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -46087,6 +46479,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/jobs/{jobId}/get(retrieve-job)/responses/429`.
             ///
@@ -46435,6 +46831,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/jobs/{jobId}/cancel/post(cancel-job)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -46681,6 +47081,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/instances/get(list-instances)/responses/429`.
             ///
@@ -46929,6 +47333,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//cron-jobs/{cronJobId}/runs/post(run-cron-job)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -47159,6 +47567,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//cron-jobs/{cronJobId}/runs/delete(cancel-cron-job-run)/responses/429`.
             ///
@@ -51370,6 +51782,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//events/{eventId}/get(retrieve-event)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -51806,6 +52222,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//logs/get(list-logs)/responses/429`.
             ///
@@ -52364,6 +52784,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//logs/subscribe/get(subscribe-logs)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -52812,6 +53236,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//logs/values/get(list-logs-values)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -53194,6 +53622,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//logs/streams/owner/{ownerId}/get(get-owner-log-stream)/responses/429`.
             ///
@@ -53629,6 +54061,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//logs/streams/owner/{ownerId}/put(update-owner-log-stream)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -53882,6 +54318,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//logs/streams/owner/{ownerId}/delete(delete-owner-log-stream)/responses/429`.
             ///
@@ -54314,6 +54754,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//logs/streams/resource/get(list-resource-log-streams)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -54696,6 +55140,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//logs/streams/resource/{resourceId}/get(get-resource-log-stream)/responses/429`.
             ///
@@ -55131,6 +55579,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//logs/streams/resource/{resourceId}/put(update-resource-log-stream)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -55384,6 +55836,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//logs/streams/resource/{resourceId}/delete(delete-resource-log-stream)/responses/429`.
             ///
@@ -62560,6 +63016,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//key-value/get(list-key-value)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -62821,6 +63281,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//key-value/post(create-key-value)/responses/429`.
             ///
@@ -63090,6 +63554,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//key-value/{redisId}/get(retrieve-key-value)/responses/429`.
             ///
@@ -63392,6 +63860,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//key-value/{redisId}/patch(update-key-value)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -63644,6 +64116,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//key-value/{redisId}/delete(delete-key-value)/responses/429`.
             ///
@@ -63913,6 +64389,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//key-value/{redisId}/connection-info/get(retrieve-key-value-connection-info)/responses/429`.
             ///
@@ -64236,6 +64716,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//key-value/{redisId}/suspend/post(suspend-key-value)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -64557,6 +65041,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//key-value/{redisId}/resume/post(resume-key-value)/responses/429`.
             ///
@@ -64918,6 +65406,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//redis/get(list-redis)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -65179,6 +65671,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//redis/post(create-redis)/responses/429`.
             ///
@@ -65448,6 +65944,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//redis/{redisId}/get(retrieve-redis)/responses/429`.
             ///
@@ -65750,6 +66250,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//redis/{redisId}/patch(update-redis)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -66002,6 +66506,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//redis/{redisId}/delete(delete-redis)/responses/429`.
             ///
@@ -66272,6 +66780,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//redis/{redisId}/connection-info/get(retrieve-redis-connection-info)/responses/429`.
             ///
@@ -66595,6 +67107,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//redis/{redisId}/suspend/post(suspend-redis)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -66916,6 +67432,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//redis/{redisId}/resume/post(resume-redis)/responses/429`.
             ///
@@ -67297,6 +67817,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//postgres/get(list-postgres)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -67558,6 +68082,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//postgres/post(create-postgres)/responses/429`.
             ///
@@ -67827,6 +68355,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/get(retrieve-postgres)/responses/429`.
             ///
@@ -68129,6 +68661,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/patch(update-postgres)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -68382,6 +68918,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/delete(delete-postgres)/responses/429`.
             ///
@@ -68651,6 +69191,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/connection-info/get(retrieve-postgres-connection-info)/responses/429`.
             ///
@@ -68953,6 +69497,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/recovery/get(retrieve-postgres-recovery-info)/responses/429`.
             ///
@@ -69360,6 +69908,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/recovery/post(recover-postgres)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -69681,6 +70233,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/suspend/post(suspend-postgres)/responses/429`.
             ///
@@ -70004,6 +70560,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/resume/post(resume-postgres)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -70325,6 +70885,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/restart/post(restart-postgres)/responses/429`.
             ///
@@ -70648,6 +71212,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/failover/post(failover-postgres)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -70949,6 +71517,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/export/get(list-postgres-export)/responses/429`.
             ///
@@ -71272,6 +71844,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/export/post(create-postgres-export)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -71577,6 +72153,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/credentials/get(list-postgres-users)/responses/429`.
             ///
@@ -71926,6 +72506,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/credentials/post(create-postgres-user)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -72185,6 +72769,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/credentials/{username}/delete(delete-postgres-user)/responses/429`.
             ///
@@ -72566,6 +73154,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/query/processes/get(list-postgres-processes)/responses/429`.
             ///
@@ -72980,6 +73572,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/query/top-queries/get(list-postgres-top-queries)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -73309,6 +73905,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/query/sizes/get(list-postgres-sizes)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -73632,6 +74232,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/query/table-scans/get(list-postgres-table-scans)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -73954,6 +74558,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//projects/get(list-projects)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -74215,6 +74823,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//projects/post(create-project)/responses/429`.
             ///
@@ -74484,6 +75096,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//projects/{projectId}/get(retrieve-project)/responses/429`.
             ///
@@ -74765,6 +75381,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//projects/{projectId}/patch(update-project)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -75023,6 +75643,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//projects/{projectId}/delete(delete-project)/responses/429`.
             ///
@@ -75360,6 +75984,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//environments/get(list-environments)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -75621,6 +76249,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//environments/post(create-environment)/responses/429`.
             ///
@@ -75889,6 +76521,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//environments/{environmentId}/get(retrieve-environment)/responses/429`.
             ///
@@ -76167,6 +76803,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//environments/{environmentId}/patch(update-environment)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -76425,6 +77065,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//environments/{environmentId}/delete(delete-environment)/responses/429`.
             ///
@@ -76704,6 +77348,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//environments/{environmentId}/resources/post(add-resources-to-environment)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -76973,6 +77621,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//environments/{environmentId}/resources/delete(remove-resources-from-environment)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -77184,12 +77836,12 @@ public enum Operations {
                 /// - Remark: Generated from `#/paths/env-groups/GET/responses/200/content`.
                 @frozen public enum Body: Sendable, Hashable {
                     /// - Remark: Generated from `#/paths/env-groups/GET/responses/200/content/application\/json`.
-                    case json([Components.Schemas.EnvGroupMeta])
+                    case json([Components.Schemas.EnvGroupWithCursor])
                     /// The associated value of the enum case if `self` is `.json`.
                     ///
                     /// - Throws: An error if `self` is not `.json`.
                     /// - SeeAlso: `.json`.
-                    public var json: [Components.Schemas.EnvGroupMeta] {
+                    public var json: [Components.Schemas.EnvGroupWithCursor] {
                         get throws {
                             switch self {
                             case let .json(body):
@@ -77301,6 +77953,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//env-groups/get(list-env-groups)/responses/429`.
             ///
@@ -77563,6 +78219,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//env-groups/post(create-env-group)/responses/429`.
             ///
@@ -77834,6 +78494,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//env-groups/{envGroupId}/get(retrieve-env-group)/responses/429`.
             ///
@@ -78112,6 +78776,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//env-groups/{envGroupId}/patch(update-env-group)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -78363,6 +79031,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//env-groups/{envGroupId}/delete(delete-env-group)/responses/429`.
             ///
@@ -78646,6 +79318,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//env-groups/{envGroupId}/services/{serviceId}/post(link-service-to-env-group)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -78907,6 +79583,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//env-groups/{envGroupId}/services/{serviceId}/delete(unlink-service-from-env-group)/responses/429`.
             ///
@@ -79187,6 +79867,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//env-groups/{envGroupId}/env-vars/{envVarKey}/get(retrieve-env-group-env-var)/responses/429`.
             ///
@@ -79477,6 +80161,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//env-groups/{envGroupId}/env-vars/{envVarKey}/put(update-env-group-env-var)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -79738,6 +80426,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//env-groups/{envGroupId}/env-vars/{envVarKey}/delete(delete-env-group-env-var)/responses/429`.
             ///
@@ -80018,6 +80710,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//env-groups/{envGroupId}/secret-files/{envVarKey}/get(retrieve-env-group-secret-file)/responses/429`.
             ///
@@ -80319,6 +81015,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//env-groups/{envGroupId}/secret-files/{envVarKey}/put(update-env-group-secret-file)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -80582,6 +81282,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//env-groups/{envGroupId}/secret-files/{envVarKey}/delete(delete-env-group-secret-file)/responses/429`.
             ///
@@ -80939,6 +81643,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//maintenance/get(list-maintenance)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -81267,6 +81975,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//maintenance/{maintenanceRunID}/get(retrieve-maintenance)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -81548,6 +82260,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//maintenance/{maintenanceRunID}/patch(update-maintenance)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -81804,6 +82520,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//maintenance/{maintenanceRunID}/trigger/post(trigger-maintenance)/responses/429`.
             ///
@@ -82090,6 +82810,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//webhooks/get(list-webhooks)/responses/429`.
             ///
@@ -82595,6 +83319,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//webhooks/post(create-webhook)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -82964,6 +83692,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//webhooks/{webhookId}/get(retrieve-webhook)/responses/429`.
             ///
@@ -83479,6 +84211,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//webhooks/{webhookId}/patch(update-webhook)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -83710,6 +84446,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//webhooks/{webhookId}/delete(delete-webhook)/responses/429`.
             ///
@@ -84023,6 +84763,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//webhooks/{webhookId}/events/get(list-webhook-events)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -84329,6 +85073,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//workflows/get(listWorkflows)/responses/429`.
             ///
@@ -84976,6 +85724,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//workflows/post(createWorkflow)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -85407,6 +86159,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//workflows/{workflowId}/get(getWorkflow)/responses/429`.
             ///
@@ -85957,6 +86713,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//workflows/{workflowId}/patch(updateWorkflow)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -86210,6 +86970,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//workflows/{workflowId}/delete(deleteWorkflow)/responses/429`.
             ///
@@ -86511,6 +87275,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//workflowversions/get(listWorkflowVersions)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -86778,6 +87546,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//workflowversions/post(createWorkflowVersion)/responses/429`.
             ///
@@ -87099,6 +87871,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//workflowversions/{workflowVersionId}/get(getWorkflowVersion)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -87405,6 +88181,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//tasks/get(listTasks)/responses/429`.
             ///
@@ -87716,6 +88496,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//tasks/{taskId}/get(getTask)/responses/429`.
             ///
@@ -88030,6 +88814,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//task-runs/get(listTaskRuns)/responses/429`.
             ///
@@ -88549,6 +89337,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//task-runs/post(createTask)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -88881,6 +89673,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//task-runs/events/get(streamTaskRunsEvents)/responses/429`.
             ///
@@ -89401,6 +90197,10 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
+            ///
             /// - Remark: Generated from `#/paths//task-runs/{taskRunId}/get(getTaskRun)/responses/429`.
             ///
             /// HTTP response code: `429 tooManyRequests`.
@@ -89654,6 +90454,10 @@ public enum Operations {
                 }
             }
             /// Rate limit has been surpassed.
+            ///
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
+            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            ///
             ///
             /// - Remark: Generated from `#/paths//task-runs/{taskRunId}/delete(cancelTaskRun)/responses/429`.
             ///

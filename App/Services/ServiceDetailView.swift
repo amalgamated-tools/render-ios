@@ -226,6 +226,47 @@ struct ServiceDetailView: View {
             } label: {
                 Label("Secret Files", systemImage: "doc.text")
             }
+            NavigationLink {
+                // The other half of the Environment screen's answer: what this service inherits from
+                // a group, which its own variable list deliberately doesn't show.
+                ServiceEnvGroupsView(
+                    client: client,
+                    ownerID: ownerID,
+                    service: service,
+                    deployer: ConfigDeployer.make(client: client, service: service)
+                )
+            } label: {
+                Label("Env Groups", systemImage: "rectangle.stack")
+            }
+            // Withheld rather than shown-and-failing: these endpoints answer 406 for a service type
+            // that doesn't have them. See `ServiceConfigCatalog`.
+            if ServiceConfigCatalog.hasCustomDomains(service.type) {
+                NavigationLink {
+                    CustomDomainsView(client: client, serviceID: service.id)
+                } label: {
+                    Label("Custom Domains", systemImage: "globe")
+                }
+            }
+            if ServiceConfigCatalog.hasEdgeRules(service.type) {
+                NavigationLink {
+                    RouteRulesView(
+                        client: client,
+                        serviceID: service.id,
+                        deployer: ConfigDeployer.make(client: client, service: service)
+                    )
+                } label: {
+                    Label("Redirects & Rewrites", systemImage: "arrow.triangle.branch")
+                }
+                NavigationLink {
+                    HeaderRulesView(
+                        client: client,
+                        serviceID: service.id,
+                        deployer: ConfigDeployer.make(client: client, service: service)
+                    )
+                } label: {
+                    Label("Headers", systemImage: "text.append")
+                }
+            }
         }
     }
 

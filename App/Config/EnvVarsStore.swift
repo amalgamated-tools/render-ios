@@ -19,7 +19,9 @@ struct EnvVarEntry: Identifiable, Hashable, Sendable {
     }
 }
 
-/// Reads and writes a service's environment variables.
+/// Reads and writes a set of environment variables — a service's own, or an env group's.
+///
+/// Which set is the ``EnvVarBackend``'s business; everything below is true of both.
 ///
 /// **Writes go key by key, never as a whole-list PUT.** The API offers both — `PUT
 /// /services/{id}/env-vars` replaces the entire set — and the whole-list form is a lost-update
@@ -27,7 +29,7 @@ struct EnvVarEntry: Identifiable, Hashable, Sendable {
 /// screen last loaded. `PUT /services/{id}/env-vars/{key}` is create-or-update on one key, so
 /// editing `LOG_LEVEL` from a phone can't take a colleague's new variable down with it.
 ///
-/// **A write does not deploy.** Render applies an API env var change to the service's configuration
+/// **A write does not deploy.** Render applies an API env var change to the configuration
 /// immediately, but — unlike the same edit made in the dashboard — it does not start a deploy, so the
 /// running instances keep the old value until the next one. Verified live: writing and deleting a
 /// variable produced no deploy and no deploy event. The UI says so, because "saved" that silently
@@ -51,20 +53,28 @@ final class EnvVarsStore {
     /// the service can't be deployed, and the banner then only reports.
     let deployer: ConfigDeployer?
 
-    private let client: RenderClient
-    private let serviceID: String
-    private let pageSize: Int
+    private let backend: EnvVarBackend
 
-    init(
+    /// Where these variables live, for the two sentences that have to differ between a service and a
+    /// group — when a change takes effect, and why the list might be empty.
+    var scope: ConfigScope { backend.scope }
+
+    init(backend: EnvVarBackend, deployer: ConfigDeployer? = nil) {
+        self.backend = backend
+        self.deployer = deployer
+    }
+
+    /// A service's own variables. The common case, and the only one that can offer a deploy.
+    convenience init(
         client: RenderClient,
         serviceID: String,
         deployer: ConfigDeployer? = nil,
         pageSize: Int = 100
     ) {
-        self.client = client
-        self.serviceID = serviceID
-        self.deployer = deployer
-        self.pageSize = pageSize
+        self.init(
+            backend: .service(client: client, serviceID: serviceID, pageSize: pageSize),
+            deployer: deployer
+        )
     }
 
     /// Entries in the order they're displayed: alphabetical by key, which is the only order that
@@ -95,7 +105,7 @@ final class EnvVarsStore {
         defer { isLoading = false }
 
         do {
-            entries = try await makePaginator().collect()
+            entries = try await backend.load()
             errorMessage = nil
         } catch {
             // Keep whatever is already on screen: a failed refresh is a reason to say so, not a
@@ -125,14 +135,16 @@ final class EnvVarsStore {
         defer { writeInFlight = nil }
 
         do {
-            let updated = try await client.api.updateEnvVar(
-                path: .init(serviceId: serviceID, envVarKey: key),
-                body: .json(.EnvVarValue(.init(value: value)))
-            ).ok.body.json
-            // Apply the *response*, not the request: Render is the authority on what it stored.
-            apply(EnvVarEntry(updated))
+            // Apply what Render answered with, not what was sent: it's the authority on what it
+            // stored. A group answers with its whole set, which replaces the list outright.
+            switch try await backend.save(key, value) {
+            case .entry(let entry):
+                apply(entry)
+            case .wholeSet(let entries):
+                self.entries = entries
+            }
             actionResult = .success(
-                "\(key) saved. It takes effect on the next deploy.",
+                "\(key) saved. \(backend.scope.takesEffectNote)",
                 offersDeploy: deployer != nil
             )
             return true
@@ -151,12 +163,10 @@ final class EnvVarsStore {
         defer { writeInFlight = nil }
 
         do {
-            _ = try await client.api.deleteEnvVar(
-                path: .init(serviceId: serviceID, envVarKey: key)
-            ).noContent
+            try await backend.delete(key)
             entries.removeAll { $0.key == key }
             actionResult = .success(
-                "\(key) deleted. It takes effect on the next deploy.",
+                "\(key) deleted. \(backend.scope.takesEffectNote)",
                 offersDeploy: deployer != nil
             )
             return true
@@ -190,21 +200,6 @@ final class EnvVarsStore {
             entries[index] = entry
         } else {
             entries.append(entry)
-        }
-    }
-
-    private func makePaginator() -> CursorPaginator<Components.Schemas.EnvVarWithCursor, EnvVarEntry> {
-        let client = client
-        let serviceID = serviceID
-        return CursorPaginator(pageSize: pageSize) { cursor, limit in
-            try await client.api
-                .getEnvVarsForService(
-                    path: .init(serviceId: serviceID),
-                    query: .init(cursor: cursor, limit: limit)
-                )
-                .ok.body.json
-        } unwrap: { envelope in
-            (EnvVarEntry(envelope.envVar), envelope.cursor)
         }
     }
 }
