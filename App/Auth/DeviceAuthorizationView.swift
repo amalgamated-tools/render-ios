@@ -48,8 +48,12 @@ struct DeviceAuthorizationView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Image(systemName: "person.badge.key")
-                .font(.largeTitle)
+            // The same mark as onboarding, at the same size, so crossing into the device flow
+            // doesn't feel like leaving the app for a system sheet.
+            Image(.logomark)
+                .resizable()
+                .scaledToFit()
+                .frame(height: 36)
                 .foregroundStyle(.tint)
             Text("Approve this device")
                 .font(.title2.bold())
@@ -75,7 +79,7 @@ struct DeviceAuthorizationView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
-        .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
+        .background(.quaternary, in: RoundedRectangle(cornerRadius: Theme.Radius.card))
     }
 }
 
