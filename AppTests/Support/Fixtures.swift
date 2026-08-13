@@ -117,12 +117,16 @@ enum Fixtures {
     }
 
     /// `serviceDetails` per service type. Only the required set plus whatever a test reads.
-    static func serviceDetailsJSON(for type: String, diskSizeGB: Int? = nil) -> String {
+    static func serviceDetailsJSON(
+        for type: String,
+        diskSizeGB: Int? = nil,
+        runtime: String = "node"
+    ) -> String {
         let disk = diskSizeGB.map {
             #","disk":{"id":"dsk-1","name":"data","mountPath":"/data","sizeGB":\#($0)}"#
         } ?? ""
         let compute = """
-            "env":"node","runtime":"node",\
+            "env":"node","runtime":"\(runtime)",\
             "envSpecificDetails":{"buildCommand":"npm ci","startCommand":"npm start"},\
             "plan":"starter","region":"oregon","buildPlan":"starter"
             """
@@ -142,6 +146,11 @@ enum Fixtures {
         default:
             fatalError("unhandled service type \(type)")
         }
+    }
+
+    /// A single `deploy`, as `POST /services/{id}/deploys` answers with on a 201.
+    static func deploy(id: String = "dep-1", status: String = "build_in_progress") -> String {
+        #"{"id":"\#(id)","status":"\#(status)","createdAt":"2026-08-12T10:00:00Z"}"#
     }
 
     /// One page of `GET /services/{id}/env-vars`.

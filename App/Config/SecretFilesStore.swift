@@ -36,6 +36,10 @@ struct SecretFileEntry: Identifiable, Hashable, Sendable {
 /// One difference worth naming: a secret file's *contents* are the secret, and they're often
 /// several kilobytes of PEM or JSON. They are never rendered in the list — only a size summary —
 /// and the editor reveals them behind an explicit tap.
+///
+/// A second, uglier difference: the write endpoint doesn't match its own spec. It answers 200 rather
+/// than the documented 201, and the body it sends back describes an env var, not a secret file — so
+/// unlike every other write in the app, this one applies what it *sent*. See ``save(name:content:)``.
 @MainActor
 @Observable
 final class SecretFilesStore {
@@ -45,13 +49,22 @@ final class SecretFilesStore {
     private(set) var writeInFlight: String?
     private(set) var actionResult: ConfigActionResult?
 
+    /// Starts a deploy from the success banner. `nil` when the service can't be deployed.
+    let deployer: ConfigDeployer?
+
     private let client: RenderClient
     private let serviceID: String
     private let pageSize: Int
 
-    init(client: RenderClient, serviceID: String, pageSize: Int = 100) {
+    init(
+        client: RenderClient,
+        serviceID: String,
+        deployer: ConfigDeployer? = nil,
+        pageSize: Int = 100
+    ) {
         self.client = client
         self.serviceID = serviceID
+        self.deployer = deployer
         self.pageSize = pageSize
     }
 
@@ -93,12 +106,33 @@ final class SecretFilesStore {
         do {
             // `envVarKey` is the generated name for this path parameter — the spec reuses the env
             // var parameter for the secret file's name. It's the file name that goes in it.
-            let updated = try await client.api.addOrUpdateSecretFile(
+            let output = try await client.api.addOrUpdateSecretFile(
                 path: .init(serviceId: serviceID, envVarKey: name),
                 body: .json(.init(content: content))
-            ).created.body.json
-            apply(SecretFileEntry(updated))
-            actionResult = .success("\(name) saved. It takes effect on the next deploy.")
+            )
+            switch output {
+            case .created:
+                break
+            case .undocumented(let statusCode, _) where (200..<300).contains(statusCode):
+                // What Render actually does, measured 2026-08-12: this PUT answers **200**, not the
+                // documented 201 — and its body is env-var shaped (`{"key","value"}`), not a secret
+                // file. So the spec's success case never matches a real reply, and the reply can't
+                // be applied even when it arrives. Accepting any 2xx and trusting the request is the
+                // only honest reading. Before this, a create that Render had *performed* was
+                // reported to the user as a failure to reach Render.
+                break
+            case .undocumented(let statusCode, _):
+                throw RenderError.from(statusCode: statusCode, message: nil)
+            default:
+                throw RenderError.server(statusCode: 500, message: "Render rejected the write.")
+            }
+            // The request, not the response — see above. This is the one write in the app where
+            // Render isn't the authority on what it stored, because it doesn't say.
+            apply(SecretFileEntry(name: name, content: content))
+            actionResult = .success(
+                "\(name) saved. It takes effect on the next deploy.",
+                offersDeploy: deployer != nil
+            )
             return true
         } catch {
             actionResult = .failure(error)
@@ -118,11 +152,22 @@ final class SecretFilesStore {
                 path: .init(serviceId: serviceID, envVarKey: name)
             ).noContent
             files.removeAll { $0.name == name }
-            actionResult = .success("\(name) deleted. It takes effect on the next deploy.")
+            actionResult = .success(
+                "\(name) deleted. It takes effect on the next deploy.",
+                offersDeploy: deployer != nil
+            )
             return true
         } catch {
             actionResult = .failure(error)
             return false
+        }
+    }
+
+    /// Deploys the service, so the change the banner is reporting becomes the one that's running.
+    func deployNow() async {
+        guard writeInFlight == nil, let deployer else { return }
+        if let result = await deployer.deploy() {
+            actionResult = result
         }
     }
 

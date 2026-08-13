@@ -88,4 +88,30 @@ final class DeploysStore {
             .elements
             .first
     }
+
+    /// Starts a deploy of the service's latest commit or image.
+    ///
+    /// Lives here rather than on a screen's store because two screens start deploys: the detail
+    /// screen's action menu, and the config screens' success banner — where a deploy is what makes a
+    /// just-saved variable actually live.
+    ///
+    /// The only operation with two documented success codes: 201 when Render created a deploy, 202
+    /// when it accepted the request but had nothing new to build. Both are successes.
+    static func createDeploy(client: RenderClient, serviceID: String, clearCache: Bool) async throws {
+        let output = try await client.api.createDeploy(
+            path: .init(serviceId: serviceID),
+            body: .json(.init(clearCache: clearCache ? .clear : .doNotClear))
+        )
+        switch output {
+        case .created, .accepted:
+            break
+        case .undocumented(let statusCode, _):
+            throw RenderError.from(statusCode: statusCode, message: nil)
+        default:
+            // Unreachable: StatusMappingMiddleware turns every documented 4xx/5xx into a thrown
+            // RenderError before the client ever builds an `Output`. Failing loudly rather than
+            // silently reporting success keeps that true if the middleware stack changes.
+            throw RenderError.server(statusCode: 500, message: "Render rejected the deploy request.")
+        }
+    }
 }

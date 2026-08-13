@@ -12,8 +12,10 @@ struct SecretFilesView: View {
     @State private var isAddingFile = false
     @State private var pendingDeletion: SecretFileEntry?
 
-    init(client: RenderClient, serviceID: String) {
-        _store = State(initialValue: SecretFilesStore(client: client, serviceID: serviceID))
+    init(client: RenderClient, serviceID: String, deployer: ConfigDeployer? = nil) {
+        _store = State(
+            initialValue: SecretFilesStore(client: client, serviceID: serviceID, deployer: deployer)
+        )
     }
 
     var body: some View {
@@ -103,19 +105,12 @@ struct SecretFilesView: View {
     @ViewBuilder
     private var banner: some View {
         if let result = store.actionResult {
-            HStack(spacing: 8) {
-                Image(systemName: result.isFailure ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
-                Text(result.message)
-                    .font(.subheadline)
-                Spacer()
-                Button("Dismiss", systemImage: "xmark") { store.dismissActionResult() }
-                    .labelStyle(.iconOnly)
-            }
-            .padding(12)
-            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 12))
-            .foregroundStyle(result.isFailure ? .red : .green)
-            .padding(.horizontal)
-            .transition(.move(edge: .bottom).combined(with: .opacity))
+            ConfigResultBanner(
+                result: result,
+                deployer: store.deployer,
+                deploy: { await store.deployNow() },
+                dismiss: { store.dismissActionResult() }
+            )
         }
     }
 }
