@@ -85,4 +85,36 @@ struct MetricsCatalogTests {
         #expect(Set(ids).count == 3)
         #expect(MetricsCatalog.httpLatency.series.map(\.name) == ["p50", "p95", "p99"])
     }
+
+    // MARK: - Datastores
+
+    private func postgres(diskSizeGB: Int?) throws -> PostgresDetailModel {
+        let json = Fixtures.postgresJSON(diskSizeGB: diskSizeGB)
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return PostgresDetailModel(
+            try decoder.decode(Components.Schemas.PostgresDetail.self, from: Data(json.utf8))
+        )
+    }
+
+    @Test("postgres gets compute, connections, and — with a fixed disk — disk")
+    func postgresCharts() throws {
+        let withDisk = MetricsCatalog.charts(forPostgres: try postgres(diskSizeGB: 10)).map(\.id)
+        #expect(withDisk == ["cpu", "memory", "active-connections", "disk"])
+
+        // Flexible plans report no diskSizeGB, so there is no capacity to chart against.
+        let withoutDisk = MetricsCatalog.charts(forPostgres: try postgres(diskSizeGB: nil)).map(\.id)
+        #expect(withoutDisk == ["cpu", "memory", "active-connections"])
+    }
+
+    @Test("key value gets compute and connections")
+    func keyValueCharts() throws {
+        let json = Fixtures.keyValueJSON(includeDashboardURL: false)
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let instance = KeyValueDetailModel(
+            try decoder.decode(Components.Schemas.KeyValueDetail.self, from: Data(json.utf8))
+        )
+        #expect(MetricsCatalog.charts(forKeyValue: instance).map(\.id) == ["cpu", "memory", "active-connections"])
+    }
 }
