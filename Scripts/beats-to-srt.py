@@ -14,10 +14,21 @@ runs until the next beat starts, less a small gap so no two cues overlap. The la
 after it to bound it: with --movie it runs to the end of the video (read with ffprobe), and without
 one it gets TAIL_SECONDS.
 
-The offsets are measured from START_EPOCH, which the recorder stamps two seconds after launching
-`simctl io recordVideo`. That settling delay is deliberate, but it means the alignment is only as
-good as simctl's startup. Check the first cue against the picture; if the whole track is uniformly
-early or late, shift it at mux time with ffmpeg's -itsoffset rather than editing every line.
+Beat offsets are wall-clock seconds since the recorder started, and **the recording's clock is not
+wall time.** `simctl io recordVideo` timestamps frames by when the screen changed, and it does not
+pad the gaps: recording a still simulator for twenty seconds produces a *0.07-second* movie. Every
+still moment in the tour — most of a `beat`'s hold — is therefore squeezed out of the timeline, and a
+cue stamped in wall seconds lands later than the screen it describes by however much stillness came
+before it.
+
+That error can't be recovered from the movie, because the missing time was never written. What can be
+corrected is its total: `stop_recording` writes the tour's wall duration as a `# wall <seconds>`
+trailer, and with --movie every cue is scaled by `duration / wall`, which spreads the whole
+discrepancy evenly instead of letting it pile up at the end. It is an approximation — the squeeze is
+not evenly distributed — so check the result with Scripts/verify-walkthrough.sh rather than assuming.
+
+If the whole track then reads uniformly early or late, that part is simctl's startup rather than the
+squeeze: shift it at mux time with ffmpeg's -itsoffset rather than editing every line.
 """
 import argparse
 import re
@@ -28,6 +39,7 @@ TAIL_SECONDS = 6.0
 GAP = 0.15  # a cue ends just before the next one starts
 
 BEAT = re.compile(r"^(\d+):(\d{2})\s+(.*\S)\s*$")
+WALL = re.compile(r"^#\s*wall\s+(\d+)\s*$")
 
 
 def stamp(seconds):
@@ -54,10 +66,16 @@ def movie_duration(path):
 
 
 def read_beats(path):
+    """The beats, and the tour's wall duration if the file carries one."""
     beats = []
+    wall = None
     with open(path) as handle:
         for number, line in enumerate(handle, 1):
             if not line.strip():
+                continue
+            trailer = WALL.match(line)
+            if trailer:
+                wall = int(trailer.group(1))
                 continue
             match = BEAT.match(line)
             if not match:
@@ -66,7 +84,7 @@ def read_beats(path):
                 continue
             minutes, seconds, text = match.groups()
             beats.append((int(minutes) * 60 + int(seconds), text))
-    return beats
+    return beats, wall
 
 
 def main():
@@ -75,12 +93,25 @@ def main():
     parser.add_argument("--movie", help="end the last cue at this file's duration")
     args = parser.parse_args()
 
-    beats = read_beats(args.beats)
+    beats, wall = read_beats(args.beats)
     if not beats:
         sys.exit(f"!!! no beats found in {args.beats}")
 
     duration = movie_duration(args.movie) if args.movie else None
     tail = duration if duration else beats[-1][0] + TAIL_SECONDS
+
+    # Only with both endpoints: a wall duration alone says nothing about the recorder's clock, and a
+    # movie duration alone has nothing to compare against.
+    scale = 1.0
+    if duration and wall:
+        scale = duration / wall
+        if abs(scale - 1) > 0.1:
+            # Ten percent is not clock drift — it's the wrong pairing of .txt and .mov, and scaling
+            # by it would be worse than not scaling at all.
+            print(f"  warn: {args.beats} and {args.movie} differ by {abs(1 - scale):.0%} — are they"
+                  " from the same run? Not rescaling.", file=sys.stderr)
+            scale = 1.0
+    beats = [(start * scale, text) for start, text in beats]
 
     for index, (start, text) in enumerate(beats, 1):
         end = beats[index][0] - GAP if index < len(beats) else tail
