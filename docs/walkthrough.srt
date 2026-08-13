@@ -1,0 +1,72 @@
+1
+00:00:00,000 --> 00:00:04,850
+Sign-in — the API key path
+
+2
+00:00:05,000 --> 00:00:08,850
+Pasting a key is the fallback; expanding it focuses the field
+
+3
+00:00:09,000 --> 00:00:16,850
+The key is validated against Render before it's stored, and only ever in the Keychain
+
+4
+00:00:17,000 --> 00:00:19,850
+The service list — every service in the active workspace
+
+5
+00:00:20,000 --> 00:00:27,850
+Search narrows it down
+
+6
+00:00:28,000 --> 00:00:32,850
+Service detail: current deploy first, then the configuration facts worth knowing on call
+
+7
+00:00:33,000 --> 00:00:42,850
+The action set is computed per service — this one can deploy, restart, suspend, scale
+
+8
+00:00:43,000 --> 00:00:45,850
+Below the configuration, the drill-downs
+
+9
+00:00:46,000 --> 00:00:49,850
+Deploy history, newest first, paging as you scroll
+
+10
+00:00:50,000 --> 00:00:59,850
+One deploy: status, trigger, timing, and the commit that shipped
+
+11
+00:01:00,000 --> 00:01:05,850
+Metrics, charted against the plan's limits
+
+12
+00:01:06,000 --> 00:01:14,850
+Same charts over 24 hours
+
+13
+00:01:15,000 --> 00:01:20,850
+Chart set is chosen per service type
+
+14
+00:01:21,000 --> 00:01:28,850
+Events: what Render did to this service, and when
+
+15
+00:01:29,000 --> 00:01:34,850
+Logs, newest first, severity down the left edge
+
+16
+00:01:35,000 --> 00:01:48,850
+Filtering is server-side, and the vocabulary comes from what this service actually emits
+
+17
+00:01:49,000 --> 00:02:04,850
+A live tail over a WebSocket — lines arrive as they happen
+
+18
+00:02:05,000 --> 00:02:08,332
+Back to the list
+
