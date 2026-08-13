@@ -51,6 +51,23 @@ struct FactChip: View {
     }
 }
 
+/// The smallest badge: a word sitting next to a row's title, qualifying it. "Suspended" on a
+/// service, "Replica" on a Postgres instance. Smaller than a ``StatusChip`` because it rides
+/// alongside a headline rather than standing on its own line.
+struct MiniBadge: View {
+    let title: String
+    var tint: Color = .secondary
+
+    var body: some View {
+        Text(title)
+            .font(.caption2.weight(.semibold))
+            .foregroundStyle(tint)
+            .padding(.horizontal, Theme.Chip.horizontalPadding - 2)
+            .padding(.vertical, Theme.Chip.verticalPadding - 1)
+            .background(tint.opacity(Theme.Glyph.fillOpacity), in: Capsule())
+    }
+}
+
 /// The tinted rounded-square tile behind a service-type or datastore glyph in a list row.
 struct GlyphTile: View {
     let systemImage: String

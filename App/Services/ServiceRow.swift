@@ -6,24 +6,17 @@ struct ServiceRow: View {
     let service: ServiceSummary
 
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: service.type.systemImage)
-                .font(.title3)
-                .foregroundStyle(service.type.accent)
-                .frame(width: 28)
+        HStack(spacing: Theme.Spacing.row) {
+            GlyphTile(systemImage: service.type.systemImage, tint: service.type.accent)
+                .accessibilityLabel(service.type.displayName)
 
             VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 6) {
+                HStack(spacing: Theme.Spacing.tight) {
                     Text(service.name)
                         .font(.headline)
                         .lineLimit(1)
                     if service.isSuspended {
-                        Text("Suspended")
-                            .font(.caption2.weight(.semibold))
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Color.secondary.opacity(0.15), in: Capsule())
-                            .foregroundStyle(.secondary)
+                        MiniBadge(title: "Suspended")
                     }
                 }
                 Text(subtitle)
