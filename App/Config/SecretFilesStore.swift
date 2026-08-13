@@ -26,7 +26,7 @@ struct SecretFileEntry: Identifiable, Hashable, Sendable {
     }
 }
 
-/// Reads and writes a service's secret files.
+/// Reads and writes a set of secret files — a service's own, or an env group's.
 ///
 /// The same shape as ``EnvVarsStore`` and for the same reasons: writes address one file at a time
 /// (`PUT /services/{id}/secret-files/{name}`) rather than replacing the whole set, and — as with env
@@ -37,9 +37,8 @@ struct SecretFileEntry: Identifiable, Hashable, Sendable {
 /// several kilobytes of PEM or JSON. They are never rendered in the list — only a size summary —
 /// and the editor reveals them behind an explicit tap.
 ///
-/// A second, uglier difference: the write endpoint doesn't match its own spec. It answers 200 rather
-/// than the documented 201, and the body it sends back describes an env var, not a secret file — so
-/// unlike every other write in the app, this one applies what it *sent*. See ``save(name:content:)``.
+/// A second, uglier difference lives in ``SecretFileBackend``: the service-scoped write endpoint
+/// doesn't match its own spec, so it's the one write in the app that applies what it *sent*.
 @MainActor
 @Observable
 final class SecretFilesStore {
@@ -52,20 +51,26 @@ final class SecretFilesStore {
     /// Starts a deploy from the success banner. `nil` when the service can't be deployed.
     let deployer: ConfigDeployer?
 
-    private let client: RenderClient
-    private let serviceID: String
-    private let pageSize: Int
+    private let backend: SecretFileBackend
 
-    init(
+    var scope: ConfigScope { backend.scope }
+
+    init(backend: SecretFileBackend, deployer: ConfigDeployer? = nil) {
+        self.backend = backend
+        self.deployer = deployer
+    }
+
+    /// A service's own secret files. The common case, and the only one that can offer a deploy.
+    convenience init(
         client: RenderClient,
         serviceID: String,
         deployer: ConfigDeployer? = nil,
         pageSize: Int = 100
     ) {
-        self.client = client
-        self.serviceID = serviceID
-        self.deployer = deployer
-        self.pageSize = pageSize
+        self.init(
+            backend: .service(client: client, serviceID: serviceID, pageSize: pageSize),
+            deployer: deployer
+        )
     }
 
     var sortedFiles: [SecretFileEntry] {
@@ -80,7 +85,7 @@ final class SecretFilesStore {
         defer { isLoading = false }
 
         do {
-            files = try await makePaginator().collect()
+            files = try await backend.load()
             errorMessage = nil
         } catch {
             errorMessage = RenderError.wrapping(error).errorDescription
@@ -104,33 +109,14 @@ final class SecretFilesStore {
         defer { writeInFlight = nil }
 
         do {
-            // `envVarKey` is the generated name for this path parameter — the spec reuses the env
-            // var parameter for the secret file's name. It's the file name that goes in it.
-            let output = try await client.api.addOrUpdateSecretFile(
-                path: .init(serviceId: serviceID, envVarKey: name),
-                body: .json(.init(content: content))
-            )
-            switch output {
-            case .created:
-                break
-            case .undocumented(let statusCode, _) where (200..<300).contains(statusCode):
-                // What Render actually does, measured 2026-08-12: this PUT answers **200**, not the
-                // documented 201 — and its body is env-var shaped (`{"key","value"}`), not a secret
-                // file. So the spec's success case never matches a real reply, and the reply can't
-                // be applied even when it arrives. Accepting any 2xx and trusting the request is the
-                // only honest reading. Before this, a create that Render had *performed* was
-                // reported to the user as a failure to reach Render.
-                break
-            case .undocumented(let statusCode, _):
-                throw RenderError.from(statusCode: statusCode, message: nil)
-            default:
-                throw RenderError.server(statusCode: 500, message: "Render rejected the write.")
+            switch try await backend.save(name, content) {
+            case .entry(let file):
+                apply(file)
+            case .wholeSet(let files):
+                self.files = files
             }
-            // The request, not the response — see above. This is the one write in the app where
-            // Render isn't the authority on what it stored, because it doesn't say.
-            apply(SecretFileEntry(name: name, content: content))
             actionResult = .success(
-                "\(name) saved. It takes effect on the next deploy.",
+                "\(name) saved. \(backend.scope.takesEffectNote)",
                 offersDeploy: deployer != nil
             )
             return true
@@ -148,12 +134,10 @@ final class SecretFilesStore {
         defer { writeInFlight = nil }
 
         do {
-            _ = try await client.api.deleteSecretFile(
-                path: .init(serviceId: serviceID, envVarKey: name)
-            ).noContent
+            try await backend.delete(name)
             files.removeAll { $0.name == name }
             actionResult = .success(
-                "\(name) deleted. It takes effect on the next deploy.",
+                "\(name) deleted. \(backend.scope.takesEffectNote)",
                 offersDeploy: deployer != nil
             )
             return true
@@ -185,21 +169,6 @@ final class SecretFilesStore {
             files[index] = file
         } else {
             files.append(file)
-        }
-    }
-
-    private func makePaginator() -> CursorPaginator<Components.Schemas.SecretFileWithCursor, SecretFileEntry> {
-        let client = client
-        let serviceID = serviceID
-        return CursorPaginator(pageSize: pageSize) { cursor, limit in
-            try await client.api
-                .listSecretFilesForService(
-                    path: .init(serviceId: serviceID),
-                    query: .init(cursor: cursor, limit: limit)
-                )
-                .ok.body.json
-        } unwrap: { envelope in
-            (SecretFileEntry(envelope.secretFile), envelope.cursor)
         }
     }
 }

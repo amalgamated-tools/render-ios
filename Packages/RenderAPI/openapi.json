@@ -15453,7 +15453,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/envGroupMeta"
+                    "$ref": "#/components/schemas/envGroupWithCursor"
                   }
                 }
               }
@@ -22357,13 +22357,16 @@
         "type": "string",
         "description": "The machine-readable codes that can appear in the error object's \"code\" field. The field is a plain string so new codes are not breaking changes; this vocabulary exists so generated clients get typed constants. OpenAPI cannot deprecate individual enum values, so deprecation notes live in x-enum-descriptions.",
         "enum": [
-          "multiple_regions"
+          "multiple_regions",
+          "duplicate_saved_search_name"
         ],
         "x-enum-varnames": [
-          "ErrorCodeMultipleRegions"
+          "ErrorCodeMultipleRegions",
+          "ErrorCodeDuplicateSavedSearchName"
         ],
         "x-enum-descriptions": [
-          "A metrics query over resources spanning multiple regions is not supported."
+          "A metrics query over resources spanning multiple regions is not supported.",
+          "A saved-search create or rename hit a name already used in the project."
         ]
       },
       "pullRequestPreviewsEnabled": {
@@ -26432,6 +26435,21 @@
             "$ref": "#/components/schemas/cursor"
           }
         }
+      },
+      "envGroupWithCursor": {
+        "type": "object",
+        "required": [
+          "envGroup",
+          "cursor"
+        ],
+        "properties": {
+          "envGroup": {
+            "$ref": "#/components/schemas/envGroupMeta"
+          },
+          "cursor": {
+            "$ref": "#/components/schemas/cursor"
+          }
+        }
       }
     },
     "responses": {
@@ -26526,11 +26544,44 @@
         }
       },
       "429RateLimit": {
-        "description": "Rate limit has been surpassed.",
+        "description": "Rate limit has been surpassed.\n\nRate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and\n`RateLimit-Reset` on successful responses so clients can track their remaining quota.\n",
+        "headers": {
+          "Retry-After": {
+            "description": "Seconds to wait before retrying the request.",
+            "schema": {
+              "type": "integer",
+              "example": 30
+            }
+          },
+          "RateLimit-Limit": {
+            "description": "Maximum number of requests allowed in the current window.",
+            "schema": {
+              "type": "integer",
+              "example": 100
+            }
+          },
+          "RateLimit-Remaining": {
+            "description": "Number of requests remaining in the current window. Always `0` for this response.",
+            "schema": {
+              "type": "integer",
+              "example": 0
+            }
+          },
+          "RateLimit-Reset": {
+            "description": "Seconds until the current rate limit window resets.",
+            "schema": {
+              "type": "integer",
+              "example": 30
+            }
+          }
+        },
         "content": {
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/error"
+            },
+            "example": {
+              "message": "rate limit exceeded"
             }
           }
         }

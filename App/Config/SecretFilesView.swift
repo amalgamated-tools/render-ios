@@ -18,6 +18,11 @@ struct SecretFilesView: View {
         )
     }
 
+    /// The same screen over an env group's secret files. No deployer — see ``ConfigScope``.
+    init(backend: SecretFileBackend) {
+        _store = State(initialValue: SecretFilesStore(backend: backend))
+    }
+
     var body: some View {
         List {
             if let message = store.errorMessage, !store.files.isEmpty {
@@ -75,7 +80,7 @@ struct SecretFilesView: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: { _ in
-            Text("The running service keeps it until the next deploy.")
+            Text(store.scope.takesEffectNote)
         }
     }
 
@@ -96,7 +101,7 @@ struct SecretFilesView: View {
                 ContentUnavailableView {
                     Label("No Secret Files", systemImage: "doc.text")
                 } description: {
-                    Text("Secret files are mounted into the service at the path you name them.")
+                    Text(store.scope.emptySecretFilesDescription)
                 }
             }
         }
@@ -183,7 +188,7 @@ struct SecretFileEditor: View {
                 Text("Contents")
             } footer: {
                 // As with env vars: an API write changes the configuration without deploying.
-                Text("Saving replaces the file. The running service keeps the old one until its next deploy.")
+                Text("Saving replaces the file. \(store.scope.takesEffectNote)")
             }
 
             if let problem = nameProblem {

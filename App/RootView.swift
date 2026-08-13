@@ -26,11 +26,10 @@ struct RootView: View {
     @ViewBuilder
     private var authenticatedView: some View {
         if let ownerID = authStore.selectedOwnerID {
-            NavigationStack {
-                ServicesScreen(authStore: authStore, client: authStore.authenticatedClient(), ownerID: ownerID)
-            }
-            // Re-create the screen (and its stores) when the active workspace changes.
-            .id(ownerID)
+            // The navigation stacks live inside, one per tab.
+            WorkspaceScreen(authStore: authStore, client: authStore.authenticatedClient(), ownerID: ownerID)
+                // Re-create the screen (and its stores) when the active workspace changes.
+                .id(ownerID)
         } else {
             ContentUnavailableView("No Workspace", systemImage: "person.slash")
         }

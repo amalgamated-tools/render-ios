@@ -221,6 +221,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -241,7 +263,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -491,6 +516,28 @@ public struct Client: APIProtocol {
                     }
                     return .contentTooLarge(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -511,7 +558,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -720,6 +770,28 @@ public struct Client: APIProtocol {
                     }
                     return .conflict(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -740,7 +812,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -920,6 +995,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -940,7 +1037,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -1161,6 +1261,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -1181,7 +1303,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -1411,6 +1536,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -1431,7 +1578,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -1634,6 +1784,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -1654,7 +1826,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -1889,6 +2064,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -1909,7 +2106,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -2113,6 +2313,28 @@ public struct Client: APIProtocol {
                     }
                     return .notAcceptable(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -2133,7 +2355,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -2385,6 +2610,28 @@ public struct Client: APIProtocol {
                     }
                     return .conflict(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -2405,7 +2652,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -2625,6 +2875,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -2645,7 +2917,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -2919,6 +3194,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -2939,7 +3236,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -3140,6 +3440,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -3160,7 +3482,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -3449,6 +3774,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -3469,7 +3816,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -3721,6 +4071,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -3741,7 +4113,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -3962,6 +4337,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -3982,7 +4379,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -4238,6 +4638,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -4258,7 +4680,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -4461,6 +4886,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -4481,7 +4928,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -4724,6 +5174,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -4744,7 +5216,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -5000,6 +5475,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -5020,7 +5517,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -5173,6 +5673,28 @@ public struct Client: APIProtocol {
                     }
                     return .notAcceptable(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -5193,7 +5715,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -5374,6 +5899,28 @@ public struct Client: APIProtocol {
                     }
                     return .notAcceptable(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -5394,7 +5941,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -5595,6 +6145,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -5615,7 +6187,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -5814,6 +6389,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -5834,7 +6431,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -6112,6 +6712,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -6132,7 +6754,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -6410,6 +7035,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -6430,7 +7077,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -6587,6 +7237,28 @@ public struct Client: APIProtocol {
                     }
                     return .notAcceptable(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -6607,7 +7279,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -6771,6 +7446,28 @@ public struct Client: APIProtocol {
                     }
                     return .notAcceptable(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -6791,7 +7488,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -6972,6 +7672,28 @@ public struct Client: APIProtocol {
                     }
                     return .notAcceptable(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -6992,7 +7714,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -7149,6 +7874,28 @@ public struct Client: APIProtocol {
                     }
                     return .notAcceptable(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -7169,7 +7916,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -7333,6 +8083,28 @@ public struct Client: APIProtocol {
                     }
                     return .notAcceptable(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -7353,7 +8125,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -7576,6 +8351,28 @@ public struct Client: APIProtocol {
                     }
                     return .notAcceptable(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -7596,7 +8393,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -7823,6 +8623,28 @@ public struct Client: APIProtocol {
                     }
                     return .conflict(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -7843,7 +8665,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -8063,6 +8888,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -8083,7 +8930,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -8378,6 +9228,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -8398,7 +9270,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -8598,6 +9473,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -8618,7 +9515,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -8869,6 +9769,28 @@ public struct Client: APIProtocol {
                     }
                     return .notAcceptable(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -8889,7 +9811,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -9139,6 +10064,28 @@ public struct Client: APIProtocol {
                     }
                     return .conflict(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -9159,7 +10106,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -9380,6 +10330,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -9400,7 +10372,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -9696,6 +10671,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -9716,7 +10713,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -9917,6 +10917,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -9937,7 +10959,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -10160,6 +11185,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -10180,7 +11227,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -10464,6 +11514,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -10484,7 +11556,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -10738,6 +11813,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -10758,7 +11855,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -10980,6 +12080,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -11000,7 +12122,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -11202,6 +12327,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -11222,7 +12369,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -11434,6 +12584,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -11454,7 +12626,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -11689,6 +12864,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -11709,7 +12906,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -11960,6 +13160,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -11980,7 +13202,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -12204,6 +13429,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -12224,7 +13471,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -12479,6 +13729,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -12499,7 +13771,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -12703,6 +13978,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -12723,7 +14020,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -12958,6 +14258,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -12978,7 +14300,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -13234,6 +14559,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -13254,7 +14601,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -13478,6 +14828,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -13498,7 +14870,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -13753,6 +15128,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -13773,7 +15170,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -13977,6 +15377,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -13997,7 +15419,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -14208,6 +15633,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -14228,7 +15675,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -14484,6 +15934,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -14504,7 +15976,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -14734,6 +16209,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -14754,7 +16251,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -15008,6 +16508,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -15028,7 +16550,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -15230,6 +16755,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -15250,7 +16797,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -15506,6 +17056,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -15526,7 +17098,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -15778,6 +17353,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -15798,7 +17395,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -16054,6 +17654,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -16074,7 +17696,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -16309,6 +17934,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -16329,7 +17976,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -16531,6 +18181,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -16551,7 +18223,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -16843,6 +18518,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -16863,7 +18560,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -17159,6 +18859,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -17179,7 +18901,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -17423,6 +19148,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -17443,7 +19190,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -17667,6 +19417,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -17687,7 +19459,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -17911,6 +19686,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -17931,7 +19728,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -18154,6 +19954,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -18174,7 +19996,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -18397,6 +20222,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -18417,7 +20264,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -18642,6 +20492,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -18662,7 +20534,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -18896,6 +20771,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -18916,7 +20813,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -19168,6 +21068,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -19188,7 +21110,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -19389,6 +21314,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -19409,7 +21356,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -19621,6 +21571,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -19641,7 +21613,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -19881,6 +21856,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -19901,7 +21898,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -20087,6 +22087,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -20107,7 +22129,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -20285,6 +22310,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -20305,7 +22352,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -20483,6 +22533,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -20503,7 +22575,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -20657,6 +22732,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -20677,7 +22774,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -20831,6 +22931,28 @@ public struct Client: APIProtocol {
                     }
                     return .notAcceptable(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -20851,7 +22973,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -20985,6 +23110,28 @@ public struct Client: APIProtocol {
                     }
                     return .notAcceptable(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -21005,7 +23152,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -21248,6 +23398,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -21268,7 +23440,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -21632,6 +23807,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -21652,7 +23849,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -22014,6 +24214,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -22034,7 +24256,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -22400,6 +24625,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -22420,7 +24667,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -22662,6 +24912,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -22682,7 +24954,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -22933,6 +25208,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -22953,7 +25250,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -23109,6 +25409,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -23129,7 +25451,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -23411,6 +25736,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -23431,7 +25778,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -23673,6 +26023,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -23693,7 +26065,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -23944,6 +26319,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -23964,7 +26361,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -24120,6 +26520,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -24140,7 +26562,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -27664,6 +30089,28 @@ public struct Client: APIProtocol {
                     }
                     return .conflict(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -27684,7 +30131,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -27868,6 +30318,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -27888,7 +30360,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -28065,6 +30540,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -28085,7 +30582,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -28293,6 +30793,28 @@ public struct Client: APIProtocol {
                     }
                     return .conflict(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -28313,7 +30835,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -28470,6 +30995,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -28490,7 +31037,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -28667,6 +31217,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -28687,7 +31259,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -28910,6 +31485,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -28930,7 +31527,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -29153,6 +31753,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -29173,7 +31795,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -29442,6 +32067,28 @@ public struct Client: APIProtocol {
                     }
                     return .conflict(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -29462,7 +32109,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -29647,6 +32297,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -29667,7 +32339,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -29845,6 +32520,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -29865,7 +32562,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -30074,6 +32774,28 @@ public struct Client: APIProtocol {
                     }
                     return .conflict(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -30094,7 +32816,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -30252,6 +32977,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -30272,7 +33019,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -30451,6 +33201,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -30471,7 +33243,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -30695,6 +33470,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -30715,7 +33512,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -30939,6 +33739,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -30959,7 +33781,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -31240,6 +34065,28 @@ public struct Client: APIProtocol {
                     }
                     return .conflict(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -31260,7 +34107,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -31444,6 +34294,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -31464,7 +34336,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -31641,6 +34516,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -31661,7 +34558,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -31869,6 +34769,28 @@ public struct Client: APIProtocol {
                     }
                     return .conflict(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -31889,7 +34811,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -32047,6 +34972,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -32067,7 +35014,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -32244,6 +35194,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -32264,7 +35236,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -32441,6 +35416,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -32461,7 +35458,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -32713,6 +35713,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -32733,7 +35755,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -32956,6 +35981,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -32976,7 +36023,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -33199,6 +36249,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -33219,7 +36291,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -33442,6 +36517,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -33462,7 +36559,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -33685,6 +36785,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -33705,7 +36827,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -33882,6 +37007,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -33902,7 +37049,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -34125,6 +37275,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -34145,7 +37317,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -34322,6 +37497,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -34342,7 +37539,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -34574,6 +37774,28 @@ public struct Client: APIProtocol {
                     }
                     return .gone(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -34594,7 +37816,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -34752,6 +37977,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -34772,7 +38019,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -34949,6 +38199,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -34969,7 +38241,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -35146,6 +38421,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -35166,7 +38463,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -35343,6 +38643,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -35363,7 +38685,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -35540,6 +38865,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -35560,7 +38907,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -35791,6 +39141,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -35811,7 +39183,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -35995,6 +39370,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -36015,7 +39412,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -36192,6 +39592,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -36212,7 +39634,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -36400,6 +39825,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -36420,7 +39867,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -36583,6 +40033,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -36603,7 +40075,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -36848,6 +40323,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -36868,7 +40365,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -37052,6 +40552,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -37072,7 +40594,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -37248,6 +40773,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -37268,7 +40815,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -37453,6 +41003,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -37473,7 +41045,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -37636,6 +41211,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -37656,7 +41253,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -37842,6 +41442,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -37862,7 +41484,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -38026,6 +41651,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -38046,7 +41693,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -38207,7 +41857,7 @@ public struct Client: APIProtocol {
                     switch chosenContentType {
                     case "application/json":
                         body = try await converter.getResponseBodyAsJSON(
-                            [Components.Schemas.EnvGroupMeta].self,
+                            [Components.Schemas.EnvGroupWithCursor].self,
                             from: responseBody,
                             transforming: { value in
                                 .json(value)
@@ -38284,6 +41934,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -38304,7 +41976,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -38488,6 +42163,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -38508,7 +42205,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -38685,6 +42385,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -38705,7 +42427,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -38890,6 +42615,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -38910,7 +42657,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -39066,6 +42816,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -39086,7 +42858,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -39266,6 +43041,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -39286,7 +43083,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -39446,6 +43246,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -39466,7 +43288,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -39644,6 +43469,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -39664,7 +43511,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -39851,6 +43701,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -39871,7 +43743,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -40029,6 +43904,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -40049,7 +43946,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -40227,6 +44127,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -40247,7 +44169,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -40434,6 +44359,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -40454,7 +44401,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -40612,6 +44562,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -40632,7 +44604,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -40828,6 +44803,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -40848,7 +44845,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -41024,6 +45024,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -41044,7 +45066,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -41212,6 +45237,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -41232,7 +45279,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -41393,6 +45443,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -41413,7 +45485,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -41608,6 +45683,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -41628,7 +45725,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -41812,6 +45912,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -41832,7 +45954,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -41986,6 +46111,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -42006,7 +46153,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -42192,6 +46342,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -42212,7 +46384,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -42347,6 +46522,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -42367,7 +46564,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -42572,6 +46772,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -42592,7 +46814,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -42808,6 +47033,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -42828,7 +47075,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -43011,6 +47261,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -43031,7 +47303,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -43207,6 +47482,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -43227,7 +47524,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -43412,6 +47712,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -43432,7 +47754,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -43588,6 +47913,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -43608,7 +47955,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -43817,6 +48167,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -43837,7 +48209,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -44000,6 +48375,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -44020,7 +48417,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -44196,6 +48596,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -44216,7 +48638,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -44432,6 +48857,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -44452,7 +48899,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -44628,6 +49078,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -44648,7 +49120,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -44871,6 +49346,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -44891,7 +49388,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -45096,6 +49596,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -45116,7 +49638,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -45342,6 +49867,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -45362,7 +49909,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -45538,6 +50088,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -45558,7 +50130,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body
@@ -45714,6 +50289,28 @@ public struct Client: APIProtocol {
                     }
                     return .notFound(.init(body: body))
                 case 429:
+                    let headers: Components.Responses._429RateLimit.Headers = .init(
+                        retryAfter: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "Retry-After",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitLimit: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Limit",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitRemaining: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Remaining",
+                            as: Swift.Int.self
+                        ),
+                        rateLimitReset: try converter.getOptionalHeaderFieldAsURI(
+                            in: response.headerFields,
+                            name: "RateLimit-Reset",
+                            as: Swift.Int.self
+                        )
+                    )
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._429RateLimit.Body
                     let chosenContentType = try converter.bestContentType(
@@ -45734,7 +50331,10 @@ public struct Client: APIProtocol {
                     default:
                         preconditionFailure("bestContentType chose an invalid content type.")
                     }
-                    return .tooManyRequests(.init(body: body))
+                    return .tooManyRequests(.init(
+                        headers: headers,
+                        body: body
+                    ))
                 case 500:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Components.Responses._500InternalServerError.Body

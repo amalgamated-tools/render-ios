@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		A00000000000000000000012 /* RenderAPI in Frameworks */ = {isa = PBXBuildFile; productRef = A00000000000000000000011 /* RenderAPI */; };
-		A0000000000000000000002D /* RenderAPI in Frameworks */ = {isa = PBXBuildFile; productRef = A0000000000000000000002B /* RenderAPI */; };
 		A0000000000000000000002E /* RenderAPITestSupport in Frameworks */ = {isa = PBXBuildFile; productRef = A0000000000000000000002C /* RenderAPITestSupport */; };
 		A00000000000000000000033 /* OpenAPIRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = A00000000000000000000031 /* OpenAPIRuntime */; };
 		A00000000000000000000034 /* OpenAPIURLSession in Frameworks */ = {isa = PBXBuildFile; productRef = A00000000000000000000032 /* OpenAPIURLSession */; };
@@ -39,7 +38,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A0000000000000000000002D /* RenderAPI in Frameworks */,
 				A0000000000000000000002E /* RenderAPITestSupport in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -111,7 +109,6 @@
 			);
 			name = RenderiOSTests;
 			packageProductDependencies = (
-				A0000000000000000000002B /* RenderAPI */,
 				A0000000000000000000002C /* RenderAPITestSupport */,
 			);
 			productName = RenderiOSTests;
@@ -397,10 +394,6 @@
 
 /* Begin XCSwiftPackageProductDependency section */
 		A00000000000000000000011 /* RenderAPI */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = RenderAPI;
-		};
-		A0000000000000000000002B /* RenderAPI */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = RenderAPI;
 		};

@@ -19,6 +19,12 @@ struct EnvVarsView: View {
         )
     }
 
+    /// The same screen over an env group's variables. No deployer: a group feeds every service linked
+    /// to it, so one tap can't honestly make the change live — see ``ConfigScope``.
+    init(backend: EnvVarBackend) {
+        _store = State(initialValue: EnvVarsStore(backend: backend))
+    }
+
     var body: some View {
         List {
             if let message = store.errorMessage, !store.entries.isEmpty {
@@ -58,7 +64,7 @@ struct EnvVarsView: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: { _ in
-            Text("The running service keeps it until the next deploy.")
+            Text(store.scope.takesEffectNote)
         }
     }
 
@@ -108,7 +114,7 @@ struct EnvVarsView: View {
                 ContentUnavailableView {
                     Label("No Environment Variables", systemImage: "key")
                 } description: {
-                    Text("This service has none set directly. Variables from a linked environment group aren't listed here.")
+                    Text(store.scope.emptyEnvVarsDescription)
                 }
             }
         } else if store.visibleEntries.isEmpty {
@@ -227,7 +233,7 @@ struct EnvVarEditor: View {
                 } footer: {
                     // Verified live: an env var written through the API changes the configuration
                     // but starts no deploy, unlike the same edit made in the dashboard.
-                    Text("Saving replaces the current value. The running service keeps the old one until its next deploy.")
+                    Text("Saving replaces the current value. \(store.scope.takesEffectNote)")
                 }
 
                 if let problem = keyProblem {
