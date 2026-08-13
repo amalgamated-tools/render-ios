@@ -1,8 +1,9 @@
 import RenderAPI
 import SwiftUI
 
-/// The service detail screen: current deploy status up top, then the facts worth knowing at 3am,
-/// then the drill-downs. Lifecycle actions live in the toolbar menu, each behind a confirmation.
+/// The service detail screen: a hero header answering what this is, whether it's up, where it runs
+/// and how to open it; then the facts worth knowing at 3am; then the drill-downs. Lifecycle actions
+/// live in the toolbar menu, each behind a confirmation.
 struct ServiceDetailView: View {
     @State private var store: ServiceDetailStore
     /// The action awaiting confirmation. Non-nil drives the confirmation dialog.
@@ -26,10 +27,11 @@ struct ServiceDetailView: View {
     var body: some View {
         List {
             if let service = store.service {
+                heroHeader(for: service)
                 if !service.details.matchesDeclaredType {
                     detailsMismatchWarning
                 }
-                deploySection(for: service)
+                deploySection
                 configurationSection(for: service)
                 drillDownSection(for: service)
                 dashboardSection(for: service)
@@ -47,6 +49,7 @@ struct ServiceDetailView: View {
         .onDisappear { store.stopPolling() }
         .overlay { errorState }
         .safeAreaInset(edge: .bottom) { actionBanner }
+        .actionOutcomeFeedback(store.actionResult)
         .confirmationDialog(
             pendingAction?.confirmationTitle(serviceName: store.service?.name ?? serviceName) ?? "",
             isPresented: .init(get: { pendingAction != nil }, set: { if !$0 { pendingAction = nil } }),
@@ -77,35 +80,102 @@ struct ServiceDetailView: View {
 
     // MARK: - Sections
 
-    private func deploySection(for service: ServiceDetailModel) -> some View {
-        Section("Current Deploy") {
-            HStack(spacing: 12) {
-                Image(systemName: service.type.systemImage)
-                    .font(.title2)
-                    .foregroundStyle(service.type.accent)
-                VStack(alignment: .leading, spacing: 4) {
+    /// The answers you want before reading anything else: what this is, whether it's up, where it
+    /// runs, and how to open it. Previously these were scattered between a section header and four
+    /// LabeledContent rows halfway down a wall of them.
+    private func heroHeader(for service: ServiceDetailModel) -> some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.row) {
+            HStack(spacing: Theme.Spacing.row) {
+                GlyphTile(systemImage: service.type.systemImage, tint: service.type.accent, size: 44)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(service.name)
+                        .font(.title2.bold())
+                        .lineLimit(2)
                     Text(service.type.displayName)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-                    if let status = store.latestDeploy?.status {
-                        DeployStatusChip(status: status)
-                    } else if store.deployErrorMessage != nil {
-                        Text("Deploy status unavailable")
-                            .font(.subheadline.weight(.medium))
-                            .foregroundStyle(.orange)
-                    } else if store.latestDeploy == nil {
-                        Text("Never deployed")
-                            .font(.subheadline.weight(.medium))
-                            .foregroundStyle(.secondary)
-                    }
                 }
-                Spacer()
+                Spacer(minLength: 0)
                 if service.isSuspended {
                     suspendedBadge(service)
                 }
             }
 
-            if let deploy = store.latestDeploy {
+            deployStatus
+
+            if !factChips.isEmpty {
+                // Wraps rather than truncates: on a cron job in a long-named region at largest
+                // Dynamic Type these do not fit on one line.
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: Theme.Spacing.tight) { chips }
+                    VStack(alignment: .leading, spacing: Theme.Spacing.tight) { chips }
+                }
+            }
+
+            if let url = service.details.url, let parsed = URL(string: url) {
+                Link(destination: parsed) {
+                    Label(parsed.host() ?? url, systemImage: "arrow.up.right.square")
+                        .font(.subheadline.weight(.medium))
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+            }
+        }
+        .padding(.vertical, Theme.Spacing.tight)
+        .listRowSeparator(.hidden)
+    }
+
+    @ViewBuilder
+    private var deployStatus: some View {
+        if let status = store.latestDeploy?.status {
+            DeployStatusChip(status: status)
+        } else if store.deployErrorMessage != nil {
+            Text("Deploy status unavailable")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.orange)
+        } else if store.latestDeploy == nil {
+            Text("Never deployed")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    /// Region, instance type, and instance count — the three facts that were LabeledContent rows in
+    /// Configuration. They are shown here instead of in both places.
+    private var factChips: [(title: String, systemImage: String)] {
+        guard let details = store.service?.details else { return [] }
+        var chips: [(String, String)] = []
+        if let region = details.region {
+            chips.append((region.rawValue.capitalized, "globe.americas"))
+        }
+        if let plan = details.plan {
+            chips.append((plan.rawValue.replacingOccurrences(of: "_", with: " ").capitalized, "cpu"))
+        }
+        if let instances = details.numInstances {
+            var title = "\(instances) \(instances == 1 ? "instance" : "instances")"
+            if let autoscaling = details.autoscaling, autoscaling.isEnabled {
+                title += " · auto \(autoscaling.min)–\(autoscaling.max)"
+            }
+            chips.append((title, "square.stack.3d.up"))
+        }
+        return chips
+    }
+
+    private var chips: some View {
+        ForEach(factChips, id: \.title) { chip in
+            FactChip(title: chip.title, systemImage: chip.systemImage)
+        }
+    }
+
+    /// The commit that shipped, without its status — the hero already says that. Omitted entirely
+    /// when there is no deploy, rather than left as a section header over nothing: "Never deployed"
+    /// is stated once, in the hero.
+    @ViewBuilder
+    private var deploySection: some View {
+        if let deploy = store.latestDeploy {
+            Section("Current Deploy") {
                 DeployRow(deploy: deploy, showsStatus: false)
                 if deploy.isInProgress {
                     Label("Watching for updates…", systemImage: "dot.radiowaves.left.and.right")
@@ -119,25 +189,10 @@ struct ServiceDetailView: View {
     @ViewBuilder
     private func configurationSection(for service: ServiceDetailModel) -> some View {
         let details = service.details
+        // Instance type, region, and instance count are deliberately absent: they are the fact
+        // chips in the hero header, and saying them twice on one screen is how a config list stops
+        // being scannable.
         Section("Configuration") {
-            if let plan = details.plan {
-                LabeledContent("Instance Type", value: plan.rawValue.replacingOccurrences(of: "_", with: " ").capitalized)
-            }
-            if let region = details.region {
-                LabeledContent("Region", value: region.rawValue.capitalized)
-            }
-            if let instances = details.numInstances {
-                LabeledContent("Instances") {
-                    HStack(spacing: 6) {
-                        Text("\(instances)")
-                        if let autoscaling = details.autoscaling, autoscaling.isEnabled {
-                            Text("auto \(autoscaling.min)–\(autoscaling.max)")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-            }
             if let schedule = details.schedule {
                 LabeledContent("Schedule", value: schedule)
                     .monospaced()
@@ -168,11 +223,7 @@ struct ServiceDetailView: View {
                 Label("Maintenance mode is on", systemImage: "wrench.and.screwdriver.fill")
                     .foregroundStyle(.orange)
             }
-            if let url = details.url, let parsed = URL(string: url) {
-                Link(destination: parsed) {
-                    LabeledContent("URL", value: parsed.host() ?? url)
-                }
-            }
+            // The URL is the hero's link button, not a row here.
         }
     }
 
@@ -355,7 +406,7 @@ struct ServiceDetailView: View {
                     .labelStyle(.iconOnly)
             }
             .padding(12)
-            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 12))
+            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: Theme.Radius.card))
             .foregroundStyle(result.isFailure ? .red : .green)
             .padding(.horizontal)
             .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -365,13 +416,7 @@ struct ServiceDetailView: View {
     @ViewBuilder
     private var errorState: some View {
         if let message = store.errorMessage, store.service == nil {
-            ContentUnavailableView {
-                Label("Couldn't load service", systemImage: "exclamationmark.triangle")
-            } description: {
-                Text(message)
-            } actions: {
-                Button("Retry") { Task { await store.refresh() } }
-            }
+            ErrorStateView(subject: "service", message: message) { await store.refresh() }
         }
     }
 

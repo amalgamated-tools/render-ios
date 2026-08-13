@@ -44,6 +44,7 @@ struct HeaderRulesView: View {
         }
         .overlay { emptyOrErrorState }
         .safeAreaInset(edge: .bottom) { banner }
+        .actionOutcomeFeedback(store.actionResult)
         .sheet(isPresented: $isAdding) {
             HeaderRuleAddSheet(store: store)
         }
@@ -92,15 +93,9 @@ struct HeaderRulesView: View {
     private var emptyOrErrorState: some View {
         if store.rules.isEmpty {
             if let message = store.errorMessage {
-                ContentUnavailableView {
-                    Label("Couldn't load header rules", systemImage: "exclamationmark.triangle")
-                } description: {
-                    Text(message)
-                } actions: {
-                    Button("Retry") { Task { await store.refresh() } }
-                }
+                ErrorStateView(subject: "header rules", message: message) { await store.refresh() }
             } else if store.isLoading {
-                ProgressView()
+                SkeletonList()
             } else {
                 ContentUnavailableView {
                     Label("No Header Rules", systemImage: "text.append")

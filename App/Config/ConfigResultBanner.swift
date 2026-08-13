@@ -5,6 +5,36 @@ import SwiftUI
 /// Shared rather than written twice: the env var and secret file screens reported identically
 /// already, and the deploy path — confirmation copy, in-flight state, what the button says on an
 /// image-backed service — is more than either screen should be carrying its own copy of.
+/// Anything a screen reports in an outcome banner.
+///
+/// Five stores independently grew the same `{ id, message, isFailure }` shape. They are not worth
+/// merging — each is tied to a different action type and reloads different state — but they can
+/// share the one behaviour that should not be written five times.
+protocol ActionOutcome: Equatable {
+    var isFailure: Bool { get }
+}
+
+extension ConfigActionResult: ActionOutcome {}
+
+extension View {
+    /// Haptic and spring for an action's outcome banner.
+    ///
+    /// Applied to the screen rather than to the banner itself, because the banner only exists once
+    /// there is a result — a trigger inside it would never see the nil-to-value change that fires
+    /// the feedback.
+    ///
+    /// A restart or a rollback is a real-world side effect, confirmed in a dialog and then reported
+    /// in a banner at the opposite end of the screen from the menu that started it. The haptic is
+    /// what tells you it landed without having to look for the answer.
+    func actionOutcomeFeedback<Outcome: ActionOutcome>(_ result: Outcome?) -> some View {
+        sensoryFeedback(trigger: result) { _, new in
+            guard let new else { return nil }
+            return new.isFailure ? .error : .success
+        }
+        .animation(.spring(duration: 0.35), value: result)
+    }
+}
+
 struct ConfigResultBanner: View {
     let result: ConfigActionResult
     /// `nil` when this service can't be deployed (a cron job), in which case no button is offered.

@@ -63,7 +63,7 @@ final class ServiceDetailStore {
     /// Outcome banner for the last action — success or failure.
     private(set) var actionResult: ActionResult?
 
-    struct ActionResult: Identifiable, Equatable {
+    struct ActionResult: Identifiable, ActionOutcome {
         let id = UUID()
         let message: String
         let isFailure: Bool

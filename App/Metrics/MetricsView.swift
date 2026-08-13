@@ -69,13 +69,7 @@ struct MetricsView: View {
                 Text("Render doesn't report metrics for this kind of service.")
             }
         } else if let message = store.errorMessage {
-            ContentUnavailableView {
-                Label("Couldn't load metrics", systemImage: "exclamationmark.triangle")
-            } description: {
-                Text(message)
-            } actions: {
-                Button("Retry") { Task { await store.refresh() } }
-            }
+            ErrorStateView(subject: "metrics", message: message) { await store.refresh() }
         } else if store.isLoading && !store.hasAnyData {
             // The single spinner the concurrent fetch is for.
             ProgressView()
@@ -99,7 +93,13 @@ private struct MetricChartCard: View {
             }
         }
         .padding(14)
-        .background(.background.secondary, in: RoundedRectangle(cornerRadius: 14))
+        .background(.background.secondary, in: RoundedRectangle(cornerRadius: Theme.Radius.card))
+        // A hairline so the card still has an edge in dark mode, where .background.secondary and
+        // the page behind it are nearly the same value.
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Radius.card)
+                .strokeBorder(.quaternary, lineWidth: 0.5)
+        )
     }
 
     private var plot: MetricsStore.MetricPlot { store.plot(for: chart) }
@@ -113,6 +113,10 @@ private struct MetricChartCard: View {
             if let headline = store.headline(for: chart) {
                 Text(headline)
                     .font(.title3.weight(.semibold).monospacedDigit())
+                    // Rolls digit-by-digit as the poll updates rather than swapping the whole
+                    // string, so a changing number reads as the same number changing.
+                    .contentTransition(.numericText())
+                    .animation(.default, value: headline)
                     .accessibilityLabel("\(chart.title) now \(headline)")
             }
         }
@@ -146,6 +150,23 @@ private struct MetricChartCard: View {
                             y: .value(line.name, point.value)
                         )
                         .foregroundStyle(color(at: index, role: line.role))
+                    }
+                    // Only under measurements, and only when there is one of them: stacked
+                    // translucent fills on a multi-series chart muddy every colour they overlap.
+                    if line.role == .measurement, lines.filter({ $0.role == .measurement }).count == 1 {
+                        AreaMark(
+                            x: .value("Time", point.timestamp),
+                            y: .value(line.name, point.value),
+                            series: .value("Series", line.id)
+                        )
+                        .foregroundStyle(
+                            .linearGradient(
+                                colors: [color(at: index, role: line.role).opacity(0.25), .clear],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .interpolationMethod(.monotone)
                     }
                     LineMark(
                         x: .value("Time", point.timestamp),
@@ -225,7 +246,9 @@ private struct MetricChartCard: View {
     /// visually behind the measurements.
     private func color(at index: Int, role: MetricChartSpec.Role) -> Color {
         guard role == .measurement else { return .secondary }
-        let palette: [Color] = [.blue, .green, .purple, .orange, .teal, .pink, .indigo, .brown]
+        // Brand violet leads: on the single-series charts that make up most of this screen, it is
+        // the only colour shown, and it should be the app's.
+        let palette: [Color] = [Color(.accent), .blue, .green, .orange, .teal, .pink, .indigo, .brown]
         return palette[index % palette.count]
     }
 

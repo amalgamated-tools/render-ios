@@ -14,6 +14,17 @@
 # for the picture and dismissed without saving, and the datastore action menus are deliberately not
 # opened at all: on Postgres and Key Value the destructive item renders directly under the toolbar,
 # close enough that a mistimed dismiss tap could fire it. See `datastore_tour`.
+#
+# Re-measured after the visual redesign, by locating each row's glyph tile in a screenshot rather
+# than by eye. Only two things moved: the ONBOARD_* triple, because the hero rebuilt that screen,
+# and LIST_FIRST_RESULT, 447 -> 477.
+#
+# Everything else held, including three that looked like they should have moved. DATASTORE_FIRST_ROW
+# (642) and EG_FIRST_ROW (626) are unchanged even though datastore rows also gained a glyph tile —
+# those rows were already taller than the 34pt tile, so it sets no height there. The DETAIL_* and
+# STATIC_* ladders are unchanged despite the detail screen gaining a whole hero header above them,
+# because they are read with the screen scrolled to the bottom and the card is bottom-anchored.
+# Assume nothing here shifted uniformly; measure the one you care about.
 
 set -euo pipefail
 
@@ -29,12 +40,12 @@ BUNDLE_ID="com.veverkap.RenderiOS"
 APP="$REPO_ROOT/build/DerivedData/Build/Products/Debug-iphonesimulator/RenderiOS.app"
 
 # --- taps, in screenshot pixels ------------------------------------------------------------------
-ONBOARD_SIGNIN=(601 1093)     # "Sign in with Render"
-ONBOARD_APIKEY=(280 1267)     # "Use an API key instead" — expanding it focuses the field
-ONBOARD_CONTINUE=(601 1586)
+ONBOARD_SIGNIN=(603 1848)     # "Sign in with Render"
+ONBOARD_APIKEY=(282 2024)     # "Use an API key instead" — expanding it focuses the field
+ONBOARD_CONTINUE=(601 2343)
 DEVICE_AUTH_OPEN=(641 1589)   # "Open render.com to approve", on the device-flow waiting screen
 LIST_SEARCH=(346 417)
-LIST_FIRST_RESULT=(406 447)   # first row once the search field is active
+LIST_FIRST_RESULT=(406 477)   # first row once the search field is active
 LIST_SCOPE=(601 252)          # the workspace/project picker, in the title slot
 LIST_ACCOUNT=(916 252)
 LIST_SIGNOUT=(714 278)
@@ -154,7 +165,9 @@ reset_app() {
   xcrun simctl keychain "$DEVICE" reset
   xcrun simctl install "$DEVICE" "$APP"
   xcrun simctl launch "$DEVICE" "$BUNDLE_ID" > /dev/null
-  sleep 3
+  # 4, not 3: the splash holds the logomark for a 700ms minimum before the first tappable frame,
+  # and a tap that lands on the splash is silently swallowed.
+  sleep 4
 }
 
 start_recording() {

@@ -46,6 +46,7 @@ struct KeyValueDetailView: View {
         .onDisappear { store.stopPolling() }
         .overlay { errorState }
         .safeAreaInset(edge: .bottom) { actionBanner }
+        .actionOutcomeFeedback(store.actionResult)
         .confirmationDialog(
             pendingAction?.confirmationTitle(instanceName: store.instance?.name ?? instanceName) ?? "",
             isPresented: .init(get: { pendingAction != nil }, set: { if !$0 { pendingAction = nil } }),
@@ -212,13 +213,7 @@ struct KeyValueDetailView: View {
     @ViewBuilder
     private var errorState: some View {
         if let message = store.errorMessage, store.instance == nil {
-            ContentUnavailableView {
-                Label("Couldn't load instance", systemImage: "exclamationmark.triangle")
-            } description: {
-                Text(message)
-            } actions: {
-                Button("Retry") { Task { await store.refresh() } }
-            }
+            ErrorStateView(subject: "instance", message: message) { await store.refresh() }
         }
     }
 }

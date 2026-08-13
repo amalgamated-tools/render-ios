@@ -401,19 +401,34 @@ service and static site the tour expects.
   implying the service never deployed.
 - **Polling is opt-out by design**: only an in-flight deploy is polled, at 6s, and it stops on its
   own when the deploy settles or the screen disappears.
-- **The app icon is Render's own logomark** from the brand kit, rendered by
-  `Scripts/make-app-icon.swift` into the three variants iOS 18 wants: black-on-white for "Any
-  Appearance", and transparent white marks for the dark and tinted appearances, which the system
-  composites over its own backdrop. The source art floats off-centre in a much larger canvas, so the
-  script measures the alpha bounding box and re-centres rather than scaling the file as-is —
-  a brand-kit refresh is one command:
+- **Every branded asset comes out of the brand kit**, rendered by
+  `Scripts/make-brand-assets.swift`. The source art floats off-centre in a much larger canvas, so
+  the script measures the alpha bounding box and re-centres rather than scaling the file as-is. It
+  writes the `Contents.json` files too, so a refresh can't leave them drifting. One command:
 
   ```sh
-  swift Scripts/make-app-icon.swift \
-    "<brand kit>/Logos/Black/Render logomark - Black.png" \
-    "<brand kit>/Logos/White/Render logomark - White.png" \
-    App/Assets.xcassets/AppIcon.appiconset
+  swift Scripts/make-brand-assets.swift "<brand kit>/Logos"
   ```
+
+  | Output | Rendering | Size |
+  |---|---|---|
+  | `AppIcon.appiconset` | black-on-white, plus transparent white marks for dark and tinted | 1024 |
+  | `Logomark.imageset` | template | 120pt |
+  | `Wordmark.imageset` | template | 160pt |
+  | `LaunchLogomark.imageset` | **original** | 96pt |
+
+  A *template* asset keeps only alpha, so one white source renders correctly in light mode, dark
+  mode, tinted, and knocked out of the violet hero. The launch screen is the exception both ways:
+  it runs before any app code, so there is no tint to apply, and `UILaunchScreen` draws its image
+  centred at natural point size and **never scales it** — hence a separate non-template set
+  authored at exactly the 96pt it should appear.
+
+- **The brand palette is sampled from render.com**, not the brand kit, which ships black-and-white
+  artwork and no colour spec. `AccentColor` is `#8A05FF` (their `--color-purple-600`), lightened to
+  `#AA77FD` in dark mode — the saturated violet loses against near-black, and the tab bar's
+  selected item is where that shows first. Setting an `AccentColor` colorset is not enough on its
+  own; `ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME` has no default and is what actually reaches
+  `UITabBar`.
 
 - **"Render" is a third-party trademark**, logomark included. The bundle identifier is
   `com.veverkap.RenderiOS`; this is fine for personal use but both the name and the mark want

@@ -51,6 +51,7 @@ struct DeploysListView: View {
         .task { if deploysStore.deploys.isEmpty { await deploysStore.refresh() } }
         .overlay { emptyState }
         .safeAreaInset(edge: .bottom) { banner }
+        .actionOutcomeFeedback(store.actionResult)
         .confirmationDialog(
             pendingRollback.map { rollbackAction(for: $0).confirmationTitle(serviceName: serviceName) } ?? "",
             isPresented: .init(get: { pendingRollback != nil }, set: { if !$0 { pendingRollback = nil } }),
@@ -118,15 +119,9 @@ struct DeploysListView: View {
     @ViewBuilder
     private var emptyState: some View {
         if let message = deploysStore.errorMessage, deploysStore.deploys.isEmpty {
-            ContentUnavailableView {
-                Label("Couldn't load deploys", systemImage: "exclamationmark.triangle")
-            } description: {
-                Text(message)
-            } actions: {
-                Button("Retry") { Task { await deploysStore.refresh() } }
-            }
+            ErrorStateView(subject: "deploys", message: message) { await deploysStore.refresh() }
         } else if deploysStore.deploys.isEmpty && deploysStore.isLoading {
-            ProgressView()
+            SkeletonList()
         } else if deploysStore.deploys.isEmpty {
             ContentUnavailableView(
                 "No Deploys",

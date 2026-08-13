@@ -68,15 +68,9 @@ struct PostgresListView: View {
     @ViewBuilder
     private var emptyState: some View {
         if let message = store.errorMessage, store.databases.isEmpty {
-            ContentUnavailableView {
-                Label("Couldn't load databases", systemImage: "exclamationmark.triangle")
-            } description: {
-                Text(message)
-            } actions: {
-                Button("Retry") { Task { await store.refresh() } }
-            }
+            ErrorStateView(subject: "databases", message: message) { await store.refresh() }
         } else if store.databases.isEmpty && store.isLoading {
-            ProgressView()
+            SkeletonList()
         } else if store.databases.isEmpty {
             ContentUnavailableView(
                 "No Postgres Databases",

@@ -178,14 +178,10 @@ struct LogsView: View {
     @ViewBuilder
     private var emptyState: some View {
         if let message = store.errorMessage, store.lines.isEmpty {
-            ContentUnavailableView {
-                Label("Couldn't load logs", systemImage: "exclamationmark.triangle")
-            } description: {
-                Text(message)
-            } actions: {
-                Button("Retry") { Task { await store.retry() } }
-            }
+            ErrorStateView(subject: "logs", message: message) { await store.retry() }
         } else if store.lines.isEmpty && store.isLoading {
+            // Not a SkeletonList: a log line is a monospaced run of text, not a tile and two
+            // labels, and a ghost of the wrong shape is worse than an honest spinner.
             ProgressView()
         } else if store.lines.isEmpty {
             ContentUnavailableView {

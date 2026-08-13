@@ -51,6 +51,7 @@ struct EnvGroupDetailView: View {
             }
         }
         .safeAreaInset(edge: .bottom) { banner }
+        .actionOutcomeFeedback(store.actionResult)
         .sheet(isPresented: $isRenaming) {
             EnvGroupRenameSheet(store: store)
         }

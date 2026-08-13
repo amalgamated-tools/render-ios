@@ -79,15 +79,9 @@ struct ServicesListView: View {
     @ViewBuilder
     private var emptyState: some View {
         if let message = store.errorMessage, store.services.isEmpty {
-            ContentUnavailableView {
-                Label("Couldn't load services", systemImage: "exclamationmark.triangle")
-            } description: {
-                Text(message)
-            } actions: {
-                Button("Retry") { Task { await store.refresh() } }
-            }
+            ErrorStateView(subject: "services", message: message) { await store.refresh() }
         } else if store.services.isEmpty && store.isLoading {
-            ProgressView()
+            SkeletonList()
         } else if store.services.isEmpty {
             ContentUnavailableView(
                 "No Services",

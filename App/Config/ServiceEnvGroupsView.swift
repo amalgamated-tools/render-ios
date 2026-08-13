@@ -61,6 +61,7 @@ struct ServiceEnvGroupsView: View {
         .task { await store.load() }
         .overlay { emptyOrErrorState }
         .safeAreaInset(edge: .bottom) { banner }
+        .actionOutcomeFeedback(store.actionResult)
         .sheet(isPresented: $isLinking) {
             NavigationStack {
                 List(store.availableGroups) { group in
@@ -135,15 +136,9 @@ struct ServiceEnvGroupsView: View {
     private var emptyOrErrorState: some View {
         if store.groups.isEmpty {
             if let message = store.errorMessage {
-                ContentUnavailableView {
-                    Label("Couldn't load environment groups", systemImage: "exclamationmark.triangle")
-                } description: {
-                    Text(message)
-                } actions: {
-                    Button("Retry") { Task { await store.refresh() } }
-                }
+                ErrorStateView(subject: "environment groups", message: message) { await store.refresh() }
             } else if store.isLoading {
-                ProgressView()
+                SkeletonList()
             } else {
                 ContentUnavailableView {
                     Label("No Environment Groups", systemImage: "rectangle.stack")

@@ -46,6 +46,7 @@ struct RouteRulesView: View {
         }
         .overlay { emptyOrErrorState }
         .safeAreaInset(edge: .bottom) { banner }
+        .actionOutcomeFeedback(store.actionResult)
         .sheet(isPresented: $isAdding) {
             RouteRuleAddSheet(store: store)
         }
@@ -122,15 +123,9 @@ struct RouteRulesView: View {
     private var emptyOrErrorState: some View {
         if store.rules.isEmpty {
             if let message = store.errorMessage {
-                ContentUnavailableView {
-                    Label("Couldn't load rules", systemImage: "exclamationmark.triangle")
-                } description: {
-                    Text(message)
-                } actions: {
-                    Button("Retry") { Task { await store.refresh() } }
-                }
+                ErrorStateView(subject: "rules", message: message) { await store.refresh() }
             } else if store.isLoading {
-                ProgressView()
+                SkeletonList()
             } else {
                 ContentUnavailableView {
                     Label("No Redirects or Rewrites", systemImage: "arrow.triangle.branch")

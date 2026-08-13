@@ -15,27 +15,19 @@ struct DatastoreRow: View {
     var roleBadge: String?
 
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: systemImage)
-                .font(.title3)
-                .foregroundStyle(accent)
-                .frame(width: 28)
+        HStack(spacing: Theme.Spacing.row) {
+            GlyphTile(systemImage: systemImage, tint: accent)
 
             VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 6) {
+                HStack(spacing: Theme.Spacing.tight) {
                     Text(name)
                         .font(.headline)
                         .lineLimit(1)
                     if let roleBadge {
-                        Text(roleBadge)
-                            .font(.caption2.weight(.semibold))
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Color.secondary.opacity(0.15), in: Capsule())
-                            .foregroundStyle(.secondary)
+                        MiniBadge(title: roleBadge)
                     }
                 }
-                HStack(spacing: 6) {
+                HStack(spacing: Theme.Spacing.tight) {
                     DatabaseStatusChip(status: status, isCompact: true)
                     Text(detailLine)
                         .font(.subheadline)

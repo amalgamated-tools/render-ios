@@ -71,16 +71,13 @@ struct DeployStatusChip: View {
     var isCompact = false
 
     var body: some View {
-        Label {
-            Text(status.displayName)
-        } icon: {
-            Image(systemName: status.systemImage)
-        }
-        .font(isCompact ? .caption.weight(.medium) : .subheadline.weight(.medium))
-        .foregroundStyle(status.tint)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 3)
-        .background(status.tint.opacity(0.12), in: Capsule())
+        StatusChip(
+            title: status.displayName,
+            systemImage: status.systemImage,
+            tint: status.tint,
+            isCompact: isCompact,
+            isActive: status.isInProgress
+        )
         .accessibilityLabel("Deploy status: \(status.displayName)")
     }
 }

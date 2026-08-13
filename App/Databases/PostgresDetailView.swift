@@ -44,6 +44,7 @@ struct PostgresDetailView: View {
         .onDisappear { store.stopPolling() }
         .overlay { errorState }
         .safeAreaInset(edge: .bottom) { actionBanner }
+        .actionOutcomeFeedback(store.actionResult)
         .confirmationDialog(
             pendingAction?.confirmationTitle(databaseName: store.database?.name ?? databaseName) ?? "",
             isPresented: .init(get: { pendingAction != nil }, set: { if !$0 { pendingAction = nil } }),
@@ -264,13 +265,7 @@ struct PostgresDetailView: View {
     @ViewBuilder
     private var errorState: some View {
         if let message = store.errorMessage, store.database == nil {
-            ContentUnavailableView {
-                Label("Couldn't load database", systemImage: "exclamationmark.triangle")
-            } description: {
-                Text(message)
-            } actions: {
-                Button("Retry") { Task { await store.refresh() } }
-            }
+            ErrorStateView(subject: "database", message: message) { await store.refresh() }
         }
     }
 }

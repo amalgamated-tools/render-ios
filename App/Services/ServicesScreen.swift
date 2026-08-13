@@ -28,7 +28,7 @@ struct ServicesScreen: View {
         // A project remembered from a previous launch only becomes a filter once the project list
         // arrives, so hold the list back rather than fetch the whole workspace and replace it.
         if projectsStore.selectedProjectID != nil && !projectsStore.hasLoaded {
-            ProgressView()
+            SkeletonList()
         } else {
             ServicesListView(
                 client: client,
