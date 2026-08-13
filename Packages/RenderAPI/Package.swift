@@ -8,6 +8,14 @@ let package = Package(
         .library(name: "RenderAPI", targets: ["RenderAPI"]),
         // Test-only helpers, shipped as a product because the app target's tests live outside this
         // package and can't reach another target's test sources.
+        //
+        // Known wart this creates: the app binary and the test bundle each statically link their
+        // own copy of RenderAPI, so under the app test runner a dynamic cast on a package type
+        // (`error as? RenderError`) fails when the value was created on the other side. App tests
+        // therefore assert on user-visible outcomes (phase, message presence) rather than on
+        // specific RenderError cases. Making the products `.dynamic` doesn't fix it: Xcode refuses
+        // a dynamic product that shares its target's name, and the TestSupport→RenderAPI target
+        // dependency would still embed a second static copy.
         .library(name: "RenderAPITestSupport", targets: ["RenderAPITestSupport"]),
     ],
     dependencies: [
