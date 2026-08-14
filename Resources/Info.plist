@@ -25,5 +25,13 @@
 		<key>UIImageRespectsSafeAreaInsets</key>
 		<false/>
 	</dict>
+
+	<!-- Export compliance. Answered here rather than in App Store Connect's upload questionnaire,
+	     which otherwise asks again on every single build and holds the build until you do. The app
+	     ships no cryptography of its own; all it does is talk HTTPS to Render through URLSession,
+	     which is the exempt case this key exists to declare. Revisit only if the app ever encrypts
+	     something itself. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Template. `make export` copies this to build/ and stamps teamID from $TEAM_ID before
+	     handing it to xcodebuild — the placeholder below is never used as-is, it's here so
+	     PlistBuddy has a key to Set. -->
+	<key>teamID</key>
+	<string>REPLACE_WITH_TEAM_ID</string>
+	<!-- The App Store / TestFlight channel. (Xcode 15 renamed this value from "app-store"; both
+	     still work, this is the current spelling.) -->
+	<key>method</key>
+	<string>app-store-connect</string>
+	<!-- Write an .ipa to disk instead of pushing straight to App Store Connect. Uploading from here
+	     would need an ASC API key wired in as well; keeping the two steps apart means a failed
+	     upload doesn't cost you the archive. -->
+	<key>destination</key>
+	<string>export</string>
+	<key>signingStyle</key>
+	<string>automatic</string>
+	<!-- Let App Store Connect thin the bundle per device rather than shipping one fat binary. -->
+	<key>uploadSymbols</key>
+	<true/>
+	<key>manageAppVersionAndBuildNumber</key>
+	<false/>
+</dict>
+</plist>

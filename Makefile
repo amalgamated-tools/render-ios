@@ -5,6 +5,12 @@ DESTINATION ?= platform=iOS Simulator,name=$(SIMULATOR)
 # Extra flags for xcodebuild — CI passes -clonedSourcePackagesDirPath to make SPM checkouts cacheable.
 XCODEBUILD_FLAGS ?=
 
+# Distribution. TEAM_ID is your 10-character Apple Developer Team ID; it is deliberately not checked
+# into project.pbxproj, so a fresh clone doesn't try to sign against an account it can't reach.
+TEAM_ID ?=
+ARCHIVE_PATH ?= build/RenderiOS.xcarchive
+EXPORT_PATH ?= build/export
+
 .DEFAULT_GOAL := check
 
 ## check: everything CI would run
@@ -56,6 +62,30 @@ walkthrough-captions:
 .PHONY: walkthrough-verify
 walkthrough-verify:
 	@Scripts/verify-walkthrough.sh
+
+## archive: build a signed device archive for distribution (needs TEAM_ID=XXXXXXXXXX)
+.PHONY: archive
+archive:
+	@test -n "$(TEAM_ID)" || { echo "TEAM_ID is unset — pass your 10-character Apple Team ID: make archive TEAM_ID=XXXXXXXXXX"; exit 1; }
+	xcodebuild -project RenderiOS.xcodeproj -scheme RenderiOS \
+	  -destination 'generic/platform=iOS' \
+	  -archivePath '$(ARCHIVE_PATH)' \
+	  DEVELOPMENT_TEAM='$(TEAM_ID)' \
+	  -allowProvisioningUpdates $(XCODEBUILD_FLAGS) archive
+
+## ipa: turn the archive into an .ipa ready to upload to TestFlight
+# Not called `export`: that's a GNU make directive, and a target sharing the name is ambiguous.
+.PHONY: ipa
+ipa: archive
+	@cp Scripts/ExportOptions.plist build/ExportOptions.plist
+	@/usr/libexec/PlistBuddy -c "Set :teamID $(TEAM_ID)" build/ExportOptions.plist
+	xcodebuild -exportArchive -archivePath '$(ARCHIVE_PATH)' \
+	  -exportPath '$(EXPORT_PATH)' -exportOptionsPlist build/ExportOptions.plist \
+	  -allowProvisioningUpdates
+	@echo
+	@echo "Wrote $(EXPORT_PATH)/RenderiOS.ipa — upload it with Transporter.app, or:"
+	@echo "  xcrun altool --upload-app -f $(EXPORT_PATH)/RenderiOS.ipa -t ios --apiKey <KEY_ID> --apiIssuer <ISSUER_ID>"
+	@echo "Bump CURRENT_PROJECT_VERSION before the next upload — build numbers must not repeat."
 
 ## generate: re-vendor the OpenAPI spec and regenerate the client
 .PHONY: generate

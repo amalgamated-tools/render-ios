@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Apple's privacy manifest. `App` is a synchronized root group, so dropping this file here is
+	     enough to get it copied into the bundle — there is nothing to add to the project file.
+
+	     Two of the four sections are empty and stay that way: nothing leaves the device except calls
+	     to Render's own API on the user's behalf, and there is no analytics, attribution, or
+	     advertising SDK to route data anywhere else. The API key lives in the Keychain.
+
+	     The one required-reason API the app touches is UserDefaults — AuthStore remembers which
+	     owner you last selected, ProjectsStore which project. Both are this app's own state, read
+	     back by this app only, which is exactly what CA92.1 describes. Omitting this declaration is
+	     what earns the ITMS-91053 rejection mail. -->
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>CA92.1</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>
