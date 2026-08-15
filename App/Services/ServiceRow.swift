@@ -4,6 +4,9 @@ import SwiftUI
 /// One service in the list: type glyph, name, a suspended badge, and the repo/branch subtitle.
 struct ServiceRow: View {
     let service: ServiceSummary
+    /// Watching is otherwise invisible from the list, which is where you'd go to check what you set
+    /// up — and an alerting feature you can't audit is one you stop trusting.
+    var isWatched = false
 
     var body: some View {
         HStack(spacing: Theme.Spacing.row) {
@@ -17,6 +20,12 @@ struct ServiceRow: View {
                         .lineLimit(1)
                     if service.isSuspended {
                         MiniBadge(title: "Suspended")
+                    }
+                    if isWatched {
+                        Image(systemName: "bell.fill")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .accessibilityLabel("Watched for failures")
                     }
                 }
                 Text(subtitle)

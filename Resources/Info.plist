@@ -33,5 +33,24 @@
 	     something itself. -->
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+
+	<!-- Failure watching. Both keys are arrays, and INFOPLIST_KEY_<X> only emits top-level scalars
+	     and strings, so neither can come from a build setting.
+
+	     UIBackgroundModes "fetch" is what lets BGAppRefreshTask run at all, and the identifier below
+	     must match FailureWatchCoordinator.taskIdentifier exactly — BGTaskScheduler.submit throws
+	     for an identifier that isn't listed here, which looks identical to a feature that simply
+	     never fires.
+
+	     No entitlement is involved: this is local notifications raised by the app itself after a
+	     background wake, not push. APNs would need an aps-environment entitlement and a server. -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.veverkap.RenderiOS.refresh</string>
+	</array>
 </dict>
 </plist>

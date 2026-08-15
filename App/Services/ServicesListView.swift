@@ -5,6 +5,8 @@ import SwiftUI
 /// incremental paging as you scroll. Tapping a row pushes the service detail screen.
 struct ServicesListView: View {
     @State private var store: ServicesStore
+    @State private var watchlistFullMessage: String?
+    @Environment(FailureWatchCoordinator.self) private var coordinator
 
     private let client: RenderClient
     /// Passed down to the detail screen: logs are addressed by workspace, not by service, so the
@@ -32,18 +34,43 @@ struct ServicesListView: View {
         .overlay { emptyState }
         .refreshable { await store.refresh() }
         .task { if store.services.isEmpty { await store.refresh() } }
+        .alert(
+            "Watchlist Full",
+            isPresented: .init(get: { watchlistFullMessage != nil }, set: { if !$0 { watchlistFullMessage = nil } }),
+            presenting: watchlistFullMessage
+        ) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { message in
+            Text(message)
+        }
     }
 
+    /// The destination is a value rather than a view, so a tapped notification can push the same
+    /// screen — see ``ServiceRoute``. `WorkspaceScreen` owns the matching `navigationDestination`,
+    /// because it owns the stack.
     private func row(for service: ServiceSummary) -> some View {
-        NavigationLink {
-            ServiceDetailView(
-                client: client,
-                ownerID: ownerID,
-                serviceID: service.id,
-                serviceName: service.name
-            )
-        } label: {
-            ServiceRow(service: service)
+        NavigationLink(value: ServiceRoute(id: service.id, name: service.name)) {
+            ServiceRow(service: service, isWatched: coordinator.watchlist.isWatching(service.id))
+        }
+        .swipeActions(edge: .trailing) {
+            let isWatched = coordinator.watchlist.isWatching(service.id)
+            Button {
+                Task { await toggleWatch(service, isWatched: isWatched) }
+            } label: {
+                Label(
+                    isWatched ? "Stop Watching" : "Watch",
+                    systemImage: isWatched ? "bell.slash" : "bell"
+                )
+            }
+            .tint(isWatched ? .secondary : .accentColor)
+        }
+    }
+
+    private func toggleWatch(_ service: ServiceSummary, isWatched: Bool) async {
+        if isWatched {
+            coordinator.unwatch(serviceID: service.id)
+        } else if await coordinator.watch(serviceID: service.id, ownerID: ownerID, name: service.name) == false {
+            watchlistFullMessage = "You can watch up to \(WatchlistStore.limit) services. Stop watching one to add another."
         }
     }
 

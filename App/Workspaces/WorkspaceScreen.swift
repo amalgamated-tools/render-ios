@@ -17,6 +17,17 @@ struct WorkspaceScreen: View {
     private let client: RenderClient
     private let ownerID: String
     @State private var projectsStore: ProjectsStore
+    /// A value-based path, so a tapped failure notification can push a service the list hasn't
+    /// loaded — see ``ServiceRoute``.
+    @State private var servicesPath: [ServiceRoute] = []
+    @State private var selectedTab: WorkspaceTab = .services
+    @State private var isShowingNotificationSettings = false
+    @Environment(FailureWatchCoordinator.self) private var coordinator
+    @Environment(NotificationRouter.self) private var router
+
+    private enum WorkspaceTab: Hashable {
+        case services, postgres, keyValue, envGroups
+    }
 
     init(authStore: AuthStore, client: RenderClient, ownerID: String) {
         self.authStore = authStore
@@ -26,26 +37,34 @@ struct WorkspaceScreen: View {
     }
 
     var body: some View {
-        TabView {
-            Tab("Services", systemImage: "square.stack.3d.up") {
-                NavigationStack {
+        TabView(selection: $selectedTab) {
+            Tab("Services", systemImage: "square.stack.3d.up", value: .services) {
+                NavigationStack(path: $servicesPath) {
                     ServicesScreen(client: client, ownerID: ownerID, projectsStore: projectsStore)
+                        .navigationDestination(for: ServiceRoute.self) { route in
+                            ServiceDetailView(
+                                client: client,
+                                ownerID: ownerID,
+                                serviceID: route.id,
+                                serviceName: route.name
+                            )
+                        }
                         .toolbar { sharedToolbar }
                 }
             }
-            Tab("Postgres", systemImage: "cylinder.split.1x2") {
+            Tab("Postgres", systemImage: "cylinder.split.1x2", value: .postgres) {
                 NavigationStack {
                     PostgresScreen(client: client, ownerID: ownerID, projectsStore: projectsStore)
                         .toolbar { sharedToolbar }
                 }
             }
-            Tab("Key Value", systemImage: "bolt.horizontal.circle") {
+            Tab("Key Value", systemImage: "bolt.horizontal.circle", value: .keyValue) {
                 NavigationStack {
                     KeyValueScreen(client: client, ownerID: ownerID, projectsStore: projectsStore)
                         .toolbar { sharedToolbar }
                 }
             }
-            Tab("Env Groups", systemImage: "rectangle.stack") {
+            Tab("Env Groups", systemImage: "rectangle.stack", value: .envGroups) {
                 NavigationStack {
                     EnvGroupsListView(client: client, ownerID: ownerID)
                         .toolbar { sharedToolbar }
@@ -53,6 +72,35 @@ struct WorkspaceScreen: View {
             }
         }
         .task { await projectsStore.load() }
+        // Runs on appearance *and* on every change, which is what makes the two-step workspace
+        // switch below work: the switch rebuilds this screen, and the rebuilt one re-reads the same
+        // still-pending target.
+        .task(id: router.pending) { openPendingNotification() }
+        .sheet(isPresented: $isShowingNotificationSettings) {
+            NotificationSettingsView(client: client, ownerID: ownerID)
+        }
+    }
+
+    /// Navigates to whatever a tapped notification asked for.
+    ///
+    /// A notification can name a service in a workspace other than the active one. Switching
+    /// `selectedOwnerID` re-creates this whole screen (`RootView` keys it on the owner), so the
+    /// target is left pending rather than consumed — the rebuilt screen picks it up and navigates.
+    private func openPendingNotification() {
+        guard let target = router.pending else { return }
+        guard target.ownerID == ownerID else {
+            // Only switch to a workspace this credential actually has. Otherwise drop the target,
+            // rather than leave it pending forever and re-fire on every navigation.
+            if authStore.owners.contains(where: { $0.id == target.ownerID }) {
+                authStore.selectedOwnerID = target.ownerID
+            } else {
+                router.consume()
+            }
+            return
+        }
+        selectedTab = .services
+        servicesPath = [ServiceRoute(id: target.serviceID, name: target.serviceName)]
+        router.consume()
     }
 
     /// The scope picker and account menu, on both tabs. A picker that appeared on one tab and not the
@@ -77,7 +125,14 @@ struct WorkspaceScreen: View {
 
     private var accountMenu: some View {
         Menu {
+            Button("Notifications", systemImage: "bell") {
+                isShowingNotificationSettings = true
+            }
             Button("Sign Out", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) {
+                // Before the credential goes, not after: a watchlist that outlives its session polls
+                // with nothing, and a stale watermark would swallow the first alert after signing
+                // back in.
+                coordinator.reset()
                 authStore.signOut()
             }
         } label: {
