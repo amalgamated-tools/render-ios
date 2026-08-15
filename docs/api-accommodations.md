@@ -25,9 +25,12 @@ the generator emits an optional and `decodeIfPresent` turns `null` into `nil`.
 | `buildFilter.ignoredPaths` (and `paths`, defensively) | `null` on **66 of 190** real services | The service list — the app's first screen — didn't load at all |
 | `webServiceDetails.openPorts`, `privateServiceDetails.openPorts` | `null` | Same: any service with a null port list failed |
 | `Logs200Response.logs` | `null`, not `[]`, for a window with no lines — **7 of 20** services at the default range | "Couldn't load logs" on a service whose only problem was being quiet; the "Nothing was logged in this time range" empty state was unreachable |
+| `ipAllowList` on `postgres`, `postgresDetail`, `keyValue`, `keyValueDetail` | `null` for a datastore with no rules — every Key Value instance in the sample workspace, and a fresh free-tier Postgres the moment it's created | Both datastore tabs showed "Render returned data this version of the app doesn't understand" in place of the whole list |
+| `postgresDetail.project` | absent entirely on a database that isn't in a project | Same — the Postgres detail screen couldn't load |
 
 The logs entry needed the script extended to reach response bodies inline under
-`components/responses`, since that schema isn't a named component.
+`components/responses`, since that schema isn't a named component. The two `ipAllowList.count` call
+sites unwrap the optional.
 
 ## B. Structural problems that break or corrupt code generation
 
@@ -37,13 +40,14 @@ The logs entry needed the script extended to reach response bodies inline under
 | 2 | `service.serviceDetails` is an undiscriminated `oneOf`, so the generated decoder keeps the first member that decodes — making spec declaration order load-bearing. `cronJobDetails`' required set is satisfied by any cron job carrying `numInstances` (unknown keys like `schedule` are ignored), so **every cron job silently decoded as a background worker** | `Scripts/order-oneof.py` moves `cronJobDetails` ahead of `backgroundWorkerDetails`. On the Swift side `ServiceDetails+Decode.swift` keys every field off the authoritative sibling `service.type` and keeps `decodedType` only to *detect* disagreement, which the detail screen surfaces as a warning |
 | 3 | `GET /env-groups` is documented as a bare array of `envGroupMeta`; it returns the `{envGroup, cursor}` envelope every other list uses. With six required fields on `envGroupMeta`, the decoder **rejected every real reply** | `Scripts/envelope-env-groups.py` synthesises `envGroupWithCursor` and points the operation at it. `EnvGroupsStore` then became an ordinary `CursorPaginator` — simpler than the `createdBefore` window it needed while the response looked cursorless |
 | 4 | `resolutionSeconds` is typed `number` → Swift `Double` → `resolutionSeconds=60.0`, which Render rejects: `invalid filter parameter: could not parse input 60.0`. **This 400'd every metrics chart on the screen** | `Scripts/number-params.py` retypes it as `integer` (18 sites). Found by the live pass, not the tests — a unit test had pinned `60.0` as if it were correct |
-| 5 | `/metrics/http-latency`'s `quantile` carries `format: float`; the generator's query serializer widens `Float` to `Double` before printing, so a p95 request goes out as `0.949999988079071` | Same script drops `format`. Render turned out to *tolerate* the widened value, so this is correctness, not a rescued feature |
+| 5 | **Enums the live API overruns.** `postgres.plan` has no `starter_legacy` and `postgresVersion` has no `10` — values Render no longer lets you create and still runs. An unlisted value fails the whole response, so **one 2018 database emptied a list of 42** | `Scripts/widen-enums.py` adds the missing values, additively and idempotently, so a re-vendor keeps the fix and an upstream addition isn't duplicated. Widened rather than dropped: the documented values are still worth having as a compile-time list, which the display code reads |
+| 6 | `/metrics/http-latency`'s `quantile` carries `format: float`; the generator's query serializer widens `Float` to `Double` before printing, so a p95 request goes out as `0.949999988079071` | Same script drops `format`. Render turned out to *tolerate* the widened value, so this is correctness, not a rescued feature |
 
 Pipeline order (`Scripts/generate-api.sh`):
 
 ```
-download → jq pretty-print → flatten-path-refs.py → relax-nullable.py → order-oneof.py
-         → envelope-env-groups.py → number-params.py → generate
+download → jq pretty-print → flatten-path-refs.py → relax-nullable.py → widen-enums.py
+         → order-oneof.py → envelope-env-groups.py → number-params.py → generate
 ```
 
 ## C. Timestamps
@@ -125,7 +129,7 @@ turned a *successful* write into an error banner over a change Render had alread
 3. **Render validates none of the edge rules and renumbers priorities itself.** Duplicate route
    sources, duplicate header name+path, and `priority: 0` are all accepted with `201`; deleting one rule
    shifted the survivors (1, 2, 9 → 2, 3, 10) with relative order intact. The app's "append at max + 1"
-   reads a possibly-stale max, and `sorted(by: <)` is unspecified on a tie — open item 11.
+   reads a possibly-stale max, and `sorted(by: <)` is unspecified on a tie — open item 13.
 4. **`DELETE` on an unknown route or header ID answers `204`** (idempotent — the report of success is
    true), while **`PATCH` on a missing route answers `404`** with the bare message "Not found."
 5. **`/metrics/bandwidth` declares no `resolutionSeconds`** — sending one is a `400` — and Render buckets
