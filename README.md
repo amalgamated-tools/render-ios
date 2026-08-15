@@ -5,18 +5,25 @@
 A native iPhone app for [Render](https://render.com) — on-call triage and one-tap recovery for your
 services, without opening a laptop.
 
-Sign in with a Render API key, browse the services in any workspace or project you belong to, drill
-into one to see its current deploy and configuration, walk its deploy history and event timeline,
-and run the actions that matter at 3am: deploy, roll back, cancel, restart, suspend/resume, scale,
-purge cache, trigger a cron job. Read its logs, live, and chart its CPU, memory, HTTP traffic,
-latency, bandwidth, instances, and disk against the plan's limits.
+Sign in through Render's browser approval flow (or paste an API key), browse the services in any
+workspace or project you belong to, drill into one to see its current deploy and configuration, walk
+its deploy history and event timeline, and run the actions that matter at 3am: deploy, roll back,
+cancel, restart, suspend/resume, scale, purge cache, trigger a cron job. Read its logs, live, and
+chart its CPU, memory, HTTP traffic, latency, bandwidth, instances, and disk against the plan's
+limits. Edit the configuration behind it — env vars, secret files, env groups, custom domains, and a
+static site's redirects and headers — and deploy the change from the banner that confirms it. Your
+Postgres databases and Key Value instances get their own tabs, with connection info, the same logs
+and metrics screens, and their own lifecycle actions.
 
 Built with SwiftUI, Swift 6 strict concurrency, and a code-generated client over Render's public
 OpenAPI spec. No third-party UI or networking dependencies.
 
-> **Status:** Phases 0–4 are complete (auth, service list, service detail, deploys, events, lifecycle
-> actions, logs with a live WebSocket tail, and metrics charts), each verified against a real workspace.
-> Full dashboard parity is planned — see [`PLAN.md`](PLAN.md) for the roadmap.
+> **Status:** Phases 0–5b are complete (auth, service list, service detail, deploys, events,
+> lifecycle actions, logs with a live WebSocket tail, metrics charts, and the full config surface),
+> along with the core of 5c — the Postgres and Key Value tabs. Each was verified against a real
+> workspace, config and datastore writes included. The app is prepared for TestFlight
+> (`make ipa`), and what remains of parity — projects, blueprints, disks, webhooks, audit logs — is
+> in [`PLAN.md`](PLAN.md) with the rest of the roadmap.
 
 ---
 
@@ -25,7 +32,7 @@ OpenAPI spec. No third-party UI or networking dependencies.
 | Onboarding | Service list | Service detail |
 |---|---|---|
 | ![Onboarding](docs/screenshots/onboarding.png) | ![Service list](docs/screenshots/services-list.png) | ![Service detail](docs/screenshots/service-detail.png) |
-| Paste an API key. It's validated against `GET /owners` and stored in the Keychain — never in `UserDefaults`, never in the repo. | Every service in the active workspace/project, searchable and filterable by type, paging as you scroll. PR previews are excluded. | Current deploy status, then the configuration facts worth knowing on call, then drill-downs. |
+| Sign in through Render in the browser, or paste an API key from the collapsed fallback. Either credential is validated against `GET /owners` and stored in the Keychain — never in `UserDefaults`, never in the repo. | Every service in the active workspace/project, searchable and filterable by type, paging as you scroll. PR previews are excluded. | Current deploy status, then the configuration facts worth knowing on call, then drill-downs. |
 
 | Actions | Deploy history | Deploy detail | Events |
 |---|---|---|---|
@@ -42,6 +49,12 @@ OpenAPI spec. No third-party UI or networking dependencies.
 | ![Logs](docs/screenshots/logs.png) | ![Live tail](docs/screenshots/logs-live.png) | ![Log filters](docs/screenshots/logs-filter.png) |
 | Newest first, paging backwards through the window Render hands back. Severity down the left edge, request logs summarised as `POST 200 /webhook`. Tap a line for its full label set. | A WebSocket tail over `GET /logs/subscribe` — the one endpoint the generator can't express, so it's hand-written. Reconnects with backoff; pause holds lines without dropping them. | The filter set is server-side, and its vocabulary comes from `GET /logs/values` — so it offers the levels and types *this* service actually emits, not a hard-coded list. |
 
+The set above is captured by `Scripts/capture-screenshots.sh`, which drives the same tour the
+walkthrough recorder does and sources its coordinates — so a UI change is one command to re-shoot
+rather than an afternoon of hand-captured stills that quietly drift a release behind. The config
+screens and the two datastore tabs have no stills yet; they're covered in the
+[walkthrough video](#recording-a-walkthrough).
+
 ---
 
 ## Getting started
@@ -55,7 +68,8 @@ cd render-ios
 make run          # build, install, and launch on the iPhone 17 Pro simulator
 ```
 
-Paste your API key into the onboarding screen. It's stored in the device Keychain and nowhere else.
+Tap **Sign in with Render** and approve in the browser, or open the fallback and paste an API key.
+Either credential is stored in the device Keychain and nowhere else.
 
 ```sh
 make check        # everything CI runs: tests + build
@@ -70,10 +84,26 @@ make help         # list targets
 
 `SIMULATOR="iPhone 17"` overrides the device for `run`/`build`/`test-app`.
 
+### Distribution
+
+```sh
+make archive TEAM_ID=XXXXXXXXXX   # signed device archive
+make ipa     TEAM_ID=XXXXXXXXXX   # …and export build/export/RenderiOS.ipa for TestFlight
+```
+
+`TEAM_ID` is your 10-character Apple Developer Team ID, and it is a make variable rather than a value
+in `project.pbxproj` so a fresh clone doesn't try to sign against an account it can't reach —
+`Scripts/ExportOptions.plist` stays account-agnostic the same way, with the team stamped into a
+`build/` copy at run time. The target is `ipa` and not `export` because `export` is a GNU make
+directive and a target sharing the name parses ambiguously. Bump `CURRENT_PROJECT_VERSION` before
+each upload; build numbers must not repeat. The bundle ID still needs registering, and see the
+trademark note at the end of [Design notes](#design-notes) before submitting anything.
+
 ### Optional: live smoke test
 
 `Scripts/smoke.sh` exercises the real API read-only (owners, services, deploys, events, logs,
-metrics) so you can confirm what the app should be showing — and it asserts the spec assumptions the
+metrics, env vars, secret files, env groups, custom domains, routes, headers, Postgres, Key Value) so
+you can confirm what the app should be showing — and it asserts the spec assumptions the
 app is built on, so it's how you find out one stopped holding:
 
 ```sh
@@ -107,6 +137,13 @@ A view never touches a `Components.Schemas.*` type. Each store owns the mapping 
 `Sendable` domain struct, so an upstream spec change is absorbed in one layer instead of rippling
 through the UI.
 
+The signed-in root is four tabs — Services, Postgres, Key Value, Env Groups — each with its own
+navigation stack. `WorkspaceScreen` owns what belongs to the session rather than to a list: the scope
+picker, the account menu, and the `ProjectsStore` behind them, so every tab agrees about the active
+workspace and switching tabs doesn't re-fetch the project list. Env groups and datastores are tabs
+rather than drill-downs because they belong to the *workspace*: there is no `GET
+/services/{id}/env-groups` to hang one off.
+
 ### The API layer (`Packages/RenderAPI`)
 
 A local SwiftPM package that is the app target's only dependency. `RenderClient` wraps the generated
@@ -116,13 +153,21 @@ client with a fixed base URL and a three-middleware stack — order matters, and
 |---|---|
 | `StatusMappingMiddleware` | Outermost, so it sees only the *final* response: turns a terminal 4xx/5xx into a thrown `RenderError`. |
 | `RetryMiddleware` | Exponential backoff with jitter, honouring `Retry-After` on 429. A 429 is replayed for any method; a 5xx only for idempotent ones, so a failed `POST /deploys` can't ship twice. |
-| `AuthMiddleware` | Attaches `Authorization: Bearer <key>`, reading the key per request so a sign-out or workspace switch takes effect immediately. |
+| `AuthMiddleware` | Attaches `Authorization: Bearer <credential>`, reading it per request so a sign-out, a token refresh, or a workspace switch takes effect immediately. |
 
 Other pieces that earn their place:
 
-- **`Keychain` / `KeychainAPIKeyProvider`** — the API key is the only secret, stored as a generic
-  password with `kSecAttrAccessibleAfterFirstUnlock`. Everything non-secret (selected workspace,
+- **`Keychain` / `KeychainAPIKeyProvider`** — credentials are the only secret, stored as generic
+  passwords with `kSecAttrAccessibleAfterFirstUnlock`. Everything non-secret (selected workspace,
   selected project) lives in `UserDefaults`.
+- **`OAuth/`** — Render's RFC 8628 device-authorization flow, the same one `render login` uses:
+  request a grant, show the user code, poll until the browser approval lands.
+  `OAuthCredentialProvider` is an actor behind the same `APIKeyProvider` seam the pasted key uses, so
+  it refreshes an expired access token underneath the generated client and the log stream without
+  either knowing it exists — and concurrent callers coalesce onto one refresh rather than racing.
+  The endpoints have a quirk worth knowing: they take a **JSON body under a form-urlencoded
+  content type**, which is what the CLI does and what Render accepts, so it's mirrored and pinned by
+  a test.
 - **`CursorPaginator`** — every Render list endpoint returns `{resource, cursor}` envelopes with no
   "hasMore" flag; a short page is the only end-of-collection signal. One generic `AsyncSequence`
   handles all of them, with both a `collect()` (drain everything) and a `firstPage(after:)`
@@ -132,7 +177,7 @@ Other pieces that earn their place:
   fails to decode.
 - **`RenderError`** — one enum (`unauthorized`, `forbidden`, `notFound`, `rateLimited(retryAfter:)`,
   `server`, `transport`, `decoding`) so views switch on intent, not on status numbers. Only
-  `unauthorized` clears the stored key.
+  `unauthorized` clears the stored credential.
 - **`ServiceDetails+Decode`** — see [the `oneOf` problem](#the-oneof-problem) below.
 
 ### The stores
@@ -142,7 +187,7 @@ changes (SwiftUI `.id(...)` on the view).
 
 | Store | Responsibility |
 |---|---|
-| `AuthStore` | Validates a key by calling `listOwners` — one round trip proves the key works *and* yields the workspace list. A key is written to the Keychain only *after* it validates, so a typo never displaces a working one. |
+| `AuthStore` | Owns both ways in — the device flow and a pasted key, one credential at a time. Either is validated by calling `listOwners`: one round trip proves it works *and* yields the workspace list. A pasted key is written to the Keychain only *after* it validates, so a typo never displaces a working one. |
 | `ProjectsStore` | Drains the owner's projects for the scope picker. Services belong to *environments*, not projects, so a project scope becomes an `environmentId` filter. A failure here is non-fatal — the list just stays workspace-wide. |
 | `ServicesStore` | Pages the service list; search and type filtering are client-side over loaded pages. |
 | `ServiceDetailStore` | Loads the service and its latest deploy concurrently, owns the lifecycle actions, and **polls while a deploy is in progress** — stopping the moment it settles, so an idle service costs zero requests. |
@@ -151,6 +196,14 @@ changes (SwiftUI `.id(...)` on the view).
 | `LogsStore` | Pages log history on the window Render hands back (`hasMore` + `nextStartTime`/`nextEndTime` — the one list endpoint that isn't cursor-based), and merges a live WebSocket tail into the same newest-first list. |
 | `LogFilterValuesStore` | Fetches the filter vocabulary per facet from `GET /logs/values`, six calls concurrently. A facet that fails or comes back empty simply isn't offered. |
 | `MetricsStore` | Fires up to twelve series requests **concurrently behind a single spinner** — there's no batch endpoint. A failed series fails its chart, not the screen; only a total failure takes over. |
+| `EnvVarsStore` / `SecretFilesStore` | Read and write one set of variables or files, over an `EnvVarBackend` / `SecretFileBackend` — so the same store, views, editors, and masking serve both a service's config and an env group's. Writes address **one key at a time**, never the whole-list `PUT` that would delete whatever a teammate added since the screen loaded. |
+| `EnvGroupsStore` / `EnvGroupDetailStore` | The workspace's env groups (drained, not paged: a partial list of shared config invites a duplicate) and one group's variables, files, rename, and service links. |
+| `ServiceEnvGroupsStore` | The same links from the service's side — there is no `GET /services/{id}/env-groups`, so the link is found by reading each group's `serviceLinks`. |
+| `CustomDomainsStore` | Add, verify, delete. Verification is reported as "checking", never as verified: `POST …/verify` answers `202` — it has queued a DNS check, not passed one. |
+| `RouteRulesStore` / `HeaderRulesStore` | A static site's redirects/rewrites and headers. Routes are shown in evaluation order, and a reorder is two `PATCH`es — setting one priority alone would leave two rules claiming it. |
+| `ConfigDeployer` | The deploy offered by a config success banner, so a saved change is one tap from running rather than two screens back. Shared by every config screen, using `ServiceAction.deploy`'s own confirmation copy so the two can't drift. |
+| `PostgresStore` / `KeyValueStore` | Page the datastore lists for the active workspace, same shape as `ServicesStore`. |
+| `PostgresDetailStore` / `KeyValueDetailStore` | Load the datastore and its connection info together, own the lifecycle actions, and **poll while the status is transitional**. A failed connection-info call says so in that section rather than blanking the screen. |
 
 ### Actions, and the care taken with them
 
@@ -169,9 +222,21 @@ one row apart in a menu:
 - After any action, success or failure, the store reloads: these endpoints are asynchronous and the
   local copy is stale the moment they return.
 
+`PostgresAction` (restart, fail over, suspend, resume) and `KeyValueAction` (suspend, resume) follow
+the same contract for the same reason. All six endpoints answer `202`, so the banner says
+"Restart requested." rather than claiming the work is done.
+
+A config write says when it takes effect, which is not what the dashboard would have you assume:
+**an API config write starts no deploy.** Render applies the change to the service's configuration
+immediately and the running instances keep the old value until something else deploys them —
+measured, not guessed. So every message on these screens says so, and a successful write offers
+**Deploy Latest Commit** (or Image) right there in the banner. A group write doesn't: a group feeds
+*N* services, so the honest thing is to name how many are waiting rather than fan out N deploys from
+one tap.
+
 ### The generated client
 
-`Packages/RenderAPI/Sources/RenderAPI/Generated/` is **committed** — 207 operations, ~135K lines,
+`Packages/RenderAPI/Sources/RenderAPI/Generated/` is **committed** — 207 operations, ~141K lines,
 produced by `swift-openapi-generator` from the vendored `openapi.json`. Committing it means an
 upstream spec change arrives as a reviewable diff rather than a surprise build break, keeps clean
 checkouts free of Xcode's plugin trust prompt, and keeps ~40s of generation off every incremental
@@ -184,17 +249,17 @@ the layer that earns its keep is the store that maps results into domain types.
 
 ## Working with the spec
 
-Render publishes its OpenAPI spec unversioned and warns that it changes without notice. Four of its
+Render publishes its OpenAPI spec unversioned and warns that it changes without notice. Six of its
 properties actively break or degrade naive code generation, and `Scripts/generate-api.sh` works
-around all four before the generator ever sees the file:
+around all six before the generator ever sees the file:
 
 > The complete inventory of spec-vs-reality mismatches — every relaxed field, wrong status code,
 > undocumented response shape, and behavioural surprise, with what each one broke — is in
 > [`docs/api-accommodations.md`](docs/api-accommodations.md).
 
 ```
-download → jq pretty-print → flatten-path-refs.py → relax-nullable.py → order-oneof.py
-         → envelope-env-groups.py → number-params.py → generate
+download → jq pretty-print → flatten-path-refs.py → relax-nullable.py → widen-enums.py
+         → order-oneof.py → envelope-env-groups.py → number-params.py → generate
 ```
 
 1. **Unresolvable `$ref`s.** OpenAPIKit only resolves refs into `#/components/…`, and the spec has
@@ -204,7 +269,13 @@ download → jq pretty-print → flatten-path-refs.py → relax-nullable.py → 
    such field fails the *whole* response — `buildFilter.ignoredPaths` alone broke the service list
    on 66 of 190 real services. `relax-nullable.py` drops those from `required` so they generate as
    optionals. Each entry is a confirmed spec-vs-reality mismatch.
-3. **<a id="the-oneof-problem"></a>`service.serviceDetails` is an undiscriminated `oneOf`.** The
+3. **Enums the live API overruns.** Render still runs resources on plans and versions it no longer
+   lets you create, and an unlisted enum value fails the *whole* response the same way a null does:
+   one 2018 database on `postgres_10` / `starter_legacy` emptied a list of 42. `widen-enums.py` adds
+   the missing values, additively and idempotently, so a re-vendor keeps the fix and an upstream
+   addition isn't duplicated. Widening rather than deleting the enum: the documented values are still
+   worth having as a compile-time list, which the display code reads.
+4. **<a id="the-oneof-problem"></a>`service.serviceDetails` is an undiscriminated `oneOf`.** The
    generated decoder tries each member in declaration order and keeps the first that succeeds — so
    the spec's ordering is load-bearing. `cronJobDetails`' requirements are a subset of
    `backgroundWorkerDetails`', which means every cron job would silently decode as a worker.
@@ -212,7 +283,13 @@ download → jq pretty-print → flatten-path-refs.py → relax-nullable.py → 
    authoritative `service.type` and records which union member actually decoded, purely so a
    disagreement can be *detected* — the detail screen shows a warning banner rather than presenting
    possibly-wrong configuration as fact.
-4. **Numeric query parameters that don't serialize the way Render parses them.** Every numeric query
+5. **`GET /env-groups` returns an envelope the spec doesn't describe.** The spec declares a bare array
+   of `envGroupMeta`; the live API sends `{envGroup, cursor}` like every other list endpoint, which
+   the strict decoder rejects outright — the env group list could not load a single real reply.
+   `envelope-env-groups.py` synthesises the envelope schema and points the operation at it, which
+   also makes the store an ordinary `CursorPaginator`. `Scripts/smoke.sh` fails loudly if the
+   envelope ever disappears.
+6. **Numeric query parameters that don't serialize the way Render parses them.** Every numeric query
    parameter is typed `number`, which the generator maps to `Double` — so `resolutionSeconds` went out as
    `60.0` and Render answered `could not parse input 60.0 for field resolutionSeconds`. That 400'd
    *every* metrics chart, and only the live pass caught it: the unit test had pinned `60.0` as if it were
@@ -220,7 +297,7 @@ download → jq pretty-print → flatten-path-refs.py → relax-nullable.py → 
    `/metrics/http-latency`'s `quantile` — mapped to `Float`, whose serialization widens to
    `0.949999988079071` before printing, which is not reliably a request for the p95.
 
-Two consequences worth knowing before extending the app:
+Consequences worth knowing before extending the app:
 
 - **Service event details are not readable.** `serviceEvent.details` is a 44-member undiscriminated
   `oneOf` whose second member has *no* required properties, so it matches almost anything and reports
@@ -237,6 +314,11 @@ Two consequences worth knowing before extending the app:
   protocol whose requirements are spelled with the generated property names, so all forty-two
   conformances are *empty* — nothing to keep in sync, and a compile error rather than a blank chart if
   a spec change moves a field.
+- **A write can succeed with a status it doesn't document.** A secret file `PUT` answers 200 where the
+  spec says 201; unlinking an env group answers 200 where it says 204 — and the generated accessor
+  throws on anything undocumented, so the app reported a failure over work Render had already done.
+  `NoContentWrite` treats **any 2xx** as success for the no-body writes, and three tests pin it,
+  including that a real failure is still a failure.
 
 `.github/workflows/spec-drift.yml` re-runs generation against the live spec every Monday and fails
 when the committed output no longer matches. The fix is `make generate` and a review of the diff.
@@ -247,15 +329,18 @@ when the committed output no longer matches. The fix is `make generate` and a re
 
 ```
 App/                      app target (Xcode 26 synchronized folders)
-  Assets.xcassets/        app icon (light / dark / tinted)
-  Auth/                   API-key onboarding, AuthStore
-  Workspaces/             workspace + project scope picker
+  Assets.xcassets/        app icon and marks, brand palette (light / dark / tinted)
+  PrivacyInfo.xcprivacy   required-reason API declaration (UserDefaults), no tracking, no collection
+  Auth/                   onboarding, the device-flow screen, AuthStore
+  Workspaces/             the tab bar, workspace + project scope picker, account menu
   Projects/               ProjectsStore
   Services/               list, detail, actions, events
   Deploys/                history, detail, rollback
   Logs/                   history, live tail, server-side filter sheet
   Metrics/                charts, range picker, unit formatting, per-type catalog
-  DesignSystem/           status chips, type glyphs, shared display mappings
+  Config/                 env vars, secret files, env groups, domains, routes, headers
+  Databases/              Postgres and Key Value: lists, details, connection info, actions
+  DesignSystem/           status chips, glyph tiles, skeletons, error state, Theme, splash
 AppTests/                 store tests, transport stubbed
 Packages/RenderAPI/       the only dependency surface
   openapi.json            vendored + pinned, post-flatten
@@ -264,12 +349,16 @@ Packages/RenderAPI/       the only dependency surface
     RenderClient.swift    façade: base URL + middleware stack
     *Middleware.swift     auth, retry, status mapping
     Pagination.swift      generic cursor AsyncSequence
+    NoContentWrite.swift  any 2xx is a success for a no-body write
     ServiceDetails+Decode.swift   the oneOf workaround
     LogQuery/LogStream.swift      one filter description, two transports (one hand-written)
     MetricSeries*/MetricsQuery.swift   one series type and one window for 14 endpoints
-  Sources/RenderAPITestSupport/   StubTransport, shared by both suites
+    OAuth/                device flow, token storage, refreshing credential provider
+  Sources/RenderAPITestSupport/   StubTransport and friends, shared by both suites
   Tests/RenderAPITests/
-Scripts/                  generation pipeline, smoke test, simulator driver, icon builder
+Resources/Info.plist      UILaunchScreen only — merged into the generated Info.plist
+Scripts/                  generation pipeline, smoke test, simulator driver, recorders, icon builder
+docs/api-accommodations.md   every spec-vs-reality mismatch found so far
 docs/screenshots/
 Makefile
 PLAN.md                   design rationale, roadmap, and phase outcomes
@@ -279,14 +368,17 @@ PLAN.md                   design rationale, roadmap, and phase outcomes
 
 ## Testing
 
-**`Packages/RenderAPI/Tests`** — `swift-testing` cases over `StubTransport`: `ServiceDetails`
-decoding for all five service types, pagination termination, retry backoff on a stubbed 429 with
-`Retry-After`, `RenderError` mapping for 401/403/404/429/5xx, date transcoding. No simulator, no
-network.
+293 tests, all offline. `make test` runs both suites.
 
-**`AppTests/`** — the `@Observable` stores driven through the *real* generated client with only the
-transport stubbed, so a test covers the query a store actually builds rather than a re-implementation
-of it.
+**`Packages/RenderAPI/Tests`** — 93 `swift-testing` cases in 14 suites over `StubTransport`:
+`ServiceDetails` decoding for all five service types, datastore decoding against real trimmed
+payloads, pagination termination, retry backoff on a stubbed 429 with `Retry-After`, `RenderError`
+mapping for 401/403/404/429/5xx, date transcoding, the OAuth device flow and its refresh coalescing.
+No simulator, no network.
+
+**`AppTests/`** — 200 cases in 24 suites: the `@Observable` stores driven through the *real*
+generated client with only the transport stubbed, so a test covers the query a store actually builds
+rather than a re-implementation of it.
 
 No test makes a live call: an API key is a user secret and CI runs offline. The stub transport ships
 as a package *product* (`RenderAPITestSupport`) because both suites need it.
@@ -352,7 +444,7 @@ A blind coordinate script fails quietly — a single swallowed tap aims every la
 screen while the console still prints the whole tour — so check the result before publishing it:
 
 ```sh
-Scripts/verify-walkthrough.sh           # one frame per beat, tiled, in .context/verify/
+make walkthrough-verify                 # one frame per beat, tiled, in .context/verify/
 ```
 
 Each frame should show the screen its caption describes. A leg of the tour went missing this way once
@@ -399,8 +491,20 @@ service and static site the tour expects.
 - **Errors are inline and actionable**, not alert spam: a failed list offers Retry in a
   `ContentUnavailableView`; a failed deploy-status fetch says "status unavailable" rather than
   implying the service never deployed.
-- **Polling is opt-out by design**: only an in-flight deploy is polled, at 6s, and it stops on its
-  own when the deploy settles or the screen disappears.
+- **Polling is opt-out by design**: only an in-flight deploy — or a datastore mid-restart — is
+  polled, and it stops on its own when the status settles or the screen disappears.
+- **Loading looks like the thing that's arriving.** A first page draws skeleton rows shaped like the
+  real ones instead of a spinner on a blank screen, so the layout doesn't jump when the rows land;
+  the skeletons are `accessibilityHidden`, because placeholder shapes are not information. The "couldn't
+  load" block is one `ErrorStateView` rather than the sixteen copies whose wording had already drifted.
+- **Motion and haptics only on state the user caused**, or state the server is actively changing: a
+  status chip pulses while a deploy is building or a database restarting, an action outcome gets a
+  success/error haptic, a metric headline rolls digit-by-digit. Nothing animates on its own.
+- **The launch screen carries into the first frame.** `UILaunchScreen` draws the logomark on the brand
+  violet and `SplashView` reproduces it exactly — same mark, same size, same colour — so the handoff
+  has nothing to show. `matchedGeometryEffect` can't span it (the launch screen is a process-owned
+  UIKit view, torn down before SwiftUI renders), which is why reproduction is the mechanism. The splash
+  has a 700ms *floor*, not a delay: the restore and the sleep race, so only a fast restore waits.
 - **Every branded asset comes out of the brand kit**, rendered by
   `Scripts/make-brand-assets.swift`. The source art floats off-centre in a much larger canvas, so
   the script measures the alpha bounding box and re-centres rather than scaling the file as-is. It
@@ -430,9 +534,19 @@ service and static site the tour expects.
   own; `ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME` has no default and is what actually reaches
   `UITabBar`.
 
+- **The bundle declares what App Store Connect asks about.** `PrivacyInfo.xcprivacy` declares the one
+  required-reason API the app uses (`UserDefaults`, for the selected workspace and project); the
+  tracking and collected-data sections are empty and should stay that way, since nothing leaves the
+  device except calls to Render. `ITSAppUsesNonExemptEncryption` is `false` — the app ships no
+  cryptography of its own and talks HTTPS through `URLSession` — which is what keeps Connect from
+  holding every build on an unanswered encryption question.
+
 - **"Render" is a third-party trademark**, logomark included. The bundle identifier is
   `com.veverkap.RenderiOS`; this is fine for personal use but both the name and the mark want
-  sorting out before any App Store submission.
+  sorting out before any App Store submission. The OAuth flow is on borrowed credentials for the same
+  reason: it prototypes with the **Render CLI's** `client_id`, since Render issues one per
+  integration with no self-serve registration — so sessions show up as "Render CLI" in the dashboard,
+  and the app needs an id of its own before it ships to anyone else.
 
-See [`PLAN.md`](PLAN.md) for the full rationale, the remaining phases (logs over WebSocket, metrics
-charts, env vars, Postgres and Key Value), and per-phase verification records.
+See [`PLAN.md`](PLAN.md) for the full rationale, what's left of parity (projects, blueprints, disks,
+webhooks, audit logs), and per-phase verification records.
