@@ -88,6 +88,11 @@ and Postgres' recovery/credentials/top-queries) is not built. See
 - **TestFlight preparation** — privacy manifest, encryption declaration, version 1.0, and
   `make archive` / `make ipa`. See [distribution](#distribution).
 
+**Phase 6's failure notifications are complete on the device-local side**: a watchlist, a background
+refresh, and a local notification that deep-links to the service that broke, plus a screen that also
+surfaces Render's own email/Slack settings. True push is *not* built and needs a server — see
+[Phase 6 — Failure notifications](#phase-6--failure-notifications--done-device-local-half).
+
 ---
 
 ## Three spec gotchas that shape the design
@@ -1123,7 +1128,9 @@ reason: a hand-rolled decoder would faithfully agree with the spec and tell us n
 **Not built, and still 5c's scope:** Postgres recovery, credentials rotation, and the
 top-queries / sizes / processes / table-scans diagnostics; projects and environments as manageable
 resources rather than a scope filter; blueprints + syncs, disks + snapshots, webhooks, maintenance,
-notification settings, audit logs.
+audit logs. Owner notification settings were 5c scope and landed with
+[Phase 6](#phase-6--failure-notifications--done-device-local-half) instead, since that is the screen
+someone opens to ask why they weren't told.
 
 ### OAuth sign-in ✅ DONE
 
@@ -1187,10 +1194,59 @@ wireframe is hard to judge and harder to hand to anyone:
 
 Still open in this phase:
 - Widgets / Live Activity for an in-flight deploy.
-- Background refresh + local notifications on deploy failure (note: true push requires a server
-  to receive Render webhooks — out of scope here; call it out as a follow-up).
+- ~~Background refresh + local notifications on deploy failure~~ — **done**, see below. True push
+  still needs a server to receive Render webhooks; the design for it is recorded there too.
 - A full accessibility pass: Dynamic Type at the largest sizes, VoiceOver labels beyond the status
   chips' own prefixes.
+
+#### Phase 6 — Failure notifications ✅ DONE (device-local half)
+
+**Built:** `App/Notifications/` — `WatchlistStore`, `EventWatermarkStore`, `FailureWatcher`,
+`NotificationScheduler`, `NotificationRouter`, `FailureWatchCoordinator`, `NotificationSettingsStore`
+and `NotificationSettingsView`; a watch toggle on the service detail screen and a swipe action plus
+bell glyph in the list; `UIBackgroundModes`/`BGTaskSchedulerPermittedIdentifiers` in
+`Resources/Info.plist`. **No entitlement and no `.entitlements` file**: local notifications raised
+after a `BGAppRefreshTask` need neither. `make check` green — 93 package tests, 225 app tests,
+`BUILD SUCCEEDED` — and driven on the simulator against a real workspace.
+
+**Decisions worth naming:**
+
+1. **A watchlist, not every service.** There is no account-wide events feed in the API: the only
+   listable event collections are per service, per webhook, and per task run. So "did anything
+   break" costs one request per service, inside a background budget measured in seconds. The user
+   picks up to 20.
+2. **The poll is unfiltered.** `GET /services/{id}/events` takes `type` as a *single* value, not a
+   list, so filtering server-side to the seven types worth alerting on would multiply requests by
+   seven rather than divide them. One request per service since its watermark, filtered in
+   `FailureWatcher`.
+3. **`deploy_ended` costs a second request.** It can't say whether the deploy succeeded — that lives
+   in `event.details`, the union the app can't decode (§F of `docs/api-accommodations.md`). So the
+   status comes from `DeploysStore.latestDeploy`, and only when a deploy actually ended. Known
+   imprecision, documented at the call site: it reads the *newest* deploy, so a failure immediately
+   redeployed reports the redeploy. That errs toward not shouting about a superseded failure.
+4. **The watermark is a timestamp *and* a bounded ID set.** `startTime` is inclusive and Render emits
+   several events in the same second, so a timestamp alone either re-alerts on the boundary event
+   forever or steps over its siblings. Both cases are pinned by tests.
+5. **One credential provider per process** (`SharedCredentials`). `OAuthCredentialProvider` coalesces
+   refreshes per instance; a background poll and a foreground screen refreshing the same rotating
+   refresh token would sign the user out. `AuthStore` takes it via a new `shared:` parameter that
+   defaults to `nil`, so tests keep their injected stores.
+6. **The delegate uses the completion-handler methods, not the `async` ones.** Found by running it:
+   the `async` spelling replies to UIKit's ObjC completion block from whatever executor the
+   continuation resumed on, and UIKit asserts if that isn't the main thread. Every tapped
+   notification crashed the app at launch, with a stack naming UIKit rather than the app.
+
+**Not done — true push.** Still needs a server, for three independent reasons: APNs only accepts
+pushes authenticated by a `.p8` key that can't ship in the app, a phone has no public URL for Render
+to POST a webhook to, and Render's email/Slack channels can't target a device. The design agreed for
+that follow-up: a **Go relay in a new top-level `Server/`** with its own `render.yaml`, kept out of
+`make check`; the **app creates the webhook itself** via `POST /v1/webhooks` under the user's own
+credential and hands the relay only the `secret` from the 201, so the relay never stores a Render
+credential; device registration authenticates by proxy-verifying the caller against `GET /owners`,
+persisting only `ownerId` + APNs token; and pushes stay **thin** (`mutable-content: 1`, enriched
+on-device by a Notification Service Extension), so service names never sit in the relay's database.
+That work also needs an APNs auth key, the first `.entitlements` file, and a Render-issued OAuth
+client id (`OAuthEnvironment` still borrows the CLI's).
 
 ### Distribution
 
@@ -1235,6 +1291,8 @@ still needs registering** — and see open item 2 before it goes anywhere public
 | `Packages/RenderAPI/Sources/RenderAPI/RetryMiddleware.swift` | 429 handling; the app polls, so this is load-bearing |
 | `Packages/RenderAPI/Sources/RenderAPI/LogStream.swift` | One of two hand-written transports |
 | `Packages/RenderAPI/Sources/RenderAPI/OAuth/OAuthCredentialProvider.swift` | The other; must be a single shared instance, or concurrent refreshes stop coalescing |
+| `App/Auth/SharedCredentials.swift` | Holds that single instance. Background refresh gave the app a second entry point that could refresh a rotating token at the same time as a screen |
+| `App/Notifications/EventWatermarkStore.swift` | Decides what has already been reported. Get it wrong and the app either alerts forever or goes silent |
 | `RenderiOS.xcodeproj/project.pbxproj` | Hand-written; synchronized folders keep it churn-free |
 | `Scripts/generate-api.sh` | Makes spec upgrades a reviewable diff |
 

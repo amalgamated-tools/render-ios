@@ -5,6 +5,11 @@ import SwiftUI
 /// incremental paging as you scroll. Tapping a row pushes the service detail screen.
 struct ServicesListView: View {
     @State private var store: ServicesStore
+    /// Non-nil when the last watch attempt had something to say. The detail screen says the same
+    /// things in a section footer; from a swipe there's no footer to put it in.
+    @State private var watchOutcome: FailureWatchCoordinator.WatchOutcome?
+    @Environment(FailureWatchCoordinator.self) private var coordinator
+    @Environment(\.openURL) private var openURL
 
     private let client: RenderClient
     /// Passed down to the detail screen: logs are addressed by workspace, not by service, so the
@@ -32,19 +37,51 @@ struct ServicesListView: View {
         .overlay { emptyState }
         .refreshable { await store.refresh() }
         .task { if store.services.isEmpty { await store.refresh() } }
+        .alert(
+            watchOutcome?.title ?? "",
+            isPresented: .init(get: { watchOutcome != nil }, set: { if !$0 { watchOutcome = nil } }),
+            presenting: watchOutcome
+        ) { outcome in
+            if outcome == .notificationsDenied {
+                Button("Open Settings") {
+                    if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+                }
+            }
+            Button("OK", role: .cancel) {}
+        } message: { outcome in
+            if let message = outcome.message { Text(message) }
+        }
     }
 
+    /// The destination is a value rather than a view, so a tapped notification can push the same
+    /// screen — see ``ServiceRoute``. `WorkspaceScreen` owns the matching `navigationDestination`,
+    /// because it owns the stack.
     private func row(for service: ServiceSummary) -> some View {
-        NavigationLink {
-            ServiceDetailView(
-                client: client,
-                ownerID: ownerID,
-                serviceID: service.id,
-                serviceName: service.name
-            )
-        } label: {
-            ServiceRow(service: service)
+        NavigationLink(value: ServiceRoute(id: service.id, name: service.name)) {
+            ServiceRow(service: service, isWatched: coordinator.watchlist.isWatching(service.id))
         }
+        .swipeActions(edge: .trailing) {
+            let isWatched = coordinator.watchlist.isWatching(service.id)
+            Button {
+                Task { await toggleWatch(service, isWatched: isWatched) }
+            } label: {
+                Label(
+                    isWatched ? "Stop Watching" : "Watch",
+                    systemImage: isWatched ? "bell.slash" : "bell"
+                )
+            }
+            .tint(isWatched ? .secondary : .accentColor)
+        }
+    }
+
+    private func toggleWatch(_ service: ServiceSummary, isWatched: Bool) async {
+        guard !isWatched else {
+            coordinator.unwatch(serviceID: service.id)
+            return
+        }
+        let outcome = await coordinator.watch(serviceID: service.id, ownerID: ownerID, name: service.name)
+        // `.watching` has nothing to say — the bell appearing on the row is the confirmation.
+        watchOutcome = outcome == .watching ? nil : outcome
     }
 
     private var loadingFooter: some View {

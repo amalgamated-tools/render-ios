@@ -13,7 +13,8 @@ chart its CPU, memory, HTTP traffic, latency, bandwidth, instances, and disk aga
 limits. Edit the configuration behind it — env vars, secret files, env groups, custom domains, and a
 static site's redirects and headers — and deploy the change from the banner that confirms it. Your
 Postgres databases and Key Value instances get their own tabs, with connection info, the same logs
-and metrics screens, and their own lifecycle actions.
+and metrics screens, and their own lifecycle actions. Mark the services you care about and the phone
+tells you when one of them breaks, then opens straight to it.
 
 Built with SwiftUI, Swift 6 strict concurrency, and a code-generated client over Render's public
 OpenAPI spec. No third-party UI or networking dependencies.
@@ -21,7 +22,8 @@ OpenAPI spec. No third-party UI or networking dependencies.
 > **Status:** Phases 0–5b are complete (auth, service list, service detail, deploys, events,
 > lifecycle actions, logs with a live WebSocket tail, metrics charts, and the full config surface),
 > along with the core of 5c — the Postgres and Key Value tabs. Each was verified against a real
-> workspace, config and datastore writes included. The app is prepared for TestFlight
+> workspace, config and datastore writes included. Failure notifications landed from Phase 6 —
+> device-local, since true push needs a server. The app is prepared for TestFlight
 > (`make ipa`), and what remains of parity — projects, blueprints, disks, webhooks, audit logs — is
 > in [`PLAN.md`](PLAN.md) with the rest of the roadmap.
 
@@ -204,6 +206,9 @@ changes (SwiftUI `.id(...)` on the view).
 | `ConfigDeployer` | The deploy offered by a config success banner, so a saved change is one tap from running rather than two screens back. Shared by every config screen, using `ServiceAction.deploy`'s own confirmation copy so the two can't drift. |
 | `PostgresStore` / `KeyValueStore` | Page the datastore lists for the active workspace, same shape as `ServicesStore`. |
 | `PostgresDetailStore` / `KeyValueDetailStore` | Load the datastore and its connection info together, own the lifecycle actions, and **poll while the status is transitional**. A failed connection-info call says so in that section rather than blanking the screen. |
+| `FailureWatcher` | Checks each watched service for something that broke since the last look, and returns alerts. One request per service, because there is no account-wide events feed — and unfiltered, because the `type` parameter takes a single event type rather than a list. One service failing never suppresses another's alert. |
+| `WatchlistStore` / `EventWatermarkStore` | What this device watches, and how far each service's timeline has been examined. The watermark is a timestamp **and** a bounded set of event IDs: `startTime` is inclusive and Render emits several events in one second, so a timestamp alone either re-alerts on the boundary event forever or steps over its siblings. |
+| `NotificationSettingsStore` | Render's own workspace settings — email, previews, `notificationsToSend` — written optimistically and put back if Render refuses. `slackEnabled` is read-only, because connecting Slack is an OAuth dance that happens in the dashboard. |
 
 ### Actions, and the care taken with them
 
@@ -340,6 +345,7 @@ App/                      app target (Xcode 26 synchronized folders)
   Metrics/                charts, range picker, unit formatting, per-type catalog
   Config/                 env vars, secret files, env groups, domains, routes, headers
   Databases/              Postgres and Key Value: lists, details, connection info, actions
+  Notifications/          watchlist, watermarks, the failure poll, and Render's own notification settings
   DesignSystem/           status chips, glyph tiles, skeletons, error state, Theme, splash
 AppTests/                 store tests, transport stubbed
 Packages/RenderAPI/       the only dependency surface
@@ -368,7 +374,7 @@ PLAN.md                   design rationale, roadmap, and phase outcomes
 
 ## Testing
 
-293 tests, all offline. `make test` runs both suites.
+318 tests, all offline. `make test` runs both suites.
 
 **`Packages/RenderAPI/Tests`** — 93 `swift-testing` cases in 14 suites over `StubTransport`:
 `ServiceDetails` decoding for all five service types, datastore decoding against real trimmed
@@ -376,9 +382,11 @@ payloads, pagination termination, retry backoff on a stubbed 429 with `Retry-Aft
 mapping for 401/403/404/429/5xx, date transcoding, the OAuth device flow and its refresh coalescing.
 No simulator, no network.
 
-**`AppTests/`** — 200 cases in 24 suites: the `@Observable` stores driven through the *real*
+**`AppTests/`** — 225 cases in 27 suites: the `@Observable` stores driven through the *real*
 generated client with only the transport stubbed, so a test covers the query a store actually builds
-rather than a re-implementation of it.
+rather than a re-implementation of it. The failure-watch suites are routed by request path rather
+than by arrival order, because that watcher checks services concurrently — "the second response"
+would be a race, not a fact.
 
 No test makes a live call: an API key is a user secret and CI runs offline. The stub transport ships
 as a package *product* (`RenderAPITestSupport`) because both suites need it.

@@ -56,28 +56,47 @@ final class AuthStore {
     private let credentialProvider: OAuthCredentialProvider
     /// Internal (not private) so tests can await the poll's completion deterministically.
     private(set) var pollTask: Task<Void, Never>?
+    /// Everything else on the device that only makes sense while a session exists.
+    private let onSessionEnded: @MainActor () -> Void
 
     /// - Parameters are injection seams for tests/previews; production defaults build the real thing.
+    /// - Parameter shared: The process-wide credential provider. Production passes
+    ///   ``SharedCredentials/shared`` so the background poll and this store refresh the *same*
+    ///   token — see ``SharedCredentials``. `nil` (the default) builds a private provider from the
+    ///   injected stores, which is what tests want.
+    /// - Parameter onSessionEnded: Called on **every** route out of a session, not just the Sign Out
+    ///   button — a rejected refresh token ends one too, and nobody taps anything. Production clears
+    ///   the failure watchlist here; see ``FailureWatchCoordinator/reset()`` for why leaving it
+    ///   behind is not survivable.
     init(
         makeClient: @escaping @Sendable (any APIKeyProvider) -> RenderClient = { RenderClient(apiKeyProvider: $0) },
         oauthClient: RenderOAuthClient = OAuthEnvironment.makeClient(),
         apiKeyStore: any APIKeyStoring = KeychainAPIKeyStore(),
-        tokenStore: any OAuthTokenStoring = KeychainOAuthTokenStore()
+        tokenStore: any OAuthTokenStoring = KeychainOAuthTokenStore(),
+        shared: SharedCredentials? = nil,
+        onSessionEnded: @escaping @MainActor () -> Void = {}
     ) {
         self.makeClient = makeClient
         self.oauthClient = oauthClient
         self.apiKeyStore = apiKeyStore
         self.tokenStore = tokenStore
+        self.onSessionEnded = onSessionEnded
         // The provider's rejection callback fires from arbitrary request contexts, and `self`
         // isn't available yet while initializing the provider property — bridge through a relay
         // whose handler is attached right after init completes.
-        let relay = RejectionRelay()
-        self.credentialProvider = OAuthCredentialProvider(
-            oauthClient: oauthClient,
-            tokenStore: tokenStore,
-            legacyAPIKey: { (try? apiKeyStore.read()) ?? nil },
-            onTerminalRejection: { relay.fire() }
-        )
+        let relay: RejectionRelay
+        if let shared {
+            relay = shared.rejectionRelay
+            self.credentialProvider = shared.provider
+        } else {
+            relay = RejectionRelay()
+            self.credentialProvider = OAuthCredentialProvider(
+                oauthClient: oauthClient,
+                tokenStore: tokenStore,
+                legacyAPIKey: { (try? apiKeyStore.read()) ?? nil },
+                onTerminalRejection: { relay.fire() }
+            )
+        }
         self.selectedOwnerID = UserDefaults.standard.string(forKey: Self.selectedOwnerKey)
         relay.handler = { [weak self] in
             Task { @MainActor in self?.handleSessionExpired() }
@@ -153,6 +172,7 @@ final class AuthStore {
     private func handleSessionExpired() {
         guard phase == .authenticated || phase == .restoring else { return }
         owners = []
+        onSessionEnded()
         errorMessage = "Your session expired. Sign in again."
         phase = .needsKey
     }
@@ -184,6 +204,7 @@ final class AuthStore {
         try? apiKeyStore.write(nil)
         try? tokenStore.write(nil)
         owners = []
+        onSessionEnded()
         selectedOwnerID = nil
         errorMessage = nil
         phase = .needsKey
@@ -241,21 +262,5 @@ final class AuthStore {
             return oauthError.errorDescription ?? "Sign-in failed."
         }
         return RenderError.wrapping(error).errorDescription ?? "Sign-in failed."
-    }
-}
-
-/// Bridges `OAuthCredentialProvider`'s Sendable rejection callback back to the store, which can't
-/// capture `self` while its own initializer is still assigning the provider property.
-private final class RejectionRelay: @unchecked Sendable {
-    private let lock = NSLock()
-    private var _handler: (@Sendable () -> Void)?
-
-    var handler: (@Sendable () -> Void)? {
-        get { lock.withLock { _handler } }
-        set { lock.withLock { _handler = newValue } }
-    }
-
-    func fire() {
-        handler?()
     }
 }

@@ -9,10 +9,14 @@ struct ServiceDetailView: View {
     /// The action awaiting confirmation. Non-nil drives the confirmation dialog.
     @State private var pendingAction: ServiceAction?
     @State private var isShowingScaleSheet = false
+    @State private var watchDenialMessage: String?
+    @Environment(FailureWatchCoordinator.self) private var coordinator
+    @Environment(NotificationRouter.self) private var router
 
     private let client: RenderClient
     /// Needed by the log screen: `/logs` is scoped by workspace, and a service ID alone won't do.
     private let ownerID: String
+    private let serviceID: String
     private let serviceName: String
 
     /// - Parameter serviceName: The name already shown in the list, used as the title until the
@@ -20,6 +24,7 @@ struct ServiceDetailView: View {
     init(client: RenderClient, ownerID: String, serviceID: String, serviceName: String) {
         self.client = client
         self.ownerID = ownerID
+        self.serviceID = serviceID
         self.serviceName = serviceName
         _store = State(initialValue: ServiceDetailStore(client: client, serviceID: serviceID))
     }
@@ -32,6 +37,7 @@ struct ServiceDetailView: View {
                     detailsMismatchWarning
                 }
                 deploySection
+                watchSection
                 configurationSection(for: service)
                 drillDownSection(for: service)
                 dashboardSection(for: service)
@@ -46,7 +52,13 @@ struct ServiceDetailView: View {
         .toolbar { actionsMenu }
         .refreshable { await store.refresh() }
         .task { await store.load() }
-        .onDisappear { store.stopPolling() }
+        // A failure banner for the service you're already staring at is noise; the delegate reads
+        // this to decide whether to present one.
+        .onAppear { router.foregroundServiceID = serviceID }
+        .onDisappear {
+            store.stopPolling()
+            if router.foregroundServiceID == serviceID { router.foregroundServiceID = nil }
+        }
         .overlay { errorState }
         .safeAreaInset(edge: .bottom) { actionBanner }
         .actionOutcomeFeedback(store.actionResult)
@@ -184,6 +196,47 @@ struct ServiceDetailView: View {
                 }
             }
         }
+    }
+
+    /// Opting this service into failure notifications.
+    ///
+    /// The footer says what the feature can and can't promise. An alerting feature that quietly
+    /// depends on iOS choosing to wake the app is worse than no feature at all if the user thinks
+    /// they've been paged.
+    private var watchSection: some View {
+        Section {
+            Toggle(isOn: watchBinding) {
+                Label("Notify Me About Failures", systemImage: "bell")
+            }
+        } footer: {
+            if let watchDenialMessage {
+                Text(watchDenialMessage)
+                    .foregroundStyle(.orange)
+            } else if coordinator.watchlist.isWatching(serviceID) {
+                Text("This device checks for failed deploys and failed instances when you open the app, and periodically in the background. iOS decides how often background checks run, so this isn't a pager.")
+            } else {
+                Text("Get a notification on this device when a deploy or an instance fails.")
+            }
+        }
+    }
+
+    private var watchBinding: Binding<Bool> {
+        Binding(
+            get: { coordinator.watchlist.isWatching(serviceID) },
+            set: { shouldWatch in
+                Task {
+                    watchDenialMessage = nil
+                    guard shouldWatch else {
+                        coordinator.unwatch(serviceID: serviceID)
+                        return
+                    }
+                    let name = store.service?.name ?? serviceName
+                    watchDenialMessage = await coordinator
+                        .watch(serviceID: serviceID, ownerID: ownerID, name: name)
+                        .message
+                }
+            }
+        )
     }
 
     @ViewBuilder

@@ -23,6 +23,14 @@ struct ServiceEvent: Identifiable, Hashable, Sendable {
         self.timestamp = event.timestamp
         self.type = event._type
     }
+
+    /// Building one directly, for tests over the watermark rules — where constructing a whole
+    /// generated payload would say nothing the three fields don't.
+    init(id: String, timestamp: Date, type: Components.Schemas.ServiceEventWithCursor.EventPayload._TypePayload) {
+        self.id = id
+        self.timestamp = timestamp
+        self.type = type
+    }
 }
 
 /// Loads a service's event timeline, newest first, paging **by time window rather than by cursor**.

@@ -153,6 +153,33 @@ enum Fixtures {
         #"{"id":"\#(id)","status":"\#(status)","createdAt":"2026-08-12T10:00:00Z"}"#
     }
 
+    /// One page of `GET /services/{id}/deploys`.
+    static func deploysPage(_ deploys: [(id: String, status: String)]) -> String {
+        let elements = deploys.map { entry in
+            #"{"deploy":\#(deploy(id: entry.id, status: entry.status)),"cursor":"cursor-\#(entry.id)"}"#
+        }
+        return "[\(elements.joined(separator: ","))]"
+    }
+
+    /// One page of `GET /services/{id}/events`.
+    ///
+    /// `details` is `{}` on purpose: the schema's `oneOf` has a member with no required properties,
+    /// which is exactly why the app can't read it — see `ServiceEvent`. An empty object is what the
+    /// decoder actually does with most real payloads.
+    static func eventsPage(
+        _ events: [(id: String, type: String, timestamp: String)],
+        serviceID: String = "srv-1"
+    ) -> String {
+        let elements = events.map { event in
+            """
+            {"event":{"id":"\(event.id)","timestamp":"\(event.timestamp)",\
+            "serviceId":"\(serviceID)","type":"\(event.type)","details":{}},\
+            "cursor":"cursor-\(event.id)"}
+            """
+        }
+        return "[\(elements.joined(separator: ","))]"
+    }
+
     /// One page of `GET /services/{id}/env-vars`.
     static func envVarsPage(_ vars: [(key: String, value: String)]) -> String {
         let elements = vars.map { one in
