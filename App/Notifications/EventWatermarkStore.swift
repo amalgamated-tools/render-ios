@@ -28,7 +28,16 @@ struct EventWatermark: Codable, Hashable, Sendable {
     mutating func advance(over events: [ServiceEvent]) {
         guard !events.isEmpty else { return }
         lastSeen = max(lastSeen, events.map(\.timestamp).max() ?? lastSeen)
-        recentIDs = Array((events.map(\.id) + recentIDs).prefix(Self.recentIDLimit))
+        // Deduplicated, not merely capped. The inclusive `startTime` means the boundary events come
+        // back on every poll, so plain prepending re-adds the same IDs every 15 minutes: an idle
+        // service fills all 50 slots with copies of one ID inside a day, and re-encodes the lot to
+        // `UserDefaults` each time. Correctness survives that — the boundary is always re-prepended
+        // — but the buffer stops holding what it says it holds, which is what the limit is for.
+        var seen: Set<String> = []
+        recentIDs = (events.map(\.id) + recentIDs)
+            .filter { seen.insert($0).inserted }
+            .prefix(Self.recentIDLimit)
+            .map(\.self)
     }
 
     func hasSeen(_ eventID: String) -> Bool {

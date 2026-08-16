@@ -211,6 +211,80 @@ struct AuthStoreTests {
         #expect(request?.url?.path().contains("/oauth/revoke") == true)
         #expect(request?.value(forHTTPHeaderField: "Authorization") == "Bearer acc-0")
     }
+
+    // MARK: - Ending a session
+
+    // Everything the device keeps that only makes sense inside a session — the failure watchlist and
+    // its watermarks — is torn down through `onSessionEnded`. Both routes out have to call it: one
+    // of them is a button, and the other one nobody taps.
+
+    @Test("signing out ends the session for everything hanging off it")
+    func signOutEndsSession() async throws {
+        let ended = SessionEndTally()
+        let oauthTransport = StubOAuthTransport(responses: [(204, "")])
+        let store = AuthStore(
+            makeClient: { _ in RenderClient.stubbed(jsonBodies: [Fixtures.ownersPage([(id: Fixtures.ownerID, name: "Render-Prod")])]).client },
+            oauthClient: RenderOAuthClient(clientID: "client-abc", transport: oauthTransport, sleep: { _ in await Task.yield() }),
+            apiKeyStore: InMemoryAPIKeyStore(nil),
+            tokenStore: InMemoryTokenStore(validToken()),
+            onSessionEnded: { ended.increment() }
+        )
+        await store.restore()
+
+        store.signOut()
+
+        #expect(ended.value == 1)
+    }
+
+    @Test("a rejected refresh token ends the session too, with nobody watching")
+    func expiredSessionEndsSession() async throws {
+        // The regression this pins: `onSessionEnded` used to live in the Sign Out button's closure,
+        // so a session that ended because Render rejected the refresh token left the watchlist and
+        // its watermarks behind — polling on a dead credential, and visible to whoever signed in
+        // next on that device.
+        //
+        // Driven through the real `OAuthCredentialProvider` rather than by calling the handler:
+        // an expired stored token forces a refresh, and `invalid_grant` is what makes it terminal.
+        // That needs a client which actually consults the provider, so this one isn't `stubbed`.
+        let ended = SessionEndTally()
+        let oauthTransport = StubOAuthTransport(responses: [(400, #"{"error":"invalid_grant"}"#)])
+        let expired = OAuthToken(
+            accessToken: "acc-stale",
+            refreshToken: "ref-revoked",
+            expiresAt: Date().addingTimeInterval(-60)
+        )
+        let store = AuthStore(
+            makeClient: { provider in
+                RenderClient(
+                    apiKeyProvider: provider,
+                    transport: StubTransport(responses: [(status: 401, headers: [.contentType: "application/json"], body: #"{"id":"unauthorized","message":"nope"}"#)])
+                )
+            },
+            oauthClient: RenderOAuthClient(clientID: "client-abc", transport: oauthTransport, sleep: { _ in await Task.yield() }),
+            apiKeyStore: InMemoryAPIKeyStore(nil),
+            tokenStore: InMemoryTokenStore(expired),
+            onSessionEnded: { ended.increment() }
+        )
+
+        await store.restore()
+
+        // The rejection hops back to the main actor on its own task; give it a bounded beat.
+        for _ in 0..<100 where ended.value == 0 {
+            await Task.yield()
+        }
+        #expect(ended.value == 1)
+        #expect(store.phase == .needsKey)
+    }
+}
+
+/// Counts calls from a `@Sendable` closure, which can't just bump a captured `var`. Named for what
+/// it records rather than reusing `Counter` from `EnvVarsStoreTests`, which counts attempts.
+private final class SessionEndTally: @unchecked Sendable {
+    private let lock = NSLock()
+    private var count = 0
+
+    var value: Int { lock.withLock { count } }
+    func increment() { lock.withLock { count += 1 } }
 }
 
 private final class InMemoryAPIKeyStore: APIKeyStoring, @unchecked Sendable {

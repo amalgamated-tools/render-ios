@@ -13,6 +13,7 @@ struct NotificationSettingsView: View {
     @Environment(FailureWatchCoordinator.self) private var coordinator
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
+    @Environment(\.scenePhase) private var scenePhase
 
     private let ownerID: String
 
@@ -37,6 +38,12 @@ struct NotificationSettingsView: View {
             .task {
                 authorization = await coordinator.authorization()
                 await store.load()
+            }
+            // This screen's whole job in the denied state is to send you to Settings. Coming back
+            // to a screen still insisting notifications are off is the one outcome it can't have.
+            .onChange(of: scenePhase) { _, phase in
+                guard phase == .active else { return }
+                Task { authorization = await coordinator.authorization() }
             }
         }
     }

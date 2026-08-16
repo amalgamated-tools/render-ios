@@ -5,8 +5,11 @@ import SwiftUI
 /// incremental paging as you scroll. Tapping a row pushes the service detail screen.
 struct ServicesListView: View {
     @State private var store: ServicesStore
-    @State private var watchlistFullMessage: String?
+    /// Non-nil when the last watch attempt had something to say. The detail screen says the same
+    /// things in a section footer; from a swipe there's no footer to put it in.
+    @State private var watchOutcome: FailureWatchCoordinator.WatchOutcome?
     @Environment(FailureWatchCoordinator.self) private var coordinator
+    @Environment(\.openURL) private var openURL
 
     private let client: RenderClient
     /// Passed down to the detail screen: logs are addressed by workspace, not by service, so the
@@ -35,13 +38,18 @@ struct ServicesListView: View {
         .refreshable { await store.refresh() }
         .task { if store.services.isEmpty { await store.refresh() } }
         .alert(
-            "Watchlist Full",
-            isPresented: .init(get: { watchlistFullMessage != nil }, set: { if !$0 { watchlistFullMessage = nil } }),
-            presenting: watchlistFullMessage
-        ) { _ in
+            watchOutcome?.title ?? "",
+            isPresented: .init(get: { watchOutcome != nil }, set: { if !$0 { watchOutcome = nil } }),
+            presenting: watchOutcome
+        ) { outcome in
+            if outcome == .notificationsDenied {
+                Button("Open Settings") {
+                    if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+                }
+            }
             Button("OK", role: .cancel) {}
-        } message: { message in
-            Text(message)
+        } message: { outcome in
+            if let message = outcome.message { Text(message) }
         }
     }
 
@@ -67,11 +75,13 @@ struct ServicesListView: View {
     }
 
     private func toggleWatch(_ service: ServiceSummary, isWatched: Bool) async {
-        if isWatched {
+        guard !isWatched else {
             coordinator.unwatch(serviceID: service.id)
-        } else if await coordinator.watch(serviceID: service.id, ownerID: ownerID, name: service.name) == false {
-            watchlistFullMessage = "You can watch up to \(WatchlistStore.limit) services. Stop watching one to add another."
+            return
         }
+        let outcome = await coordinator.watch(serviceID: service.id, ownerID: ownerID, name: service.name)
+        // `.watching` has nothing to say — the bell appearing on the row is the confirmation.
+        watchOutcome = outcome == .watching ? nil : outcome
     }
 
     private var loadingFooter: some View {

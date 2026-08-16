@@ -7,7 +7,14 @@ struct RootView: View {
     /// `shared:` binds this store to the process-wide credential provider, so the background poll
     /// and the screens refresh the same OAuth token rather than racing each other. See
     /// ``SharedCredentials``.
-    @State private var authStore = AuthStore(shared: .shared)
+    ///
+    /// `onSessionEnded:` is wired here rather than at the Sign Out button because a session also
+    /// ends when a refresh token is rejected, which no view is watching for. Both singletons are
+    /// reached directly: this runs before the environment exists.
+    @State private var authStore = AuthStore(
+        shared: .shared,
+        onSessionEnded: { FailureWatchCoordinator.shared.reset() }
+    )
     /// Deliberately its own state rather than `phase == .restoring`. `AuthStore` re-enters
     /// `.restoring` on sign-out, and re-showing the splash mid-session would read as a crash-restart.
     @State private var isSplashComplete = false

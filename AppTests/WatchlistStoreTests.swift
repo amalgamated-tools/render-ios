@@ -129,6 +129,29 @@ struct EventWatermarkStoreTests {
         #expect(!watermark.hasSeen("batch0-evt-0"))
     }
 
+    @Test("re-examining the same boundary event doesn't spend the ID budget on copies of it")
+    func recentIDsAreDeduplicated() throws {
+        // What an idle service actually produces: `startTime` is inclusive, so the newest event
+        // comes back on every single poll. Prepending it each time fills all 50 slots with one ID
+        // inside a day, and then a service that finally emits a batch has nothing left to be
+        // recognised against.
+        var watermark = EventWatermark(lastSeen: start)
+        let boundary = event(id: "evt-boundary", at: start.addingTimeInterval(60))
+        for _ in 0..<(EventWatermark.recentIDLimit * 2) {
+            watermark.advance(over: [boundary])
+        }
+
+        #expect(watermark.recentIDs == ["evt-boundary"])
+
+        // And the budget is still there for the events that need it.
+        watermark.advance(over: (0..<10).map {
+            event(id: "evt-\($0)", at: start.addingTimeInterval(120))
+        })
+        #expect(watermark.hasSeen("evt-boundary"))
+        #expect(watermark.hasSeen("evt-0"))
+        #expect(watermark.recentIDs.count == 11)
+    }
+
     @Test("watermarks survive a relaunch, so a restart doesn't replay history")
     func persists() throws {
         let defaults = makeTestDefaults()

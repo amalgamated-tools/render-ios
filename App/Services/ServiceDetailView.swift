@@ -231,15 +231,9 @@ struct ServiceDetailView: View {
                         return
                     }
                     let name = store.service?.name ?? serviceName
-                    guard await coordinator.watch(serviceID: serviceID, ownerID: ownerID, name: name) else {
-                        watchDenialMessage = "You can watch up to \(WatchlistStore.limit) services. Stop watching one to add another."
-                        return
-                    }
-                    // Watching without permission would go through the motions and deliver nothing,
-                    // which is the worst possible outcome for an alert.
-                    if await coordinator.authorization() == .denied {
-                        watchDenialMessage = "Notifications are turned off for this app. Turn them on in Settings to be told about failures."
-                    }
+                    watchDenialMessage = await coordinator
+                        .watch(serviceID: serviceID, ownerID: ownerID, name: name)
+                        .message
                 }
             }
         )

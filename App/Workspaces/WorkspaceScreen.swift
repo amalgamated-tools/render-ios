@@ -22,7 +22,6 @@ struct WorkspaceScreen: View {
     @State private var servicesPath: [ServiceRoute] = []
     @State private var selectedTab: WorkspaceTab = .services
     @State private var isShowingNotificationSettings = false
-    @Environment(FailureWatchCoordinator.self) private var coordinator
     @Environment(NotificationRouter.self) private var router
 
     private enum WorkspaceTab: Hashable {
@@ -128,11 +127,9 @@ struct WorkspaceScreen: View {
             Button("Notifications", systemImage: "bell") {
                 isShowingNotificationSettings = true
             }
+            // Clearing the watchlist is `AuthStore`'s job, via `onSessionEnded` — doing it here
+            // would only cover the sessions that end because someone tapped this.
             Button("Sign Out", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) {
-                // Before the credential goes, not after: a watchlist that outlives its session polls
-                // with nothing, and a stale watermark would swallow the first alert after signing
-                // back in.
-                coordinator.reset()
                 authStore.signOut()
             }
         } label: {

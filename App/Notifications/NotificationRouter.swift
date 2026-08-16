@@ -61,6 +61,11 @@ final class NotificationRouter {
 /// notification, at launch, with a stack that names UIKit rather than this file. Implementing the
 /// completion-handler form and calling the handler synchronously keeps the reply on the thread
 /// `UNUserNotificationCenter` delivered on, which is the main one.
+///
+/// **Which is observed behaviour, not a documented guarantee** — so both methods check rather than
+/// assert. `MainActor.assumeIsolated` traps if it's ever wrong, and it would trap here, on the path
+/// that runs when someone taps a failure alert. That is the last place in this app worth betting a
+/// crash on an undocumented invariant, and the check costs a bool.
 final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
     /// `NotificationRouter` is main-actor isolated and therefore `Sendable`. This class is not: the
     /// protocol hands it non-`Sendable` `UNNotification` arguments from a nonisolated context.
@@ -79,10 +84,12 @@ final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
         let serviceID = notification.request.content.userInfo[NotificationRouter.serviceIDKey] as? String
-        // Delivered on the main thread — UIKit's own assertion downstream of the completion block
-        // requires it, so assuming it is stating the invariant rather than hoping for it.
         let router = self.router
-        let isOnScreen = MainActor.assumeIsolated { router.foregroundServiceID == serviceID }
+        // The answer has to be synchronous — the completion handler takes the options — so off the
+        // main thread there's nothing to read and the fallback is to present. Suppression is a
+        // nicety; a swallowed failure alert is the thing this feature exists to prevent.
+        let isOnScreen = Thread.isMainThread
+            && MainActor.assumeIsolated { router.foregroundServiceID == serviceID }
         completionHandler(isOnScreen ? [] : [.banner, .sound, .list])
     }
 
@@ -94,7 +101,14 @@ final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
         let content = response.notification.request.content
         if let target = NotificationRouter.target(from: content.userInfo, name: content.title) {
             let router = self.router
-            MainActor.assumeIsolated { router.request(target) }
+            // Synchronously when we can, so a tap that launched the app has its destination set
+            // before the first `WorkspaceScreen` reads it. Otherwise hop — the target is held, not
+            // acted on, so arriving a turn late costs nothing but a rebuild.
+            if Thread.isMainThread {
+                MainActor.assumeIsolated { router.request(target) }
+            } else {
+                Task { @MainActor in router.request(target) }
+            }
         }
         completionHandler()
     }

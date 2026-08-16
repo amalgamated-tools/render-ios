@@ -19,6 +19,8 @@ struct FailureWatcherTests {
     private func makeWatcher(
         watching services: [(id: String, name: String)] = [(id: "srv-1", name: "api")],
         stampWatermarks: Bool = true,
+        pageLimit: Int = 100,
+        maxPages: Int = 3,
         route: @escaping @Sendable (String) -> (status: Int, body: String)
     ) -> (watcher: FailureWatcher, watchlist: WatchlistStore, watermarks: EventWatermarkStore) {
         let watchlist = WatchlistStore(defaults: makeTestDefaults())
@@ -34,7 +36,9 @@ struct FailureWatcherTests {
             client: client,
             watchlist: watchlist,
             watermarks: watermarks,
-            now: { Self.watchedAt }
+            now: { Self.watchedAt },
+            pageLimit: pageLimit,
+            maxPages: maxPages
         )
         return (watcher, watchlist, watermarks)
     }
@@ -197,6 +201,40 @@ struct FailureWatcherTests {
         #expect(watermarks["srv-1"]?.recentIDs.isEmpty == true)
     }
 
+    @Test("a deploy_ended whose outcome couldn't be looked up is left unexamined")
+    func unresolvedDeployDoesNotAdvanceWatermark() async throws {
+        // The events request answered, so the naive thing is to bank it and move on — which throws
+        // away the one event whose meaning is still unknown. "That deploy was fine" and "couldn't
+        // find out" have to be told apart; only the first is allowed to advance the watermark.
+        // Matters most under a cancelled background wake, where the second request is the one that
+        // loses the race.
+        let (watcher, _, watermarks) = makeWatcher(route: { path in
+            if path.contains("/deploys") { return (500, "{}") }
+            return (200, Fixtures.eventsPage([(id: "evt-1", type: "deploy_ended", timestamp: Self.eventTime)]))
+        })
+
+        #expect(await watcher.poll().isEmpty)
+        #expect(watermarks["srv-1"]?.lastSeen == Self.watchedAt)
+        #expect(watermarks["srv-1"]?.recentIDs.isEmpty == true)
+    }
+
+    @Test("a self-describing failure alongside an unresolved deploy is still re-examined")
+    func unresolvedDeployHoldsBackItsSiblings() async throws {
+        // Deliberately all-or-nothing per service: re-reporting `server_failed` on the next wake
+        // only replaces a notification that's already on screen (the ID is the event's), whereas
+        // banking the window would lose the deploy outcome permanently.
+        let (watcher, _, watermarks) = makeWatcher(route: { path in
+            if path.contains("/deploys") { return (500, "{}") }
+            return (200, Fixtures.eventsPage([
+                (id: "evt-2", type: "deploy_ended", timestamp: Self.laterEventTime),
+                (id: "evt-1", type: "server_failed", timestamp: Self.eventTime),
+            ]))
+        })
+
+        #expect(await watcher.poll().isEmpty)
+        #expect(watermarks["srv-1"]?.lastSeen == Self.watchedAt)
+    }
+
     // MARK: - Watchlist
 
     @Test("an un-watched service is not polled, and its watermark is dropped")
@@ -229,6 +267,90 @@ struct FailureWatcherTests {
 
         #expect(await watcher.poll().isEmpty)
         #expect(transport.requests.isEmpty)
+    }
+
+    // MARK: - Windows too big for one page
+
+    @Test("a full page is paged past, not treated as the whole window")
+    func fullPagePagesBackwards() async throws {
+        // The endpoint returns the *newest* `limit` events in the window, so a full page means the
+        // older end was dropped — and the watermark would then advance past it for good. A deploy
+        // storm is exactly when that happens and exactly when the alert matters.
+        let paths = Paths()
+        let (watcher, _, _) = makeWatcher(pageLimit: 2, route: { path in
+            guard path.contains("/events") else { return (200, Fixtures.deploysPage([(id: "dep-1", status: "live")])) }
+            paths.record(path)
+            // Second page is short, which ends the walk.
+            if path.contains("endTime=") {
+                return (200, Fixtures.eventsPage([
+                    (id: "evt-1", type: "image_pull_failed", timestamp: Self.eventTime),
+                ]))
+            }
+            return (200, Fixtures.eventsPage([
+                (id: "evt-3", type: "server_failed", timestamp: Self.laterEventTime),
+                (id: "evt-2", type: "plan_changed", timestamp: Self.laterEventTime),
+            ]))
+        })
+
+        let alerts = await watcher.poll()
+
+        #expect(paths.all.count == 2)
+        // The failure on the far side of the page boundary is the one this exists to catch.
+        #expect(Set(alerts.map(\.id)) == ["evt-1", "evt-3"])
+    }
+
+    @Test("a short page ends the walk, so the ordinary case still costs one request")
+    func shortPageDoesNotPage() async throws {
+        let paths = Paths()
+        let (watcher, _, _) = makeWatcher(pageLimit: 10, route: { path in
+            if path.contains("/events") {
+                paths.record(path)
+                return (200, Fixtures.eventsPage([(id: "evt-1", type: "server_failed", timestamp: Self.eventTime)]))
+            }
+            return (200, Fixtures.deploysPage([(id: "dep-1", status: "live")]))
+        })
+
+        #expect(await watcher.poll().count == 1)
+        #expect(paths.all.count == 1)
+    }
+
+    @Test("a page that repeats itself ends the walk instead of spinning")
+    func allDuplicatePageStopsPaging() async throws {
+        // Every event sharing one timestamp means `endTime` can't move, so the same page comes back
+        // forever. Bounded by `maxPages` regardless, but this is the stop that should fire first.
+        let paths = Paths()
+        let (watcher, _, _) = makeWatcher(pageLimit: 2, maxPages: 5, route: { path in
+            guard path.contains("/events") else { return (200, Fixtures.deploysPage([(id: "dep-1", status: "live")])) }
+            paths.record(path)
+            return (200, Fixtures.eventsPage([
+                (id: "evt-2", type: "server_failed", timestamp: Self.eventTime),
+                (id: "evt-1", type: "plan_changed", timestamp: Self.eventTime),
+            ]))
+        })
+
+        #expect(await watcher.poll().count == 1)
+        // One page to read it, one to discover it's the same page. Not five.
+        #expect(paths.all.count == 2)
+    }
+
+    @Test("paging is bounded, so one busy service can't spend the whole background wake")
+    func pagingIsBounded() async throws {
+        let paths = Paths()
+        // Never short, never repeating: the walk only stops because it's told to.
+        let counter = Counter()
+        let (watcher, _, _) = makeWatcher(pageLimit: 2, maxPages: 3, route: { path in
+            guard path.contains("/events") else { return (200, Fixtures.deploysPage([(id: "dep-1", status: "live")])) }
+            paths.record(path)
+            let page = counter.next()
+            return (200, Fixtures.eventsPage([
+                (id: "evt-\(page)-b", type: "plan_changed", timestamp: Self.laterEventTime),
+                (id: "evt-\(page)-a", type: "plan_changed", timestamp: Self.eventTime),
+            ]))
+        })
+
+        _ = await watcher.poll()
+
+        #expect(paths.all.count == 3)
     }
 
     // MARK: - The request itself

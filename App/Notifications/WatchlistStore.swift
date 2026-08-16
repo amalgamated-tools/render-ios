@@ -26,7 +26,10 @@ final class WatchlistStore {
     /// Every watched service costs one request per background wake, inside a budget iOS measures in
     /// seconds and against an API that rate-limits. A cap the user can see beats a list that
     /// silently stops being checked in time.
-    static let limit = 20
+    ///
+    /// `nonisolated` because the copy that quotes it — ``FailureWatchCoordinator/WatchOutcome`` —
+    /// is a plain value type, and hopping to the main actor to read a constant is ceremony.
+    nonisolated static let limit = 20
 
     private(set) var watched: [WatchedService] = []
 

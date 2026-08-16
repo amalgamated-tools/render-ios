@@ -31,6 +31,18 @@ final class FailureWatchCoordinator {
     /// doesn't spend a request per switch.
     static let foregroundStaleness: TimeInterval = 60
 
+    /// How long a background wake gets before it gives up on its own.
+    ///
+    /// iOS allows a `BGAppRefreshTask` roughly 30 seconds and then calls the expiration handler;
+    /// stop short of that deliberately. Expiration is a few seconds' notice before the watchdog
+    /// kills the app — and a termination doesn't just lose this run, it makes iOS schedule the next
+    /// ones less generously, so the feature decays with no symptom but silence. Stopping early
+    /// leaves room to post whatever the poll already found.
+    ///
+    /// Only the background path is bounded. A foreground poll is spending the user's own time on a
+    /// screen they're looking at, and has no budget to blow.
+    static let backgroundBudget: Duration = .seconds(20)
+
     let watchlist: WatchlistStore
     let watermarks: EventWatermarkStore
     let router = NotificationRouter()
@@ -79,9 +91,30 @@ final class FailureWatchCoordinator {
     /// Re-schedules **before** polling, deliberately. Scheduling last means any early return — no
     /// credential, no permission, a thrown call — leaves nothing pending, and the feature stops
     /// working permanently with no symptom other than silence.
+    ///
+    /// Bounded by ``backgroundBudget``, and cancellable throughout: SwiftUI cancels this task when
+    /// iOS expires the wake, and that has to actually reach the requests in flight.
     func handleBackgroundRefresh() async {
         scheduleNextRefresh()
-        await run()
+        await Self.withDeadline(Self.backgroundBudget) { await self.run() }
+    }
+
+    /// Runs `body`, cancelling it if it hasn't finished within `duration`.
+    ///
+    /// A task group rather than a detached race, so the deadline also inherits cancellation from
+    /// *above* — an expiration that arrives before the budget runs out still stops the work.
+    private static func withDeadline(
+        _ duration: Duration,
+        _ body: @escaping @Sendable () async -> Void
+    ) async {
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask { await body() }
+            group.addTask { try? await Task.sleep(for: duration) }
+            // Whichever lands first wins; cancelling the group stops the other.
+            await group.next()
+            group.cancelAll()
+            await group.waitForAll()
+        }
     }
 
     /// The foreground entry point, on returning to the app.
@@ -94,6 +127,12 @@ final class FailureWatchCoordinator {
     }
 
     /// Checks every watched service and posts what it finds.
+    ///
+    /// The run itself is unstructured — it has to outlive whichever caller started it, so that the
+    /// second caller can join rather than duplicate it. Unstructured means it does *not* inherit
+    /// cancellation, which on the background path would leave a cancelled wake with requests still
+    /// in flight and no way for iOS's expiration to reach them; hence the explicit handler. Callers
+    /// that merely joined cancel nothing: they didn't start the work and don't get to end it.
     func run() async {
         // Coalesce: a foreground return that lands while a background wake is still polling would
         // otherwise double every request and race on the watermarks.
@@ -103,44 +142,91 @@ final class FailureWatchCoordinator {
         }
         let task = Task { await self.performRun() }
         runTask = task
-        await task.value
+        await withTaskCancellationHandler {
+            await task.value
+        } onCancel: {
+            task.cancel()
+        }
         runTask = nil
     }
 
     private func performRun() async {
-        lastRun = Date()
         guard !watchlist.watched.isEmpty else { return }
         // Cheap preconditions first: both are local, and either one failing means every request
         // below would be wasted.
         guard SharedCredentials.shared.hasStoredCredential else { return }
         guard await scheduler.authorization() == .authorized else { return }
 
+        // Stamped here rather than on entry, so the throttle only ever holds back a *poll*. A run
+        // that bailed because there was no credential yet spent nothing, and shouldn't buy itself a
+        // minute of silence during which the credential arrives and nobody looks.
+        lastRun = Date()
         let watcher = FailureWatcher(
             client: makeClient(),
             watchlist: watchlist,
             watermarks: watermarks
         )
+        // A cut-short poll returns what it had already confirmed, and leaves the watermarks of the
+        // services it never reached where they were — so the next wake re-examines those windows.
         let alerts = await watcher.poll()
         guard !alerts.isEmpty else { return }
-        await scheduler.post(alerts)
+        // Shielded from cancellation on purpose. These failures are already established fact, and
+        // posting them is local work measured in milliseconds; dropping them at the finish line
+        // because the wake ran out of time would waste the requests that found them. An
+        // unstructured task doesn't inherit cancellation, which is the whole point here.
+        await Task { @MainActor in await self.scheduler.post(alerts) }.value
     }
 
     // MARK: - Watchlist
 
+    /// What came of asking to watch a service.
+    ///
+    /// A tri-state rather than a `Bool`, because "added, but iOS will deliver nothing" is neither a
+    /// success nor a failure and is invisible unless it's said out loud. Every entry point has to
+    /// report the same three outcomes in the same words, which is why the copy lives here and not in
+    /// whichever view happened to ask.
+    enum WatchOutcome: Equatable {
+        case watching
+        /// On the list, but notifications are off for the app — so nothing will ever arrive.
+        case notificationsDenied
+        case watchlistFull
+
+        var title: String? {
+            switch self {
+            case .watching: nil
+            case .notificationsDenied: "Notifications Are Off"
+            case .watchlistFull: "Watchlist Full"
+            }
+        }
+
+        var message: String? {
+            switch self {
+            case .watching:
+                nil
+            case .notificationsDenied:
+                "This service is on the list, but notifications are turned off for this app. "
+                    + "Turn them on in Settings to be told about failures."
+            case .watchlistFull:
+                "You can watch up to \(WatchlistStore.limit) services. Stop watching one to add another."
+            }
+        }
+    }
+
     /// Starts watching a service, requesting notification permission the first time — which is why
     /// this is here rather than on the store: the permission prompt belongs to the moment the user
     /// asks to be told something, not to app launch.
-    ///
-    /// - Returns: `false` if the watchlist is full.
     @discardableResult
-    func watch(serviceID: String, ownerID: String, name: String) async -> Bool {
-        guard watchlist.add(id: serviceID, ownerID: ownerID, name: name) else { return false }
+    func watch(serviceID: String, ownerID: String, name: String) async -> WatchOutcome {
+        guard watchlist.add(id: serviceID, ownerID: ownerID, name: name) else { return .watchlistFull }
         watermarks.begin(serviceID: serviceID, at: Date())
         if await scheduler.authorization() == .notDetermined {
             await scheduler.requestAuthorization()
         }
         scheduleNextRefresh()
-        return true
+        // Asked and refused, or switched off in Settings since. Watching without permission goes
+        // through every motion and delivers nothing, which is the worst outcome an alerting feature
+        // has — worse than refusing to add it, because it looks like it worked.
+        return await scheduler.authorization() == .denied ? .notificationsDenied : .watching
     }
 
     func unwatch(serviceID: String) {
