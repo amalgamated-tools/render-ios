@@ -23895,6 +23895,13 @@ public struct Client: APIProtocol {
                     in: &request,
                     style: .form,
                     explode: true,
+                    name: "build",
+                    value: input.query.build
+                )
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
                     name: "level",
                     value: input.query.level
                 )
@@ -24297,6 +24304,13 @@ public struct Client: APIProtocol {
                     explode: true,
                     name: "sandbox",
                     value: input.query.sandbox
+                )
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "build",
+                    value: input.query.build
                 )
                 try converter.setQueryItemAsURI(
                     in: &request,
@@ -24708,6 +24722,13 @@ public struct Client: APIProtocol {
                     explode: true,
                     name: "sandbox",
                     value: input.query.sandbox
+                )
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "build",
+                    value: input.query.build
                 )
                 try converter.setQueryItemAsURI(
                     in: &request,
@@ -57941,8 +57962,7 @@ public struct Client: APIProtocol {
     }
     /// List sandboxes
     ///
-    /// List sandboxes in a workspace. Each request must specify one workspace.
-    /// Sandboxes run in the region of their sandbox group.
+    /// List sandboxes in a workspace. Each request must specify one workspace. Sandboxes run in the region of their sandbox group.
     ///
     ///
     /// - Remark: HTTP `GET /sandboxes`.
@@ -58226,9 +58246,7 @@ public struct Client: APIProtocol {
     }
     /// Create sandbox
     ///
-    /// Create a sandbox and return its initial state. The sandbox might still be
-    /// starting when the response is returned. To use a saved snapshot or custom
-    /// image, provide `snapshotId`, `snapshotName`, `buildId`, or `buildName`.
+    /// Create a sandbox and return its initial state. The sandbox might still be starting when the response is returned. To use a saved snapshot or custom image, provide `snapshotId`, `snapshotName`, `buildId`, or `buildName`.
     ///
     ///
     /// - Remark: HTTP `POST /sandboxes`.
@@ -58501,9 +58519,7 @@ public struct Client: APIProtocol {
     }
     /// List sandbox groups
     ///
-    /// List sandbox groups in a workspace, newest first. Returns up to 20 groups
-    /// by default, with a maximum of 100. To fetch the next page, pass the last
-    /// result's cursor as `cursor`. Continue until the response is empty.
+    /// List sandbox groups in a workspace, newest first. Returns up to 20 groups by default, with a maximum of 100. To fetch the next page, pass the last result's cursor as `cursor`. Continue until the response is empty.
     ///
     ///
     /// - Remark: HTTP `GET /sandbox-groups`.
@@ -59759,9 +59775,7 @@ public struct Client: APIProtocol {
     }
     /// Terminate sandbox
     ///
-    /// Terminate the sandbox with the provided ID. Returns HTTP 204 even if the
-    /// sandbox is already terminated. You can also terminate a sandbox while it
-    /// is starting (`creating`).
+    /// Terminate the sandbox with the provided ID. Returns HTTP 204 even if the sandbox is already terminated. You can also terminate a sandbox while it is starting (`creating`).
     ///
     ///
     /// - Remark: HTTP `POST /sandboxes/{sandboxId}/terminate`.
@@ -59970,10 +59984,7 @@ public struct Client: APIProtocol {
     }
     /// Create sandbox snapshot
     ///
-    /// Capture a snapshot of a running sandbox. Returns HTTP 202 with the snapshot
-    /// in `creating` status. Retrieve the snapshot until its status is `available`
-    /// or `failed`. The sandbox continues running, with a brief pause when capturing
-    /// a runtime snapshot.
+    /// Capture a snapshot of a running sandbox. Returns HTTP 202 with the snapshot in `creating` status. Retrieve the snapshot until its status is `available` or `failed`. The sandbox continues running, with a brief pause when capturing a runtime snapshot.
     ///
     ///
     /// - Remark: HTTP `POST /sandboxes/{sandboxId}/snapshots`.
@@ -60500,8 +60511,7 @@ public struct Client: APIProtocol {
     }
     /// Update sandbox group
     ///
-    /// Update a sandbox group's concurrency limit. The response contains the
-    /// effective limit after applying Render's limit for the workspace.
+    /// Update a sandbox group's concurrency limit. The response contains the effective limit after applying Render's limit for the workspace.
     ///
     ///
     /// - Remark: HTTP `PATCH /sandbox-groups/{sandboxGroupId}`.
@@ -60776,9 +60786,7 @@ public struct Client: APIProtocol {
     }
     /// List sandbox group credentials
     ///
-    /// List credentials in the sandbox group, sorted by credential ID. Returns
-    /// credential settings and metadata. These endpoints do not return secret values,
-    /// including to admins.
+    /// List credentials in the sandbox group, sorted by credential ID. Returns credential settings and metadata. These endpoints do not return secret values, including to admins.
     ///
     ///
     /// - Remark: HTTP `GET /sandbox-groups/{sandboxGroupId}/credentials`.
@@ -61022,17 +61030,11 @@ public struct Client: APIProtocol {
     }
     /// Create sandbox group credential
     ///
-    /// Configure a credential for injection into matching outbound HTTPS requests
-    /// from sandboxes in this group. Requires an admin. You assign the credential ID.
+    /// Configure a credential for injection into matching outbound HTTPS requests from sandboxes in this group. Requires an admin. You assign the credential ID.
     ///
-    /// Each group supports up to 25 credentials. Current credential settings and
-    /// secret values have a combined serialized size limit of 200 KiB (204800
-    /// bytes). Render retains the current configuration and three distinct prior
-    /// configurations per credential, with a total storage limit of 1 MiB including
-    /// version metadata.
+    /// Each group supports up to 25 credentials. Current credential settings and secret values have a combined serialized size limit of 200 KiB (204800 bytes). Render retains the current configuration and three distinct prior configurations per credential, with a total storage limit of 1 MiB including version metadata.
     ///
-    /// The response confirms the configuration was saved. It does not confirm that
-    /// credential injection is active for a particular sandbox.
+    /// The response confirms the configuration was saved. It does not confirm that credential injection is active for a particular sandbox.
     ///
     ///
     /// - Remark: HTTP `POST /sandbox-groups/{sandboxGroupId}/credentials`.
@@ -61307,8 +61309,7 @@ public struct Client: APIProtocol {
     }
     /// Retrieve sandbox group credential
     ///
-    /// Retrieve the settings and metadata for a credential in this sandbox group.
-    /// These endpoints do not return secret values, including to admins.
+    /// Retrieve the settings and metadata for a credential in this sandbox group. These endpoints do not return secret values, including to admins.
     ///
     ///
     /// - Remark: HTTP `GET /sandbox-groups/{sandboxGroupId}/credentials/{credentialId}`.
@@ -61553,18 +61554,11 @@ public struct Client: APIProtocol {
     }
     /// Update sandbox group credential
     ///
-    /// Update a credential. Developers can change `injection`, `methods`, `paths`,
-    /// and `enabled`. Changing `domain` or `value` requires an admin.
+    /// Update a credential. Developers can change `injection`, `methods`, `paths`, and `enabled`. Changing `domain` or `value` requires an admin.
     ///
-    /// Omitted top-level fields keep their current values. Providing `injection`
-    /// replaces the entire object. Its `template` defaults to `${SECRET}` when
-    /// omitted. An empty `methods` or `paths` list removes that filter. Providing
-    /// `value` creates a new version.
-    /// The combined serialized size of current credential settings and secret
-    /// values in the group must remain within 200 KiB (204800 bytes).
+    /// Omitted top-level fields keep their current values. Providing `injection` replaces the entire object. Its `template` defaults to `${SECRET}` when omitted. An empty `methods` or `paths` list removes that filter. Providing `value` creates a new version. The combined serialized size of current credential settings and secret values in the group must remain within 200 KiB (204800 bytes).
     ///
-    /// The response confirms the configuration was saved. It does not confirm that
-    /// credential injection is active for a particular sandbox.
+    /// The response confirms the configuration was saved. It does not confirm that credential injection is active for a particular sandbox.
     ///
     ///
     /// - Remark: HTTP `PATCH /sandbox-groups/{sandboxGroupId}/credentials/{credentialId}`.
@@ -61840,8 +61834,7 @@ public struct Client: APIProtocol {
     }
     /// Delete sandbox group credential
     ///
-    /// Delete a credential from the sandbox group. Requires an admin. Repeated
-    /// delete requests are accepted, including if the credential is already absent.
+    /// Delete a credential from the sandbox group. Requires an admin. Repeated delete requests are accepted, including if the credential is already absent.
     ///
     ///
     /// - Remark: HTTP `DELETE /sandbox-groups/{sandboxGroupId}/credentials/{credentialId}`.
@@ -62088,13 +62081,9 @@ public struct Client: APIProtocol {
     }
     /// List sandbox credential versions
     ///
-    /// List retained credential versions, newest version ID first. Versions with
-    /// identical settings and secret values share a fingerprint.
+    /// List retained credential versions, newest version ID first. Versions with identical settings and secret values share a fingerprint.
     ///
-    /// Render retains the current configuration and the three distinct prior
-    /// configurations most recently active. When an older configuration is removed,
-    /// all versions that refer to it are also removed. These endpoints do not return
-    /// secret values.
+    /// Render retains the current configuration and the three distinct prior configurations most recently active. When an older configuration is removed, all versions that refer to it are also removed. These endpoints do not return secret values.
     ///
     ///
     /// - Remark: HTTP `GET /sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/versions`.
@@ -62361,18 +62350,11 @@ public struct Client: APIProtocol {
     }
     /// Restore sandbox credential configuration
     ///
-    /// Restore a retained credential version, including its routing settings,
-    /// injection settings, and secret value, as a new current version. Requires
-    /// an admin.
+    /// Restore a retained credential version, including its routing settings, injection settings, and secret value, as a new current version. Requires an admin.
     ///
-    /// The new version has a higher ID, records who restored it and when, and
-    /// identifies the source in `restoredFromVersionId`. Its fingerprint matches
-    /// the source version. Render retains the current configuration and the three
-    /// distinct prior configurations most recently active. Removing an older
-    /// configuration also removes all versions that refer to it.
+    /// The new version has a higher ID, records who restored it and when, and identifies the source in `restoredFromVersionId`. Its fingerprint matches the source version. Render retains the current configuration and the three distinct prior configurations most recently active. Removing an older configuration also removes all versions that refer to it.
     ///
-    /// The response confirms the configuration was saved. It does not confirm that
-    /// credential injection is active for a particular sandbox.
+    /// The response confirms the configuration was saved. It does not confirm that credential injection is active for a particular sandbox.
     ///
     /// These endpoints do not return secret values.
     ///
@@ -62921,14 +62903,9 @@ public struct Client: APIProtocol {
     }
     /// Create sandbox build
     ///
-    /// Start converting an OCI container image into an image that sandboxes can
-    /// use. New builds run asynchronously. Retrieve the build until its status is
-    /// `succeeded` or `failed`. After it succeeds, provide its ID as `buildId` when
-    /// creating a sandbox.
+    /// Start converting an OCI container image into an image that sandboxes can use. New builds run asynchronously. Retrieve the build until its status is `succeeded` or `failed`. After it succeeds, provide its ID as `buildId` when creating a sandbox.
     ///
-    /// If the group already has a pending, running, or succeeded build for the same
-    /// name and image digest, Render returns that build. Retrying a failed build
-    /// starts a new build.
+    /// If the group already has a pending, running, or succeeded build for the same name and image digest, Render returns that build. Retrying a failed build starts a new build.
     ///
     ///
     /// - Remark: HTTP `POST /sandbox-groups/{sandboxGroupId}/builds`.
@@ -63447,9 +63424,7 @@ public struct Client: APIProtocol {
     }
     /// Delete sandbox build
     ///
-    /// Delete a build of a sandbox image. The build no longer appears in lists
-    /// and cannot be retrieved or used to create sandboxes, including by image
-    /// name. Repeated requests to delete the build return HTTP 204.
+    /// Delete a build of a sandbox image. The build no longer appears in lists and cannot be retrieved or used to create sandboxes, including by image name. Repeated requests to delete the build return HTTP 204.
     ///
     ///
     /// - Remark: HTTP `DELETE /sandbox-groups/{sandboxGroupId}/builds/{buildId}`.
@@ -63696,8 +63671,7 @@ public struct Client: APIProtocol {
     }
     /// List sandbox snapshots
     ///
-    /// List snapshots in a sandbox group, newest first. Excludes expired and
-    /// deleted snapshots.
+    /// List snapshots in a sandbox group, newest first. Excludes expired and deleted snapshots.
     ///
     ///
     /// - Remark: HTTP `GET /sandbox-groups/{sandboxGroupId}/snapshots`.
@@ -64227,8 +64201,7 @@ public struct Client: APIProtocol {
     }
     /// Delete sandbox snapshot
     ///
-    /// Delete a snapshot. Sandboxes created from it are not affected. Returns
-    /// HTTP 204 if the snapshot is already deleted or expired.
+    /// Delete a snapshot. Sandboxes created from it are not affected. Returns HTTP 204 if the snapshot is already deleted or expired.
     ///
     ///
     /// - Remark: HTTP `DELETE /sandbox-groups/{sandboxGroupId}/snapshots/{snapshotId}`.
@@ -64482,9 +64455,7 @@ public struct Client: APIProtocol {
     }
     /// Create a connect token for a sandbox run
     ///
-    /// Create a short-lived connect token for a command run in this sandbox.
-    /// Send the command to the URL in the response, using the token as the bearer
-    /// token. The token authorizes only the requested operation.
+    /// Create a short-lived connect token for a command run in this sandbox. Send the command to the URL in the response, using the token as the bearer token. The token authorizes only the requested operation.
     ///
     ///
     /// - Remark: HTTP `POST /sandboxes/{sandboxId}/runs/{operation}/token`.
@@ -64758,14 +64729,9 @@ public struct Client: APIProtocol {
     }
     /// Mint a connect token for a sandbox file transfer
     ///
-    /// Create a short-lived connect token for a file upload or download. Transfer
-    /// the file directly to or from the URL in the response, using the token as
-    /// the bearer token. The token authorizes only the specified sandbox, operation,
-    /// and path. Its expiration time is returned in `expiresAt`.
+    /// Create a short-lived connect token for a file upload or download. Transfer the file directly to or from the URL in the response, using the token as the bearer token. The token authorizes only the specified sandbox, operation, and path. Its expiration time is returned in `expiresAt`.
     ///
-    /// Use `application/octet-stream` for a single file or `application/x-tar` for
-    /// a directory archive. For gzip compression, also set `Content-Encoding: gzip`.
-    /// Directory downloads return `application/x-tar` with `Content-Encoding: gzip`.
+    /// Use `application/octet-stream` for a single file or `application/x-tar` for a directory archive. For gzip compression, also set `Content-Encoding: gzip`. Directory downloads return `application/x-tar` with `Content-Encoding: gzip`.
     ///
     ///
     /// - Remark: HTTP `POST /sandboxes/{sandboxId}/files/{operation}/token`.
