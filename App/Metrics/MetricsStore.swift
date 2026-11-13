@@ -119,9 +119,19 @@ final class MetricsStore {
         isLoading = true
         defer { isLoading = false }
 
-        let (start, end) = range.window(endingAt: clock())
-        async let options = fetchFilterOptions(start: start, end: end)
-        let results = await fetch(requiredKinds, start: start, end: end)
+        // The range picker stays live during a fetch, and `select(_:)` can't start its own load while
+        // this one holds `isLoading`. So a fetch that finishes under a different range is thrown away
+        // and the new range fetched instead — otherwise the week's axis would show the hour's points.
+        var requested: MetricRange
+        var results: [(id: String, series: [MetricSeries]?, error: String?)]
+        var options: MetricFilterOptions?
+        repeat {
+            requested = range
+            let (start, end) = requested.window(endingAt: clock())
+            async let fetchedOptions = fetchFilterOptions(start: start, end: end)
+            results = await fetch(requiredKinds, start: start, end: end)
+            options = await fetchedOptions
+        } while range != requested
 
         var loaded: [String: [MetricSeries]] = [:]
         var failed: Set<String> = []
@@ -141,7 +151,7 @@ final class MetricsStore {
         // enough: twelve requests that all failed almost always failed for the same reason.
         errorMessage = loaded.isEmpty ? (firstError ?? "Couldn't load metrics.") : nil
         lastUpdated = failed.isEmpty ? clock() : lastUpdated
-        if let options = await options {
+        if let options {
             filterOptions = options
         }
     }
@@ -170,13 +180,30 @@ final class MetricsStore {
             failedKindIDs.remove(kind.id)
         }
 
-        let (start, end) = range.window(endingAt: clock())
-        for result in await fetch(kinds, start: start, end: end) {
+        let requested = range
+        let (start, end) = requested.window(endingAt: clock())
+        let results = await fetch(kinds, start: start, end: end)
+
+        // The range changed mid-fetch. `select(_:)` cleared every chart and its load was turned away
+        // by this one, so these results are for a window no longer shown and the other charts are
+        // empty: reload the lot for the new range rather than restore a few charts from the old one.
+        guard range == requested else {
+            isLoading = false
+            await load()
+            return
+        }
+
+        for result in results {
             if let series = result.series {
                 seriesByKind[result.id] = series
             } else {
                 failedKindIDs.insert(result.id)
             }
+        }
+        // A filter can bring back data after every chart failed — a takeover error from the first
+        // load would otherwise keep covering the charts it just filled.
+        if results.contains(where: { $0.series != nil }) {
+            errorMessage = nil
         }
     }
 
@@ -215,8 +242,9 @@ final class MetricsStore {
         }
     }
 
-    /// `nil` when nothing should change: filters aren't offered here, or every option request failed.
-    /// One list failing still updates the others, since each feeds its own menu.
+    /// `nil` when filters aren't offered here. A list whose request failed keeps its previous values
+    /// rather than going empty: one flaky request shouldn't empty the menu out from under an active
+    /// filter.
     private func fetchFilterOptions(start: Date, end: Date) async -> MetricFilterOptions? {
         guard offersFilters else { return nil }
         let client = client
@@ -233,12 +261,12 @@ final class MetricsStore {
         async let paths = wantsHTTP ? try? client.metricPathOptions(resourceID: resourceID) : []
 
         let (i, h, p) = await (instances, hosts, paths)
-        if i == nil, h == nil, p == nil { return nil }
+        let previous = filterOptions
         return MetricFilterOptions(
-            instances: (i ?? []).sorted(),
-            hosts: (h ?? []).sorted(),
+            instances: i?.sorted() ?? previous.instances,
+            hosts: h?.sorted() ?? previous.hosts,
             // Render's order, which is by frequency — the busiest path pattern first.
-            paths: p ?? []
+            paths: p ?? previous.paths
         )
     }
 
@@ -366,7 +394,10 @@ final class MetricsStore {
         siblingCount: Int,
         refining: Bool
     ) -> String {
-        guard siblingCount > 1,
+        // Usually a lone series is just the chart's subject — "Requests" reads better than "200".
+        // A spec with its own label titles is the exception: those labels *are* the subject, and a
+        // bandwidth chart showing only NAT traffic should say "Outbound (NAT)", not "Egress".
+        guard siblingCount > 1 || !spec.labelTitles.isEmpty,
               let field = spec.distinguishingLabel,
               let value = series[label: field]
         else { return spec.name }

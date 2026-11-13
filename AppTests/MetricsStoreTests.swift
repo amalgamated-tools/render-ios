@@ -1,4 +1,6 @@
 import Foundation
+import HTTPTypes
+import OpenAPIRuntime
 import RenderAPI
 import RenderAPITestSupport
 import Testing
@@ -357,6 +359,98 @@ struct MetricsStoreTests {
         #expect(cpu.allSatisfy { $0.contains("instance=srv-1-aaaaa") })
     }
 
+    @Test("a range change during a filter fetch reloads every chart for the new range")
+    func rangeChangeDuringFilter() async throws {
+        // The first filtered HTTP request — the hour's — is held until the range has changed, which
+        // is the window in which the picker used to leave half the charts empty and the rest stale.
+        let held = AsyncStream<Void>.makeStream()
+        let release = AsyncStream<Void>.makeStream()
+        let holding = HoldOnce()
+        let transport = StubTransport { request, _, _ in
+            let path = request.path ?? ""
+            if path.contains("host="), path.contains("resolutionSeconds=60&") || path.hasSuffix("resolutionSeconds=60"),
+               await holding.claim() {
+                held.continuation.yield()
+                for await _ in release.stream { break }
+            }
+            let answer = Self.answerWithOptions(path)
+            var response = HTTPResponse(status: .init(code: answer.status))
+            response.headerFields = [.contentType: "application/json"]
+            return (response, HTTPBody(answer.body))
+        }
+        let client = RenderClient(apiKeyProvider: StaticAPIKeyProvider("test-key"), retryPolicy: .none, transport: transport)
+        let store = MetricsStore(
+            client: client, resourceID: "srv-1",
+            charts: [MetricsCatalog.cpu, MetricsCatalog.httpRequests],
+            offersFilters: true, clock: { Self.now }
+        )
+        await store.load()
+        let before = transport.callCount
+
+        let filtering = Task { await store.apply(MetricFilters(host: "a.example.com")) }
+        for await _ in held.stream { break }
+        await store.select(.week)
+        release.continuation.yield()
+        await filtering.value
+
+        // Every chart is back, and everything fetched after the switch is for the week.
+        #expect(!store.lines(for: MetricsCatalog.cpu).isEmpty)
+        #expect(!store.lines(for: MetricsCatalog.httpRequests).isEmpty)
+        let reload = transport.requests.dropFirst(before + 1).compactMap(\.path)
+            .filter { !$0.hasPrefix("/metrics/filters") }
+        #expect(reload.count == 4)
+        #expect(reload.allSatisfy { $0.contains("resolutionSeconds=3600") })
+        // The filter outlives the range change.
+        #expect(reload.filter { $0.hasPrefix("/metrics/http") }.allSatisfy { $0.contains("host=a.example.com") })
+    }
+
+    @Test("a filter that brings data back clears a whole-screen error")
+    func filterRecoversFromTotalFailure() async {
+        let (store, _) = store(charts: [MetricsCatalog.httpRequests], offersFilters: true) { path in
+            path.hasPrefix("/metrics/http-requests") && !path.contains("host=")
+                ? (500, #"{"message":"boom"}"#)
+                : Self.answerWithOptions(path)
+        }
+        await store.load()
+        #expect(store.errorMessage != nil)
+
+        await store.apply(MetricFilters(host: "a.example.com"))
+
+        #expect(store.errorMessage == nil)
+        #expect(!store.lines(for: MetricsCatalog.httpRequests).isEmpty)
+    }
+
+    @Test("a filter list that fails to refresh keeps its previous values")
+    func failedOptionRefreshKeepsValues() async {
+        let failing = Flag()
+        let (store, _) = store(charts: [MetricsCatalog.cpu], offersFilters: true) { path in
+            path.hasPrefix("/metrics/filters") && failing.isSet ? (500, "{}") : Self.answerWithOptions(path)
+        }
+        await store.load()
+        await store.apply(MetricFilters(instance: "srv-1-aaaaa"))
+        failing.set()
+
+        await store.refresh()
+
+        // Emptied, the menu would vanish and take "Clear Filters" with it while a filter is on.
+        #expect(store.filterOptions.instances == ["srv-1-aaaaa", "srv-1-bbbbb"])
+        #expect(store.filters.instance == "srv-1-aaaaa")
+    }
+
+    @Test("a lone traffic source is still named")
+    func namesLoneTrafficSource() async {
+        let (store, _) = store(charts: [MetricsCatalog.bandwidthBySource]) { _ in
+            (200, Fixtures.metricSeries(
+                [(labels: [("trafficSource", "nat")], points: [("2026-08-12T10:00:00Z", 135)])],
+                unit: "mb"
+            ))
+        }
+
+        await store.load()
+
+        #expect(store.lines(for: MetricsCatalog.bandwidthBySource).map(\.name) == ["Outbound (NAT)"])
+    }
+
     @Test("a single series keeps the chart's own name")
     func namesLoneSeries() async {
         let (store, _) = store(charts: [MetricsCatalog.httpRequests]) { _ in
@@ -566,4 +660,21 @@ struct MetricsStoreTests {
 
         #expect(store.headline(for: MetricsCatalog.cpu) == nil)
     }
+}
+
+/// Lets exactly one request through the hold in ``MetricsStoreTests/rangeChangeDuringFilter()``.
+private actor HoldOnce {
+    private var claimed = false
+    func claim() -> Bool {
+        defer { claimed = true }
+        return !claimed
+    }
+}
+
+/// A switch a synchronous route closure can read.
+private final class Flag: @unchecked Sendable {
+    private let lock = NSLock()
+    private var value = false
+    var isSet: Bool { lock.withLock { value } }
+    func set() { lock.withLock { value = true } }
 }

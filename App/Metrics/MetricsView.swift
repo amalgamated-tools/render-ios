@@ -35,7 +35,9 @@ struct MetricsView: View {
         .navigationTitle("Metrics")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            if store.offersFilters && !store.filterOptions.isEmpty {
+            // Shown while a filter is on even with nothing to choose from, or "Clear Filters" would be
+            // out of reach and the charts stuck filtered.
+            if store.offersFilters && (!store.filterOptions.isEmpty || store.filters.isActive) {
                 ToolbarItem(placement: .topBarTrailing) { filterMenu }
             }
         }
