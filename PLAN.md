@@ -74,7 +74,8 @@ unlink that succeeded and was reported as a failure. See [Phase 5b](#phase-5b--e
 lifecycle actions, reusing the Logs and Metrics screens. Its live pass found the app unusable against
 a real workspace for a reason no test could have: three spec-vs-reality mismatches, each of which
 lost an entire list. The rest of 5c (projects, environments, blueprints, disks, webhooks, audit logs,
-and Postgres' recovery/credentials/top-queries) is not built. See
+and Postgres' recovery/credentials) is not built. Postgres query insights (processes, top
+queries, sizes, table scans) landed for #26. See
 [Phase 5c](#phase-5c--postgres-and-key-value--core-done).
 
 **Three things landed alongside the phases, outside their numbering:**
@@ -1125,10 +1126,12 @@ documented values are still worth having as a compile-time list, which the displ
 client with only the transport stubbed — the same shape as `ServiceDetailsTests`, and for the same
 reason: a hand-rolled decoder would faithfully agree with the spec and tell us nothing.
 
-**Not built, and still 5c's scope:** Postgres recovery, credentials rotation, and the
-top-queries / sizes / processes / table-scans diagnostics; projects and environments as manageable
+**Not built, and still 5c's scope:** Postgres recovery and credentials rotation; projects and environments as manageable
 resources rather than a scope filter; blueprints + syncs, disks + snapshots, webhooks, maintenance,
-audit logs. Owner notification settings were 5c scope and landed with
+audit logs. The query-insights diagnostics landed separately (#26): Render allows one
+insights request a minute, shared across all four endpoints and every database on the key,
+so the screen loads one report on demand behind an app-wide gate rather than in parallel.
+Owner notification settings were 5c scope and landed with
 [Phase 6](#phase-6--failure-notifications--done-device-local-half) instead, since that is the screen
 someone opens to ask why they weren't told.
 
