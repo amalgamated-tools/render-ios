@@ -16,11 +16,15 @@ final class NotificationRouter {
     // would be ceremony.
     nonisolated static let serviceIDKey = "serviceID"
     nonisolated static let ownerIDKey = "ownerID"
+    nonisolated static let eventIDKey = "eventID"
 
     struct Target: Hashable, Sendable {
         let ownerID: String
         let serviceID: String
         let serviceName: String
+        /// The event to open on top of the service. Absent on notifications posted before event
+        /// detail existed, and on deploy alerts resolved from the deploy list.
+        var eventID: String? = nil
     }
 
     private(set) var pending: Target?
@@ -44,7 +48,12 @@ final class NotificationRouter {
         guard let serviceID = userInfo[serviceIDKey] as? String,
               let ownerID = userInfo[ownerIDKey] as? String
         else { return nil }
-        return Target(ownerID: ownerID, serviceID: serviceID, serviceName: name)
+        return Target(
+            ownerID: ownerID,
+            serviceID: serviceID,
+            serviceName: name,
+            eventID: userInfo[eventIDKey] as? String
+        )
     }
 }
 

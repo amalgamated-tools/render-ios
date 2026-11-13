@@ -52,6 +52,11 @@ echo "==> Giving GET /env-groups its cursor envelope"
 # {envGroup, cursor} envelope, whose shape the strict decoder rejects outright. See the script.
 python3 "$REPO_ROOT/Scripts/envelope-env-groups.py" "$SPEC"
 
+echo "==> Making event details free-form"
+# `details` is an undiscriminated oneOf whose empty members match everything, so the generated
+# decoder silently drops every field. A free-form object keeps them. See the script.
+python3 "$REPO_ROOT/Scripts/freeform-event-details.py" "$SPEC"
+
 echo "==> Fixing numeric query parameter types"
 # The spec types every numeric query parameter as `number`, which the generator maps to Double or
 # Float — and Render accepts neither serialization: it rejects `resolutionSeconds=60.0` outright, and

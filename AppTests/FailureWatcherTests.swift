@@ -141,6 +141,106 @@ struct FailureWatcherTests {
         #expect(await watcher.poll().count == 1)
     }
 
+    // MARK: - Reading the cause from details
+
+    /// Routes `/deploys` to a 500, so any test that passes proves the deploy list was never asked.
+    private static func routeWithoutDeployList(events: String) -> @Sendable (String) -> (status: Int, body: String) {
+        { path in path.contains("/events") ? (200, events) : (500, "{}") }
+    }
+
+    @Test("a failed deploy_ended answers from its own details, with the cause, and opens on the event")
+    func deployEndedFromDetails() async throws {
+        let (watcher, _, _) = makeWatcher(route: Self.routeWithoutDeployList(
+            events: Fixtures.eventsPage(withDetails: [(
+                id: "evt-1", type: "deploy_ended", timestamp: Self.eventTime,
+                details: #"{"deployId":"dep-7","deployStatus":"failed","reason":{"failure":{"evicted":false,"oomKilled":{"memoryLimit":"512Mi"}}},"status":4}"#
+            )])
+        ))
+
+        let alerts = await watcher.poll()
+
+        #expect(alerts.count == 1)
+        #expect(alerts.first?.id == "deploy-dep-7")
+        #expect(alerts.first?.summary == "Deploy failed: Out of memory (512Mi limit)")
+        #expect(alerts.first?.eventID == "evt-1")
+    }
+
+    @Test("a succeeded deploy_ended is quiet without a deploy lookup")
+    func deployEndedSucceededFromDetails() async throws {
+        let (watcher, _, watermarks) = makeWatcher(route: Self.routeWithoutDeployList(
+            events: Fixtures.eventsPage(withDetails: [(
+                id: "evt-1", type: "deploy_ended", timestamp: Self.eventTime,
+                details: #"{"deployId":"dep-7","deployStatus":"succeeded","reason":{},"status":2}"#
+            )])
+        ))
+
+        #expect(await watcher.poll().isEmpty)
+        // Resolved, not "couldn't find out": the window is banked.
+        #expect(watermarks["srv-1"]?.hasSeen("evt-1") == true)
+    }
+
+    @Test("the event's own deploy is reported, not the newest one")
+    func deployEndedNotSuperseded() async throws {
+        // The fallback would read the newest deploy — live — and stay quiet about this failure.
+        let (watcher, _, _) = makeWatcher(route: Self.route(
+            events: Fixtures.eventsPage(withDetails: [(
+                id: "evt-1", type: "deploy_ended", timestamp: Self.eventTime,
+                details: #"{"deployId":"dep-old","deployStatus":"failed","reason":{"buildFailed":{"id":"bld-1"}}}"#
+            )]),
+            deploys: Fixtures.deploysPage([(id: "dep-new", status: "live")])
+        ))
+
+        let alerts = await watcher.poll()
+
+        #expect(alerts.map(\.id) == ["deploy-dep-old"])
+        #expect(alerts.first?.summary == "Build failed")
+    }
+
+    @Test("a self-describing failure gains its cause")
+    func serverFailedWithCause() async throws {
+        let (watcher, _, _) = makeWatcher(route: Self.route(
+            events: Fixtures.eventsPage(withDetails: [(
+                id: "evt-1", type: "server_failed", timestamp: Self.eventTime,
+                details: #"{"instanceID":"srv-1-abc","reason":{"evicted":false,"nonZeroExit":1}}"#
+            )])
+        ))
+
+        let alerts = await watcher.poll()
+
+        #expect(alerts.first?.summary == "Server failed: Exited with status 1")
+        #expect(alerts.first?.eventID == "evt-1")
+    }
+
+    @Test("an image pull failure's alert carries Render's message")
+    func imagePullFailedWithMessage() async throws {
+        let (watcher, _, _) = makeWatcher(route: Self.route(
+            events: Fixtures.eventsPage(withDetails: [(
+                id: "evt-1", type: "image_pull_failed", timestamp: Self.eventTime,
+                details: #"{"imageURL":"docker.io/acme/api:latest","message":"pull access denied"}"#
+            )])
+        ))
+
+        let alerts = await watcher.poll()
+
+        #expect(alerts.first?.summary == "Image pull failed: pull access denied")
+    }
+
+    @Test("two events about one failed deploy report it once")
+    func deployDetailsCollapse() async throws {
+        let details = #"{"deployId":"dep-7","deployStatus":"failed","reason":{},"status":4}"#
+        let (watcher, _, _) = makeWatcher(route: Self.routeWithoutDeployList(
+            events: Fixtures.eventsPage(withDetails: [
+                (id: "evt-2", type: "deploy_ended", timestamp: Self.laterEventTime, details: details),
+                (id: "evt-1", type: "deploy_ended", timestamp: Self.eventTime, details: details),
+            ])
+        ))
+
+        let alerts = await watcher.poll()
+
+        #expect(alerts.count == 1)
+        #expect(alerts.first?.summary == "Deploy failed")
+    }
+
     // MARK: - Not saying it twice
 
     @Test("an event seen in one poll is not reported again in the next")

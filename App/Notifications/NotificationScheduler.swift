@@ -51,6 +51,10 @@ final class NotificationScheduler {
                 // survive the round trip through the notification.
                 NotificationRouter.ownerIDKey: alert.ownerID,
             ]
+            // Opens on the failure itself rather than the service — the "why" is the point of tapping.
+            if let eventID = alert.eventID {
+                content.userInfo[NotificationRouter.eventIDKey] = eventID
+            }
 
             // A nil trigger delivers immediately, which is what a background wake wants — the
             // failure already happened.

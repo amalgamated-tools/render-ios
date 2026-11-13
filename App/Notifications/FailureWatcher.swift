@@ -12,6 +12,9 @@ struct FailureAlert: Identifiable, Hashable, Sendable {
     /// What broke, in the notification body. The service name is the title.
     let summary: String
     let occurredAt: Date
+    /// The event to open when the notification is tapped. `nil` when the alert came from the deploy
+    /// list rather than an event, and the tap opens the service instead.
+    var eventID: String? = nil
 }
 
 /// Checks every watched service for something that broke since the last look.
@@ -30,12 +33,12 @@ struct FailureAlert: Identifiable, Hashable, Sendable {
 /// — see ``fetchEvents(serviceID:since:)``.
 @MainActor
 final class FailureWatcher {
-    /// Event types where the type alone is the alert.
+    /// Event types where the type alone is the alert. Their details add the cause where Render gives
+    /// one ("Server failed: Out of memory (512Mi limit)").
     ///
-    /// The rest of the timeline needs `event.details` to mean anything, and `details` cannot be read
-    /// — see ``ServiceEvent``. `deploy_ended` is the one ambiguous type worth the extra request, and
-    /// it's handled separately below; `build_ended` is deliberately absent because a failed build
-    /// always produces a `deploy_ended` too, and alerting on both would double-report one failure.
+    /// `deploy_ended` needs its details to say whether it failed, and is handled separately below;
+    /// `build_ended` is deliberately absent because a failed build always produces a `deploy_ended`
+    /// too, and alerting on both would double-report one failure.
     static let selfDescribingFailures: Set<Components.Schemas.ServiceEventWithCursor.EventPayload._TypePayload> = [
         .serverFailed,
         .serverHardwareFailure,
@@ -161,14 +164,21 @@ final class FailureWatcher {
                     serviceID: service.id,
                     ownerID: service.ownerID,
                     serviceName: service.name,
-                    summary: event.type.displayName,
-                    occurredAt: event.timestamp
+                    summary: Self.summary(event.type.displayName, cause: event.cause),
+                    occurredAt: event.timestamp,
+                    eventID: event.id
                 )
             }
 
-        if let deployEnded = fresh.first(where: { $0.type == .deployEnded }) {
+        let deploysEnded = fresh.filter { $0.type == .deployEnded }
+        // An event that names its deploy's outcome answers for itself — and for *that* deploy, not
+        // whichever is newest. Only events without one fall back to the deploy list.
+        alerts.append(contentsOf: Self.deployAlerts(from: deploysEnded, for: service))
+
+        if let deployEnded = deploysEnded.first(where: { $0.details.deployStatus == nil }) {
             do {
-                if let alert = try await deployFailureAlert(for: service, endedAt: deployEnded.timestamp) {
+                if let alert = try await deployFailureAlert(for: service, endedAt: deployEnded.timestamp),
+                   !alerts.contains(where: { $0.id == alert.id }) {
                     alerts.append(alert)
                 }
             } catch {
@@ -228,20 +238,50 @@ final class FailureWatcher {
         return collected
     }
 
-    /// Resolves a `deploy_ended` event into an alert, or `nil` if that deploy succeeded.
+    /// `"Deploy failed"`, or `"Deploy failed: Out of memory (512Mi limit)"` when the cause is known.
+    static func summary(_ what: String, cause: String?) -> String {
+        cause.map { "\(what): \($0)" } ?? what
+    }
+
+    /// Alerts for the `deploy_ended` events whose details say how their deploy ended.
+    ///
+    /// Keyed on the deploy, like the fallback below, so two events about one deploy report once —
+    /// and so a deploy reported here and by the fallback in the same window can't post twice.
+    static func deployAlerts(from events: [ServiceEvent], for service: WatchedService) -> [FailureAlert] {
+        var seen: Set<String> = []
+        return events.compactMap { event in
+            let details = event.details
+            guard details.deployStatus == "failed" else { return nil }
+            let key = details.deployID ?? event.id
+            guard seen.insert(key).inserted else { return nil }
+            return FailureAlert(
+                id: "deploy-\(key)",
+                serviceID: service.id,
+                ownerID: service.ownerID,
+                serviceName: service.name,
+                summary: summary(
+                    details.failedBuildID != nil ? "Build failed" : "Deploy failed",
+                    cause: details.failure?.summary
+                ),
+                occurredAt: event.timestamp,
+                eventID: event.id
+            )
+        }
+    }
+
+    /// Resolves a `deploy_ended` event whose details *don't* carry a status into an alert, or `nil`
+    /// if that deploy succeeded.
     ///
     /// Throws rather than swallowing a failed lookup, so the caller can tell "that deploy was fine"
     /// from "couldn't find out" — the two have opposite consequences for the watermark.
     ///
-    /// The event says a deploy finished but not *which* deploy or *how* — that lives in
-    /// `event.details`, which the generated union can't be trusted to decode (see ``ServiceEvent``).
-    /// So the status comes from the deploy list instead, which decodes cleanly.
+    /// Every `deploy_ended` seen in real data carries `deployStatus`, so this is a fallback for
+    /// events that don't — the status then comes from the deploy list instead.
     ///
     /// **Known imprecision:** this reads the *newest* deploy, which is only the one that just ended
     /// if nothing has started since. A deploy that fails and is immediately redeployed will report
     /// the redeploy's status. Erring toward the newest state is the right way round for an alert —
-    /// it means never shouting about a failure that has already been superseded — and the accurate
-    /// alternative needs a spec patch to make `details` readable.
+    /// it means never shouting about a failure that has already been superseded.
     private func deployFailureAlert(for service: WatchedService, endedAt: Date) async throws -> FailureAlert? {
         guard let deploy = try await DeploysStore.latestDeploy(client: client, serviceID: service.id),
               let status = deploy.status,
