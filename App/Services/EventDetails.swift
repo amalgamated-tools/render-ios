@@ -16,6 +16,10 @@ import OpenAPIRuntime
 /// - `deploy_ended`, `build_ended`: the failure is one level down — `{"reason":{"failure":{…}}}` —
 ///   and a successful or cancelled deploy has `"reason":{}`.
 /// - `auto_deploy_disabled`: `reason` is a plain string (`"manual_deploy"`).
+/// - `image_pull_failed` (`{"imageURL":…,"message":…}`) and `artifact_fetch_failed`
+///   (`{"buildId":…,"message":…}`) have no `reason`. Render's explanation is the top-level
+///   `message`, which the spec marks required for both. (From the spec; the workspace hasn't
+///   produced either yet.)
 struct EventDetails: Decodable, Hashable, Sendable {
     var deployID: String?
     /// `succeeded`, `failed`, `canceled`. The event's own record of how *that* deploy ended.
@@ -31,11 +35,13 @@ struct EventDetails: Decodable, Hashable, Sendable {
     var failedBuildID: String?
     /// A string `reason`, for the few event types that carry one.
     var reasonText: String?
+    /// Render's own explanation, for event types that give one instead of a `reason`.
+    var message: String?
 
     static let empty = EventDetails()
 
     private enum CodingKeys: String, CodingKey {
-        case deployId, deployStatus, buildId, buildStatus, instanceID, status, reason
+        case deployId, deployStatus, buildId, buildStatus, instanceID, status, reason, message
     }
 
     private enum ReasonKeys: String, CodingKey {
@@ -55,7 +61,8 @@ struct EventDetails: Decodable, Hashable, Sendable {
         runStatus: String? = nil,
         failure: EventFailure? = nil,
         failedBuildID: String? = nil,
-        reasonText: String? = nil
+        reasonText: String? = nil,
+        message: String? = nil
     ) {
         self.deployID = deployID
         self.deployStatus = deployStatus
@@ -66,6 +73,7 @@ struct EventDetails: Decodable, Hashable, Sendable {
         self.failure = failure
         self.failedBuildID = failedBuildID
         self.reasonText = reasonText
+        self.message = message
     }
 
     init(from decoder: any Decoder) throws {
@@ -78,6 +86,7 @@ struct EventDetails: Decodable, Hashable, Sendable {
         buildStatus = try? container.decodeIfPresent(String.self, forKey: .buildStatus)
         instanceID = try? container.decodeIfPresent(String.self, forKey: .instanceID)
         runStatus = try? container.decodeIfPresent(String.self, forKey: .status)
+        message = try? container.decodeIfPresent(String.self, forKey: .message)
 
         if let text = try? container.decodeIfPresent(String.self, forKey: .reason) {
             reasonText = text

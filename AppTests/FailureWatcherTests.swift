@@ -211,6 +211,20 @@ struct FailureWatcherTests {
         #expect(alerts.first?.eventID == "evt-1")
     }
 
+    @Test("an image pull failure's alert carries Render's message")
+    func imagePullFailedWithMessage() async throws {
+        let (watcher, _, _) = makeWatcher(route: Self.route(
+            events: Fixtures.eventsPage(withDetails: [(
+                id: "evt-1", type: "image_pull_failed", timestamp: Self.eventTime,
+                details: #"{"imageURL":"docker.io/acme/api:latest","message":"pull access denied"}"#
+            )])
+        ))
+
+        let alerts = await watcher.poll()
+
+        #expect(alerts.first?.summary == "Image pull failed: pull access denied")
+    }
+
     @Test("two events about one failed deploy report it once")
     func deployDetailsCollapse() async throws {
         let details = #"{"deployId":"dep-7","deployStatus":"failed","reason":{},"status":4}"#

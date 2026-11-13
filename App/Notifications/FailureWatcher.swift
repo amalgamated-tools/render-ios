@@ -164,7 +164,7 @@ final class FailureWatcher {
                     serviceID: service.id,
                     ownerID: service.ownerID,
                     serviceName: service.name,
-                    summary: Self.summary(event.type.displayName, cause: event.details.failure?.summary),
+                    summary: Self.summary(event.type.displayName, cause: event.cause),
                     occurredAt: event.timestamp,
                     eventID: event.id
                 )

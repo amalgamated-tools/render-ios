@@ -36,12 +36,19 @@ struct ServiceEvent: Identifiable, Hashable, Sendable {
         self.details = details
     }
 
+    /// Why it happened, in Render's terms: the structured failure reason when there is one, else the
+    /// `message` that image-pull and artifact-fetch failures send instead. Notifications use this,
+    /// so an alert and its timeline row give the same reason.
+    var cause: String? {
+        details.failure?.summary ?? details.message.flatMap { $0.isEmpty ? nil : $0 }
+    }
+
     /// The one-line cause, when the event is a failure that says why.
     ///
     /// A run that failed without a reason still reads as failed, so the timeline can tell "cron run
     /// ended" from "cron run failed" — the type alone is the same for both.
     var reasonSummary: String? {
-        if let failure = details.failure?.summary { return failure }
+        if let cause { return cause }
         if details.deployStatus == "failed" || details.buildStatus == "failed" || details.runFailed == true {
             return "Failed"
         }

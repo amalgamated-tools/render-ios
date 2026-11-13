@@ -95,6 +95,39 @@ struct EventDetailsTests {
         #expect(details.failedBuildID == "bld-1")
     }
 
+    // The two fetch failures below are shaped from the spec's required fields: no real workspace
+    // event of either type has been seen yet.
+
+    @Test("an image pull failure explains itself with its message")
+    func imagePullFailed() throws {
+        let details = try parse(#"""
+        {"imageURL":"docker.io/acme/api:latest","message":"pull access denied: repository does not exist"}
+        """#)
+        let event = ServiceEvent(id: "e", timestamp: .now, type: .imagePullFailed, details: details)
+
+        #expect(details.failure == nil)
+        #expect(event.cause == "pull access denied: repository does not exist")
+        #expect(event.reasonSummary == "pull access denied: repository does not exist")
+    }
+
+    @Test("an artifact fetch failure explains itself with its message")
+    func artifactFetchFailed() throws {
+        let details = try parse(#"{"buildId":"bld-1","message":"artifact not found"}"#)
+        let event = ServiceEvent(id: "e", timestamp: .now, type: .artifactFetchFailed, details: details)
+
+        #expect(details.buildID == "bld-1")
+        #expect(event.cause == "artifact not found")
+    }
+
+    @Test("a structured failure outranks a message, and an empty message is no cause")
+    func causePrecedence() {
+        let both = EventDetails(failure: EventFailure(nonZeroExit: 1), message: "something else")
+        let blank = EventDetails(message: "")
+
+        #expect(ServiceEvent(id: "e", timestamp: .now, type: .serverFailed, details: both).cause == "Exited with status 1")
+        #expect(ServiceEvent(id: "e", timestamp: .now, type: .imagePullFailed, details: blank).cause == nil)
+    }
+
     @Test("out of memory outranks the exit status it also causes")
     func oomOutranksExit() {
         let failure = EventFailure(nonZeroExit: 137, memoryLimit: "4Gi")
