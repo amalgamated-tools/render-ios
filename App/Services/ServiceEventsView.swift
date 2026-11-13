@@ -3,29 +3,41 @@ import SwiftUI
 
 /// A service's event timeline: what Render did to this service and when.
 ///
-/// Rows are type + time only — see `ServiceEvent` for why the payload's `details` can't be trusted.
-/// Even so, the sequence is what matters on call: "server failed, deploy started, build failed" is a
-/// story you can act on.
+/// The sequence is what matters on call: "server failed, deploy started, build failed" is a story
+/// you can act on. Where Render says *why* something failed — out of memory, an exit code, an
+/// eviction — that goes on the row too, and tapping it opens the event's full details.
 struct ServiceEventsView: View {
     @State private var store: ServiceEventsStore
+    private let client: RenderClient
 
     init(client: RenderClient, serviceID: String) {
+        self.client = client
         _store = State(initialValue: ServiceEventsStore(client: client, serviceID: serviceID))
     }
 
     var body: some View {
         List {
             ForEach(store.events) { event in
-                HStack(spacing: 12) {
-                    Image(systemName: event.type.systemImage)
-                        .foregroundStyle(event.type.tint)
-                        .frame(width: 24)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(event.type.displayName)
-                            .font(.subheadline)
-                        Text(event.timestamp.formatted(date: .abbreviated, time: .standard))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                NavigationLink {
+                    EventDetailView(client: client, eventID: event.id, preview: event)
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: event.type.systemImage)
+                            .foregroundStyle(event.type.tint)
+                            .frame(width: 24)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(event.type.displayName)
+                                .font(.subheadline)
+                            if let reason = event.reasonSummary {
+                                Text(reason)
+                                    .font(.caption)
+                                    .foregroundStyle(.red)
+                                    .lineLimit(2)
+                            }
+                            Text(event.timestamp.formatted(date: .abbreviated, time: .standard))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
             }

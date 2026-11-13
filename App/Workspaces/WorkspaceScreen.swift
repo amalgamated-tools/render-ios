@@ -17,9 +17,11 @@ struct WorkspaceScreen: View {
     private let client: RenderClient
     private let ownerID: String
     @State private var projectsStore: ProjectsStore
+    @State private var accountStore: AccountStore
     /// A value-based path, so a tapped failure notification can push a service the list hasn't
-    /// loaded — see ``ServiceRoute``.
-    @State private var servicesPath: [ServiceRoute] = []
+    /// loaded — see ``ServiceRoute`` — and then the event that failed on top of it. A
+    /// `NavigationPath` rather than an array because those are two different route types.
+    @State private var servicesPath = NavigationPath()
     @State private var selectedTab: WorkspaceTab = .services
     @State private var isShowingNotificationSettings = false
     @Environment(NotificationRouter.self) private var router
@@ -33,6 +35,7 @@ struct WorkspaceScreen: View {
         self.client = client
         self.ownerID = ownerID
         _projectsStore = State(initialValue: ProjectsStore(client: client, ownerID: ownerID))
+        _accountStore = State(initialValue: AccountStore(client: client))
     }
 
     var body: some View {
@@ -47,6 +50,9 @@ struct WorkspaceScreen: View {
                                 serviceID: route.id,
                                 serviceName: route.name
                             )
+                        }
+                        .navigationDestination(for: EventRoute.self) { route in
+                            EventDetailView(client: client, eventID: route.id)
                         }
                         .toolbar { sharedToolbar }
                 }
@@ -71,6 +77,7 @@ struct WorkspaceScreen: View {
             }
         }
         .task { await projectsStore.load() }
+        .task { await accountStore.load() }
         // Runs on appearance *and* on every change, which is what makes the two-step workspace
         // switch below work: the switch rebuilds this screen, and the rebuilt one re-reads the same
         // still-pending target.
@@ -98,7 +105,12 @@ struct WorkspaceScreen: View {
             return
         }
         selectedTab = .services
-        servicesPath = [ServiceRoute(id: target.serviceID, name: target.serviceName)]
+        var path = NavigationPath()
+        path.append(ServiceRoute(id: target.serviceID, name: target.serviceName))
+        if let eventID = target.eventID {
+            path.append(EventRoute(id: eventID))
+        }
+        servicesPath = path
         router.consume()
     }
 
@@ -124,6 +136,13 @@ struct WorkspaceScreen: View {
 
     private var accountMenu: some View {
         Menu {
+            // Who's signed in — the name as the section title, the email as a disabled row. Shown
+            // only once known; see ``AccountStore`` for why there's no loading or error state.
+            if let user = accountStore.user {
+                Section(user.name) {
+                    Text(user.email)
+                }
+            }
             Button("Notifications", systemImage: "bell") {
                 isShowingNotificationSettings = true
             }

@@ -4,32 +4,48 @@ import RenderAPI
 
 /// One entry in a service's event timeline.
 ///
-/// **Only `type` and `timestamp` are carried, deliberately.** `serviceEvent.details` is an
-/// undiscriminated 44-member `oneOf`, and its second member has *no* required properties — so the
-/// generated first-match decoder matches that empty member for essentially every event whose details
-/// aren't the first shape, and reports it as a successful decode. Reading a deploy ID or a failure
-/// reason out of it would be reading a value the decoder never actually looked for.
-///
-/// The upside: that same empty member means the union can never *fail*, so events always load.
-/// Making details usable needs a spec patch replacing the `oneOf` with a free-form object (the
-/// generator then emits a dictionary) — worth doing, but it belongs with the feature that needs it.
+/// `details` used to be unreadable: the spec types it as an undiscriminated `oneOf` whose empty
+/// members matched almost every event, so the generated decoder silently dropped every field. It's
+/// now patched to a free-form object (`Scripts/freeform-event-details.py`) and read into
+/// ``EventDetails`` — just the deploy, instance and failure-reason fields the app shows. Reading it
+/// can't fail the event: details that don't parse become ``EventDetails/empty``.
 struct ServiceEvent: Identifiable, Hashable, Sendable {
     let id: String
     let timestamp: Date
     let type: Components.Schemas.ServiceEventWithCursor.EventPayload._TypePayload
+    let details: EventDetails
 
     init(_ event: Components.Schemas.ServiceEventWithCursor.EventPayload) {
         self.id = event.id
         self.timestamp = event.timestamp
         self.type = event._type
+        self.details = EventDetails(event.details.additionalProperties)
     }
 
-    /// Building one directly, for tests over the watermark rules — where constructing a whole
-    /// generated payload would say nothing the three fields don't.
-    init(id: String, timestamp: Date, type: Components.Schemas.ServiceEventWithCursor.EventPayload._TypePayload) {
+    /// Building one directly, for tests — where constructing a whole generated payload would say
+    /// nothing the fields don't.
+    init(
+        id: String,
+        timestamp: Date,
+        type: Components.Schemas.ServiceEventWithCursor.EventPayload._TypePayload,
+        details: EventDetails = .empty
+    ) {
         self.id = id
         self.timestamp = timestamp
         self.type = type
+        self.details = details
+    }
+
+    /// The one-line cause, when the event is a failure that says why.
+    ///
+    /// A run that failed without a reason still reads as failed, so the timeline can tell "cron run
+    /// ended" from "cron run failed" — the type alone is the same for both.
+    var reasonSummary: String? {
+        if let failure = details.failure?.summary { return failure }
+        if details.deployStatus == "failed" || details.buildStatus == "failed" || details.runFailed == true {
+            return "Failed"
+        }
+        return nil
     }
 }
 

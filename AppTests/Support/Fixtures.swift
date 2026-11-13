@@ -180,6 +180,22 @@ enum Fixtures {
         return "[\(elements.joined(separator: ","))]"
     }
 
+    /// One page of `GET /services/{id}/events` whose events carry `details` — raw JSON, so the shapes
+    /// can be pasted from real responses.
+    static func eventsPage(
+        withDetails events: [(id: String, type: String, timestamp: String, details: String)],
+        serviceID: String = "srv-1"
+    ) -> String {
+        let elements = events.map { event in
+            """
+            {"event":{"id":"\(event.id)","timestamp":"\(event.timestamp)",\
+            "serviceId":"\(serviceID)","type":"\(event.type)","details":\(event.details)},\
+            "cursor":"cursor-\(event.id)"}
+            """
+        }
+        return "[\(elements.joined(separator: ","))]"
+    }
+
     /// One page of `GET /services/{id}/env-vars`.
     static func envVarsPage(_ vars: [(key: String, value: String)]) -> String {
         let elements = vars.map { one in

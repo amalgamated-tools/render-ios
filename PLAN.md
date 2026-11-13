@@ -461,7 +461,16 @@ the transport stubbed, so they test the actual decoder rather than a re-implemen
    would be a value the decoder never looked for. (The silver lining: the union therefore cannot fail,
    so events always load.) Making details usable needs another spec patch — replace that `oneOf` with a
    free-form object so the generator emits a dictionary — which belongs with the first feature that
-   needs the fields, not here.
+   needs the fields, not here. *(Done for #29: `Scripts/freeform-event-details.py` makes the patch,
+   and `EventDetails` reads the fields. Rows now show the failure cause: OOM with its limit, the exit
+   status, the eviction reason, a build failure, a timeout or a failed health check. Real payloads
+   differ by event type: an instance or job failure carries the failure under `reason`, a failed
+   deploy nests it under `reason.failure`, a deploy's `status` is an integer while a job's is a
+   string, and a successful deploy sends `reason: {}`. The tests use payloads copied from a live
+   workspace. A failure notification now opens on the event's detail screen
+   (`GET /events/{id}`), and `deploy_ended` takes its outcome from `deployStatus` and checks the
+   deploy that event is about, not the newest one. It only falls back to the deploy list when
+   `details` is empty.)*
 2. **Events page by time window, not by cursor.** `serviceEventWithCursor` lists `cursor` in its
    `required` array and never defines the property, so the generator drops it and the envelope has no
    cursor at all — `CursorPaginator` is unusable. `ServiceEventsStore` instead requests each page with

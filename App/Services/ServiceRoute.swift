@@ -12,3 +12,9 @@ struct ServiceRoute: Hashable, Sendable {
     let id: String
     let name: String
 }
+
+/// One event, pushed above its service by a tapped failure notification. Only the ID: the event
+/// screen fetches the rest, since a notification carries no more than that.
+struct EventRoute: Hashable, Sendable {
+    let id: String
+}
