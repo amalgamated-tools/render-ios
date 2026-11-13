@@ -56,7 +56,7 @@ struct ServiceNetworkView: View {
         } footer: {
             if let ips = store.outboundIPs {
                 if ips.isDedicated {
-                    Text("A dedicated IP set\(ips.dedicatedSetID.map { " (\($0))" } ?? ""). Only this service's traffic uses these addresses.")
+                    Text("A dedicated IP set\(ips.dedicatedSetID.map { " (\($0))" } ?? ""). Other services in this workspace or its selected environments can share these addresses. Allowlisting them also admits those services.")
                 } else {
                     // Shared IPs are used by every service in the region, so allowlisting them admits
                     // more than this service — worth saying where the allowlisting happens.
