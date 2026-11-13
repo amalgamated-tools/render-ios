@@ -36,8 +36,10 @@ enum PostgresInsight: String, CaseIterable, Identifiable, Sendable {
 /// that 404s, still spends it (checked against the live API, 2026-11). So the gate is shared
 /// app-wide rather than kept per screen, and every attempt is recorded, successful or not.
 ///
-/// Waiting client-side matters because the alternative is worse: a 429 makes `RetryMiddleware`
-/// sleep out the `Retry-After` and try again, which looks like a spinner hanging for a minute.
+/// Waiting client-side matters because the alternative is worse: a 429 would have
+/// `RetryMiddleware` sleep out the `Retry-After` and try again, which looks like a spinner
+/// hanging for a minute. ``PostgresInsightsStore`` also turns retries off for these calls, so a
+/// 429 caused by another device surfaces at once and the gate's countdown stays true.
 @MainActor
 final class InsightsRateGate {
     static let shared = InsightsRateGate()
@@ -145,7 +147,9 @@ final class PostgresInsightsStore {
         gate: InsightsRateGate = .shared,
         now: @escaping () -> Date = Date.init
     ) {
-        self.client = client
+        // No retries: one attempt per gate slot, so a 429 is reported rather than slept through
+        // and a retried request never spends an allowance the gate didn't record.
+        self.client = client.withRetryPolicy(.none)
         self.postgresID = postgresID
         self.gate = gate
         self.now = now
@@ -170,7 +174,9 @@ final class PostgresInsightsStore {
         gate.record(now())
 
         do {
-            let rows = try await fetch(insight)
+            // Unstructured so it outlives the caller: the view's `.task(id:)` is cancelled on a
+            // tab switch, but this request has already spent the minute, so let it land.
+            let rows = try await Task { try await self.fetch(insight) }.value
             results[insight] = PostgresInsightResult(rows: rows, fetchedAt: now())
             errors[insight] = nil
         } catch {

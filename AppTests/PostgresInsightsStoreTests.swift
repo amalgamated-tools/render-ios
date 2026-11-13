@@ -1,4 +1,6 @@
 import Foundation
+import HTTPTypes
+import OpenAPIRuntime
 import RenderAPI
 import RenderAPITestSupport
 import Testing
@@ -172,6 +174,64 @@ struct PostgresInsightsStoreTests {
         await store.load(.topQueries)
         #expect(transport.callCount == 2)
         #expect(store.errors[.topQueries]?.contains("one query-insights request a minute") == true)
+    }
+
+    /// Built like the app's client — default retry policy — rather than via `routed`, which turns
+    /// retries off and so would hide a store that forgot to.
+    @Test("a 429 is reported after one attempt, not retried, even on a client that retries")
+    func noRetriesOnRateLimit() async throws {
+        let transport = StubTransport { _, _, _ in
+            var response = HTTPResponse(status: .init(code: 429))
+            response.headerFields = [.contentType: "application/json", .retryAfter: "1"]
+            return (response, HTTPBody("{}"))
+        }
+        let client = RenderClient(apiKeyProvider: StaticAPIKeyProvider("test-key"), transport: transport)
+        let store = PostgresInsightsStore(client: client, postgresID: "dpg-1", gate: InsightsRateGate())
+
+        await store.load(.processes)
+
+        #expect(transport.callCount == 1)
+        #expect(store.errors[.processes]?.contains("one query-insights request a minute") == true)
+    }
+
+    @Test("a request already sent finishes when its caller is cancelled, as on a tab switch")
+    func cancelledCallerStillLands() async throws {
+        let transport = StubTransport { _, _, _ in
+            try await Task.sleep(for: .milliseconds(50))
+            var response = HTTPResponse(status: .ok)
+            response.headerFields = [.contentType: "application/json"]
+            return (response, HTTPBody(Self.processes))
+        }
+        let client = RenderClient(apiKeyProvider: StaticAPIKeyProvider("test-key"), retryPolicy: .none, transport: transport)
+        let store = PostgresInsightsStore(client: client, postgresID: "dpg-1", gate: InsightsRateGate())
+
+        let caller = Task { await store.load(.processes) }
+        caller.cancel()
+        await caller.value
+
+        #expect(store.results[.processes] != nil)
+        #expect(store.errors[.processes] == nil)
+    }
+
+    @Test("a failed refresh keeps the old rows and records why")
+    func failedRefreshKeepsResult() async throws {
+        let calls = Counter()
+        let (store, _, clock) = store { _ in
+            calls.increment() == 1 ? (200, Self.processes) : (500, #"{"message":"boom"}"#)
+        }
+
+        await store.load(.processes)
+        clock.now += 60
+        await store.load(.processes)
+
+        #expect(store.results[.processes] != nil)
+        #expect(store.errors[.processes] != nil)
+    }
+
+    final class Counter: @unchecked Sendable {
+        private let lock = NSLock()
+        private var value = 0
+        func increment() -> Int { lock.withLock { value += 1; return value } }
     }
 
     @Test("an empty report loads as empty, not as an error")

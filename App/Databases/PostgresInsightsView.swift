@@ -39,16 +39,25 @@ struct PostgresInsightsView: View {
             Section { ProgressView().frame(maxWidth: .infinity) }
         } else if let result = store.results[insight] {
             rows(result.rows, empty: insight.emptyMessage)
-            Section { refreshRow(insight, fetchedAt: result.fetchedAt) }
+            Section {
+                // A failed refresh keeps the old rows, so say why they didn't update.
+                errorLabel(insight)
+                refreshRow(insight, fetchedAt: result.fetchedAt)
+            }
         } else {
             Section {
-                if let message = store.errors[insight] {
-                    Label(message, systemImage: "exclamationmark.triangle")
-                        .font(.footnote)
-                        .foregroundStyle(.orange)
-                }
+                errorLabel(insight)
                 refreshRow(insight, fetchedAt: nil)
             }
+        }
+    }
+
+    @ViewBuilder
+    private func errorLabel(_ insight: PostgresInsight) -> some View {
+        if let message = store.errors[insight] {
+            Label(message, systemImage: "exclamationmark.triangle")
+                .font(.footnote)
+                .foregroundStyle(.orange)
         }
     }
 
