@@ -29626,13 +29626,6 @@ public struct Client: APIProtocol {
                     in: &request,
                     style: .form,
                     explode: true,
-                    name: "resource",
-                    value: input.query.resource
-                )
-                try converter.setQueryItemAsURI(
-                    in: &request,
-                    style: .form,
-                    explode: true,
                     name: "service",
                     value: input.query.service
                 )
@@ -29756,27 +29749,6 @@ public struct Client: APIProtocol {
                     method: .get
                 )
                 suppressMutabilityWarning(&request)
-                try converter.setQueryItemAsURI(
-                    in: &request,
-                    style: .form,
-                    explode: true,
-                    name: "startTime",
-                    value: input.query.startTime
-                )
-                try converter.setQueryItemAsURI(
-                    in: &request,
-                    style: .form,
-                    explode: true,
-                    name: "endTime",
-                    value: input.query.endTime
-                )
-                try converter.setQueryItemAsURI(
-                    in: &request,
-                    style: .form,
-                    explode: true,
-                    name: "resolutionSeconds",
-                    value: input.query.resolutionSeconds
-                )
                 try converter.setQueryItemAsURI(
                     in: &request,
                     style: .form,

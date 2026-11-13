@@ -26,24 +26,25 @@ struct MetricsCatalogTests {
         MetricsCatalog.charts(for: try service(type: type, diskSizeGB: diskSizeGB)).map(\.id)
     }
 
-    @Test("a web service gets the full set")
+    @Test("a web service gets the full set, with bandwidth split by source")
     func webService() throws {
         #expect(try chartIDs(for: "web_service") == [
-            "cpu", "memory", "instance-count", "http-requests", "http-latency", "bandwidth",
+            "cpu", "memory", "instance-count", "http-requests", "http-latency", "bandwidth-sources",
         ])
     }
 
-    @Test("a private service gets everything but bandwidth")
+    @Test("a private service gets bandwidth too")
     func privateService() throws {
-        // It serves HTTP, just not to the internet — so requests and latency, no egress.
+        // No public traffic, but calls out through NAT are still egress — seen live on a private
+        // service with no HTTP traffic and 135 MB of NAT.
         #expect(try chartIDs(for: "private_service") == [
-            "cpu", "memory", "instance-count", "http-requests", "http-latency",
+            "cpu", "memory", "instance-count", "http-requests", "http-latency", "bandwidth-sources",
         ])
     }
 
-    @Test("a background worker gets compute only")
+    @Test("a background worker gets compute and outbound bandwidth")
     func backgroundWorker() throws {
-        #expect(try chartIDs(for: "background_worker") == ["cpu", "memory", "instance-count"])
+        #expect(try chartIDs(for: "background_worker") == ["cpu", "memory", "instance-count", "bandwidth-sources"])
     }
 
     @Test("a cron job gets no instance count")
@@ -88,8 +89,19 @@ struct MetricsCatalogTests {
 
     // MARK: - Datastores
 
-    private func postgres(diskSizeGB: Int?) throws -> PostgresDetailModel {
-        let json = Fixtures.postgresJSON(diskSizeGB: diskSizeGB)
+    private func postgres(
+        diskSizeGB: Int? = nil,
+        highAvailability: Bool = false,
+        readReplicaNames: [String] = [],
+        primaryPostgresID: String? = nil
+    ) throws -> PostgresDetailModel {
+        let json = Fixtures.postgresJSON(
+            role: primaryPostgresID == nil ? "primary" : "replica",
+            highAvailability: highAvailability,
+            diskSizeGB: diskSizeGB,
+            readReplicaNames: readReplicaNames,
+            primaryPostgresID: primaryPostgresID
+        )
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         return PostgresDetailModel(
@@ -105,6 +117,32 @@ struct MetricsCatalogTests {
         // Flexible plans report no diskSizeGB, so there is no capacity to chart against.
         let withoutDisk = MetricsCatalog.charts(forPostgres: try postgres(diskSizeGB: nil)).map(\.id)
         #expect(withoutDisk == ["cpu", "memory", "active-connections"])
+    }
+
+    @Test("replication lag appears only where something replicates")
+    func replicationLag() throws {
+        // A lone primary always reports an empty series; the chart would only ever say "No data".
+        #expect(try !MetricsCatalog.charts(forPostgres: postgres()).map(\.id).contains("replication-lag"))
+
+        for database in [
+            try postgres(readReplicaNames: ["db-replica"]),
+            try postgres(highAvailability: true),
+            try postgres(primaryPostgresID: "dpg-primary"),
+        ] {
+            #expect(MetricsCatalog.charts(forPostgres: database).map(\.id)
+                == ["cpu", "memory", "active-connections", "replication-lag"])
+        }
+    }
+
+    @Test("only compute charts follow the instance filter, only HTTP charts the host and path")
+    func filterReach() {
+        let instance = [MetricsCatalog.cpu, MetricsCatalog.memory]
+        let http = [MetricsCatalog.httpRequests, MetricsCatalog.httpLatency]
+        let neither = [MetricsCatalog.instanceCount, MetricsCatalog.bandwidthBySource, MetricsCatalog.disk]
+
+        #expect(instance.allSatisfy { $0.followsInstanceFilter && !$0.followsHTTPFilters })
+        #expect(http.allSatisfy { $0.followsHTTPFilters && !$0.followsInstanceFilter })
+        #expect(neither.allSatisfy { !$0.followsInstanceFilter && !$0.followsHTTPFilters })
     }
 
     @Test("key value gets compute and connections")

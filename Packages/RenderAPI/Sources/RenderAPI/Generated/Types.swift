@@ -56500,102 +56500,103 @@ public enum Operations {
             public struct Ok: Sendable, Hashable {
                 /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content`.
                 @frozen public enum Body: Sendable, Hashable {
-                    /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/json`.
-                    public struct JsonPayload: Codable, Hashable, Sendable {
-                        /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/json/DataPayload`.
-                        public struct DataPayloadPayload: Codable, Hashable, Sendable {
-                            /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/json/DataPayload/labels`.
-                            public struct LabelsPayload: Codable, Hashable, Sendable {
-                                /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/json/DataPayload/labels/resource`.
-                                public var resource: Swift.String?
-                                /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/json/DataPayload/labels/trafficSource`.
-                                @frozen public enum TrafficSourcePayload: String, Codable, Hashable, Sendable, CaseIterable {
-                                    case total = "total"
-                                    case http = "http"
-                                    case websocket = "websocket"
-                                    case nat = "nat"
-                                    case privatelink = "privatelink"
-                                }
-                                /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/json/DataPayload/labels/trafficSource`.
-                                public var trafficSource: Operations.GetBandwidthSources.Output.Ok.Body.JsonPayload.DataPayloadPayload.LabelsPayload.TrafficSourcePayload?
-                                /// Creates a new `LabelsPayload`.
-                                ///
-                                /// - Parameters:
-                                ///   - resource:
-                                ///   - trafficSource:
-                                public init(
-                                    resource: Swift.String? = nil,
-                                    trafficSource: Operations.GetBandwidthSources.Output.Ok.Body.JsonPayload.DataPayloadPayload.LabelsPayload.TrafficSourcePayload? = nil
-                                ) {
-                                    self.resource = resource
-                                    self.trafficSource = trafficSource
-                                }
-                                public enum CodingKeys: String, CodingKey {
-                                    case resource
-                                    case trafficSource
-                                }
-                            }
-                            /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/json/DataPayload/labels`.
-                            public var labels: Operations.GetBandwidthSources.Output.Ok.Body.JsonPayload.DataPayloadPayload.LabelsPayload?
-                            /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/json/DataPayload/ValuesPayload`.
-                            public struct ValuesPayloadPayload: Codable, Hashable, Sendable {
-                                /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/json/DataPayload/ValuesPayload/timestamp`.
-                                public var timestamp: Swift.Int?
-                                /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/json/DataPayload/ValuesPayload/value`.
-                                public var value: Swift.Double?
-                                /// Creates a new `ValuesPayloadPayload`.
-                                ///
-                                /// - Parameters:
-                                ///   - timestamp:
-                                ///   - value:
-                                public init(
-                                    timestamp: Swift.Int? = nil,
-                                    value: Swift.Double? = nil
-                                ) {
-                                    self.timestamp = timestamp
-                                    self.value = value
-                                }
-                                public enum CodingKeys: String, CodingKey {
-                                    case timestamp
-                                    case value
-                                }
-                            }
-                            /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/json/DataPayload/values`.
-                            public typealias ValuesPayload = [Operations.GetBandwidthSources.Output.Ok.Body.JsonPayload.DataPayloadPayload.ValuesPayloadPayload]
-                            /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/json/DataPayload/values`.
-                            public var values: Operations.GetBandwidthSources.Output.Ok.Body.JsonPayload.DataPayloadPayload.ValuesPayload?
-                            /// Creates a new `DataPayloadPayload`.
+                    /// A time series data point
+                    ///
+                    /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/JsonPayload`.
+                    public struct JsonPayloadPayload: Codable, Hashable, Sendable {
+                        /// A time series datapoint label
+                        ///
+                        /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/JsonPayload/LabelsPayload`.
+                        public struct LabelsPayloadPayload: Codable, Hashable, Sendable {
+                            /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/JsonPayload/LabelsPayload/field`.
+                            public var field: Swift.String
+                            /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/JsonPayload/LabelsPayload/value`.
+                            public var value: Swift.String
+                            /// Creates a new `LabelsPayloadPayload`.
                             ///
                             /// - Parameters:
-                            ///   - labels:
-                            ///   - values:
+                            ///   - field:
+                            ///   - value:
                             public init(
-                                labels: Operations.GetBandwidthSources.Output.Ok.Body.JsonPayload.DataPayloadPayload.LabelsPayload? = nil,
-                                values: Operations.GetBandwidthSources.Output.Ok.Body.JsonPayload.DataPayloadPayload.ValuesPayload? = nil
+                                field: Swift.String,
+                                value: Swift.String
                             ) {
-                                self.labels = labels
-                                self.values = values
+                                self.field = field
+                                self.value = value
                             }
                             public enum CodingKeys: String, CodingKey {
-                                case labels
-                                case values
+                                case field
+                                case value
                             }
                         }
-                        /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/json/data`.
-                        public typealias DataPayload = [Operations.GetBandwidthSources.Output.Ok.Body.JsonPayload.DataPayloadPayload]
-                        /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/json/data`.
-                        public var data: Operations.GetBandwidthSources.Output.Ok.Body.JsonPayload.DataPayload?
-                        /// Creates a new `JsonPayload`.
+                        /// List of labels describing the time series
+                        ///
+                        /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/JsonPayload/labels`.
+                        public typealias LabelsPayload = [Operations.GetBandwidthSources.Output.Ok.Body.JsonPayloadPayload.LabelsPayloadPayload]
+                        /// List of labels describing the time series
+                        ///
+                        /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/JsonPayload/labels`.
+                        public var labels: Operations.GetBandwidthSources.Output.Ok.Body.JsonPayloadPayload.LabelsPayload
+                        /// A time series datapoint value
+                        ///
+                        /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/JsonPayload/ValuesPayload`.
+                        public struct ValuesPayloadPayload: Codable, Hashable, Sendable {
+                            /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/JsonPayload/ValuesPayload/timestamp`.
+                            public var timestamp: Foundation.Date
+                            /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/JsonPayload/ValuesPayload/value`.
+                            public var value: Swift.Double
+                            /// Creates a new `ValuesPayloadPayload`.
+                            ///
+                            /// - Parameters:
+                            ///   - timestamp:
+                            ///   - value:
+                            public init(
+                                timestamp: Foundation.Date,
+                                value: Swift.Double
+                            ) {
+                                self.timestamp = timestamp
+                                self.value = value
+                            }
+                            public enum CodingKeys: String, CodingKey {
+                                case timestamp
+                                case value
+                            }
+                        }
+                        /// The values of the time series
+                        ///
+                        /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/JsonPayload/values`.
+                        public typealias ValuesPayload = [Operations.GetBandwidthSources.Output.Ok.Body.JsonPayloadPayload.ValuesPayloadPayload]
+                        /// The values of the time series
+                        ///
+                        /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/JsonPayload/values`.
+                        public var values: Operations.GetBandwidthSources.Output.Ok.Body.JsonPayloadPayload.ValuesPayload
+                        /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/JsonPayload/unit`.
+                        public var unit: Swift.String
+                        /// Creates a new `JsonPayloadPayload`.
                         ///
                         /// - Parameters:
-                        ///   - data:
-                        public init(data: Operations.GetBandwidthSources.Output.Ok.Body.JsonPayload.DataPayload? = nil) {
-                            self.data = data
+                        ///   - labels: List of labels describing the time series
+                        ///   - values: The values of the time series
+                        ///   - unit:
+                        public init(
+                            labels: Operations.GetBandwidthSources.Output.Ok.Body.JsonPayloadPayload.LabelsPayload,
+                            values: Operations.GetBandwidthSources.Output.Ok.Body.JsonPayloadPayload.ValuesPayload,
+                            unit: Swift.String
+                        ) {
+                            self.labels = labels
+                            self.values = values
+                            self.unit = unit
                         }
                         public enum CodingKeys: String, CodingKey {
-                            case data
+                            case labels
+                            case values
+                            case unit
                         }
                     }
+                    /// A collection of time series
+                    ///
+                    /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/json`.
+                    public typealias JsonPayload = [Operations.GetBandwidthSources.Output.Ok.Body.JsonPayloadPayload]
                     /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/application\/json`.
                     case json(Operations.GetBandwidthSources.Output.Ok.Body.JsonPayload)
                     /// The associated value of the enum case if `self` is `.json`.
@@ -56621,7 +56622,7 @@ public enum Operations {
                     self.body = body
                 }
             }
-            /// A successful response with traffic source breakdown
+            /// A successful response
             ///
             /// - Remark: Generated from `#/paths//metrics/bandwidth-sources/get(get-bandwidth-sources)/responses/200`.
             ///
@@ -58541,14 +58542,9 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/metrics/filters/http/GET/query/resolutionSeconds`.
                 public var resolutionSeconds: Swift.Int?
-                /// Service ID to query. When multiple service ids are provided, they are ORed together
-                ///
-                /// - Remark: Generated from `#/paths/metrics/filters/http/GET/query/resource`.
-                public var resource: Swift.String?
-                /// This parameter is deprecated. Please use `resource` instead
+                /// Service ID to query. The only resource parameter this endpoint accepts — it rejects `resource`. See Scripts/metrics-quirks.py.
                 ///
                 /// - Remark: Generated from `#/paths/metrics/filters/http/GET/query/service`.
-                @available(*, deprecated)
                 public var service: Swift.String?
                 /// The hosts of HTTP requests to filter to. When multiple host query params are provided, they are ORed together
                 ///
@@ -58564,15 +58560,13 @@ public enum Operations {
                 ///   - startTime: Epoch/Unix timestamp of start of time range to return. Defaults to `now() - 1 hour`.
                 ///   - endTime: Epoch/Unix timestamp of end of time range to return. Defaults to `now()`.
                 ///   - resolutionSeconds: The resolution of the returned data
-                ///   - resource: Service ID to query. When multiple service ids are provided, they are ORed together
-                ///   - service: This parameter is deprecated. Please use `resource` instead
+                ///   - service: Service ID to query. The only resource parameter this endpoint accepts — it rejects `resource`. See Scripts/metrics-quirks.py.
                 ///   - host: The hosts of HTTP requests to filter to. When multiple host query params are provided, they are ORed together
                 ///   - statusCode: The status codes of HTTP requests to filter to. When multiple status code query params are provided, they are ORed together
                 public init(
                     startTime: Components.Parameters.StartTimeParam? = nil,
                     endTime: Components.Parameters.EndTimeParam? = nil,
                     resolutionSeconds: Swift.Int? = nil,
-                    resource: Swift.String? = nil,
                     service: Swift.String? = nil,
                     host: Swift.String? = nil,
                     statusCode: Swift.String? = nil
@@ -58580,7 +58574,6 @@ public enum Operations {
                     self.startTime = startTime
                     self.endTime = endTime
                     self.resolutionSeconds = resolutionSeconds
-                    self.resource = resource
                     self.service = service
                     self.host = host
                     self.statusCode = statusCode
@@ -58784,18 +58777,6 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/metrics/filters/path/GET/query`.
             public struct Query: Sendable, Hashable {
-                /// Epoch/Unix timestamp of start of time range to return. Defaults to `now() - 1 hour`.
-                ///
-                /// - Remark: Generated from `#/paths/metrics/filters/path/GET/query/startTime`.
-                public var startTime: Components.Parameters.StartTimeParam?
-                /// Epoch/Unix timestamp of end of time range to return. Defaults to `now()`.
-                ///
-                /// - Remark: Generated from `#/paths/metrics/filters/path/GET/query/endTime`.
-                public var endTime: Components.Parameters.EndTimeParam?
-                /// The resolution of the returned data
-                ///
-                /// - Remark: Generated from `#/paths/metrics/filters/path/GET/query/resolutionSeconds`.
-                public var resolutionSeconds: Swift.Int?
                 /// Service ID to query. When multiple service ids are provided, they are ORed together
                 ///
                 /// - Remark: Generated from `#/paths/metrics/filters/path/GET/query/resource`.
@@ -58820,27 +58801,18 @@ public enum Operations {
                 /// Creates a new `Query`.
                 ///
                 /// - Parameters:
-                ///   - startTime: Epoch/Unix timestamp of start of time range to return. Defaults to `now() - 1 hour`.
-                ///   - endTime: Epoch/Unix timestamp of end of time range to return. Defaults to `now()`.
-                ///   - resolutionSeconds: The resolution of the returned data
                 ///   - resource: Service ID to query. When multiple service ids are provided, they are ORed together
                 ///   - service: This parameter is deprecated. Please use `resource` instead
                 ///   - host: The hosts of HTTP requests to filter to. When multiple host query params are provided, they are ORed together
                 ///   - statusCode: The status codes of HTTP requests to filter to. When multiple status code query params are provided, they are ORed together
                 ///   - path: The paths of HTTP requests to filter to. When multiple path query params are provided, they are ORed together
                 public init(
-                    startTime: Components.Parameters.StartTimeParam? = nil,
-                    endTime: Components.Parameters.EndTimeParam? = nil,
-                    resolutionSeconds: Swift.Int? = nil,
                     resource: Swift.String? = nil,
                     service: Swift.String? = nil,
                     host: Swift.String? = nil,
                     statusCode: Swift.String? = nil,
                     path: Swift.String? = nil
                 ) {
-                    self.startTime = startTime
-                    self.endTime = endTime
-                    self.resolutionSeconds = resolutionSeconds
                     self.resource = resource
                     self.service = service
                     self.host = host

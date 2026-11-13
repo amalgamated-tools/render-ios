@@ -22,14 +22,24 @@ struct MetricChartSpec: Identifiable, Hashable, Sendable {
         /// ID for CPU, status code for a grouped request count. Named explicitly rather than guessed
         /// from whatever labels happen to come back, so a new label can't silently rename the legend.
         let distinguishingLabel: String?
+        /// Legend names for label values Render reports in API spelling — `nat` reads as "NAT".
+        /// A value missing from the map is shown as sent.
+        let labelTitles: [String: String]
 
         var id: String { kind.id }
 
-        init(_ kind: MetricKind, name: String, role: Role = .measurement, distinguishingLabel: String? = "instance") {
+        init(
+            _ kind: MetricKind,
+            name: String,
+            role: Role = .measurement,
+            distinguishingLabel: String? = "instance",
+            labelTitles: [String: String] = [:]
+        ) {
             self.kind = kind
             self.name = name
             self.role = role
             self.distinguishingLabel = distinguishingLabel
+            self.labelTitles = labelTitles
         }
     }
 
@@ -68,6 +78,22 @@ struct MetricChartSpec: Identifiable, Hashable, Sendable {
 
     /// Every series this chart needs fetched.
     var kinds: [MetricKind] { series.map(\.kind) }
+
+    /// Whether the metrics screen's instance filter changes this chart. Only CPU and memory accept
+    /// an instance.
+    var followsInstanceFilter: Bool {
+        kinds.contains { [.cpu, .memory].contains($0) }
+    }
+
+    /// Whether the host and path filters change this chart. Only the HTTP endpoints accept them.
+    var followsHTTPFilters: Bool {
+        kinds.contains {
+            switch $0 {
+            case .httpRequests, .httpLatency: true
+            default: false
+            }
+        }
+    }
 }
 
 /// Which charts a resource actually has.
@@ -97,7 +123,11 @@ enum MetricsCatalog {
             charts.append(httpRequests)
             charts.append(httpLatency)
         }
-        if hasBandwidth(service.type) {
+        if hasBandwidthBySource(service.type) {
+            charts.append(bandwidthBySource)
+        } else if service.type == .staticSite {
+            // A static site is served from the CDN, so there's nothing to split by source. The plain
+            // endpoint is the one known to answer for it.
             charts.append(bandwidth)
         }
         // The disk endpoints answer for the disk attached to a service, so with no disk there is
@@ -113,6 +143,9 @@ enum MetricsCatalog {
     /// report no `diskSizeGB`, so there is nothing to chart against.
     static func charts(forPostgres database: PostgresDetailModel) -> [MetricChartSpec] {
         var charts: [MetricChartSpec] = [cpu, memory, activeConnections]
+        if hasReplication(database) {
+            charts.append(replicationLag)
+        }
         if database.diskSizeGB != nil {
             charts.append(disk)
         }
@@ -139,10 +172,20 @@ enum MetricsCatalog {
         type == .webService || type == .privateService
     }
 
-    private static func hasBandwidth(_ type: Components.Schemas.ServiceType) -> Bool {
-        // Egress. A private service has no public traffic, and a worker and a cron job aren't
-        // addressable at all.
-        type == .webService || type == .staticSite
+    private static func hasBandwidthBySource(_ type: Components.Schemas.ServiceType) -> Bool {
+        // Egress from instances. Not just public responses: a private service or a worker calling
+        // out through NAT is billed bandwidth too — the live pass found a private service with 135 MB
+        // of NAT traffic and no chart for it. A cron job's runs are too brief to chart.
+        type == .webService || type == .privateService || type == .backgroundWorker
+    }
+
+    /// A database with something replicating from it, or one that is itself a replica. A
+    /// high-availability standby is a replica too, so lag applies there. Otherwise the series is
+    /// always empty, and the chart would only ever say "No data".
+    private static func hasReplication(_ database: PostgresDetailModel) -> Bool {
+        !database.readReplicaNames.isEmpty
+            || database.isHighAvailabilityEnabled
+            || database.primaryPostgresID != nil
     }
 
     // MARK: - The charts
@@ -219,6 +262,41 @@ enum MetricsCatalog {
         // The one series endpoint that takes no resolution, so Render chooses the buckets.
         footnote: "Outbound transfer, bucketed by Render.",
         series: [.init(.bandwidth, name: "Egress", distinguishingLabel: nil)]
+    )
+
+    static let bandwidthBySource = MetricChartSpec(
+        id: "bandwidth-sources",
+        title: "Bandwidth",
+        systemImage: "arrow.up.arrow.down.circle",
+        // Render's own total is dropped by the client, so adding up the sources gives it back.
+        footnote: "Outbound transfer by how it left, bucketed by Render.",
+        headline: .sumOfLatest,
+        series: [
+            .init(
+                .bandwidthSources,
+                name: "Egress",
+                distinguishingLabel: "trafficSource",
+                labelTitles: [
+                    "http": "HTTP",
+                    "websocket": "WebSocket",
+                    "nat": "Outbound (NAT)",
+                    "privatelink": "Private Link",
+                ]
+            )
+        ]
+    )
+
+    static let replicationLag = MetricChartSpec(
+        id: "replication-lag",
+        title: "Replication Lag",
+        systemImage: "arrow.triangle.2.circlepath",
+        footnote: "How far replicas are behind the primary.",
+        series: [
+            // Asked of the primary, Render returns a series per replica, labelled with the replica's
+            // host (its database ID) — read from Render's metrics service, not seen live: no available
+            // workspace had a replica. A missing label falls back to the plain name.
+            .init(.replicationLag, name: "Lag", distinguishingLabel: "host")
+        ]
     )
 
     // Datastore-only: services never chart connections, so this spec ships with the Postgres and

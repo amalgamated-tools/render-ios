@@ -10,8 +10,15 @@ import SwiftUI
 struct MetricsView: View {
     @State private var store: MetricsStore
 
-    init(client: RenderClient, resourceID: String, charts: [MetricChartSpec]) {
-        _store = State(initialValue: MetricsStore(client: client, resourceID: resourceID, charts: charts))
+    /// - Parameter offersFilters: Whether to show the instance, host and path filters. For services
+    ///   only — see ``MetricsStore/offersFilters``.
+    init(client: RenderClient, resourceID: String, charts: [MetricChartSpec], offersFilters: Bool = false) {
+        _store = State(initialValue: MetricsStore(
+            client: client,
+            resourceID: resourceID,
+            charts: charts,
+            offersFilters: offersFilters
+        ))
     }
 
     var body: some View {
@@ -27,6 +34,11 @@ struct MetricsView: View {
         .safeAreaInset(edge: .top) { rangePicker }
         .navigationTitle("Metrics")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if store.offersFilters && !store.filterOptions.isEmpty {
+                ToolbarItem(placement: .topBarTrailing) { filterMenu }
+            }
+        }
         .refreshable { await store.refresh() }
         .task { if store.seriesByKind.isEmpty { await store.load() } }
         .overlay { screenState }
@@ -57,6 +69,60 @@ struct MetricsView: View {
         .background(.bar)
     }
 
+    /// One menu for all three filters. Each section only appears when Render reported values for it —
+    /// a service with one instance has nothing to choose between.
+    private var filterMenu: some View {
+        Menu {
+            if store.canFilterByInstance && store.filterOptions.instances.count > 1 {
+                filterPicker("Instance", values: store.filterOptions.instances, keyPath: \.instance) {
+                    MetricsStore.shortInstance($0)
+                }
+            }
+            if store.canFilterHTTP && !store.filterOptions.hosts.isEmpty {
+                filterPicker("Host", values: store.filterOptions.hosts, keyPath: \.host) { $0 }
+            }
+            if store.canFilterHTTP && !store.filterOptions.paths.isEmpty {
+                filterPicker("Path", values: store.filterOptions.paths, keyPath: \.path) { $0 }
+            }
+            if store.filters.isActive {
+                Button("Clear Filters", systemImage: "xmark.circle") {
+                    Task { await store.apply(MetricFilters()) }
+                }
+            }
+        } label: {
+            Label(
+                "Filter",
+                systemImage: store.filters.isActive
+                    ? "line.3.horizontal.decrease.circle.fill"
+                    : "line.3.horizontal.decrease.circle"
+            )
+        }
+        // A change mid-load would be dropped by the store, so the menu waits for the load instead.
+        .disabled(store.isLoading)
+    }
+
+    private func filterPicker(
+        _ title: String,
+        values: [String],
+        keyPath: WritableKeyPath<MetricFilters, String?>,
+        display: @escaping (String) -> String
+    ) -> some View {
+        Picker(title, selection: Binding(
+            get: { store.filters[keyPath: keyPath] },
+            set: { value in
+                var filters = store.filters
+                filters[keyPath: keyPath] = value
+                Task { await store.apply(filters) }
+            }
+        )) {
+            Text("All").tag(String?.none)
+            ForEach(values, id: \.self) { value in
+                Text(display(value)).tag(String?.some(value))
+            }
+        }
+        .pickerStyle(.menu)
+    }
+
     /// Covers the two whole-screen cases. Everything else is per card, because one broken series is
     /// not a broken screen.
     @ViewBuilder
@@ -85,6 +151,13 @@ private struct MetricChartCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             header
+            if let caption = store.filterCaption(for: chart) {
+                Label(caption, systemImage: "line.3.horizontal.decrease")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
             content
             if let footnote = chart.footnote {
                 Text(footnote)

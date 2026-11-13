@@ -9483,109 +9483,76 @@
         ],
         "responses": {
           "200": {
-            "description": "A successful response with traffic source breakdown",
+            "description": "A successful response",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "labels": {
-                            "type": "object",
-                            "properties": {
-                              "resource": {
-                                "type": "string",
-                                "example": "srv-abc123"
-                              },
-                              "trafficSource": {
-                                "type": "string",
-                                "enum": [
-                                  "total",
-                                  "http",
-                                  "websocket",
-                                  "nat",
-                                  "privatelink"
-                                ],
-                                "example": "http"
-                              }
-                            }
-                          },
-                          "values": {
-                            "type": "array",
-                            "items": {
-                              "type": "object",
-                              "properties": {
-                                "timestamp": {
-                                  "type": "integer",
-                                  "example": 1709856000
-                                },
-                                "value": {
-                                  "type": "number",
-                                  "example": 100
-                                }
-                              }
+                  "type": "array",
+                  "description": "A collection of time series",
+                  "required": [
+                    "items"
+                  ],
+                  "items": {
+                    "type": "object",
+                    "description": "A time series data point",
+                    "required": [
+                      "labels",
+                      "values",
+                      "unit"
+                    ],
+                    "properties": {
+                      "labels": {
+                        "type": "array",
+                        "description": "List of labels describing the time series",
+                        "items": {
+                          "type": "object",
+                          "description": "A time series datapoint label",
+                          "required": [
+                            "field",
+                            "value"
+                          ],
+                          "properties": {
+                            "field": {
+                              "type": "string",
+                              "example": "service"
+                            },
+                            "value": {
+                              "type": "string",
+                              "example": "srv-xxxxx"
                             }
                           }
                         }
+                      },
+                      "values": {
+                        "type": "array",
+                        "description": "The values of the time series",
+                        "items": {
+                          "description": "A time series datapoint value",
+                          "type": "object",
+                          "required": [
+                            "timestamp",
+                            "value",
+                            "unit"
+                          ],
+                          "properties": {
+                            "timestamp": {
+                              "type": "string",
+                              "format": "date-time",
+                              "example": "2021-06-17T08:15:30Z"
+                            },
+                            "value": {
+                              "type": "number",
+                              "example": 1
+                            }
+                          }
+                        }
+                      },
+                      "unit": {
+                        "type": "string",
+                        "example": "GB"
                       }
                     }
                   }
-                },
-                "example": {
-                  "data": [
-                    {
-                      "labels": {
-                        "resource": "srv-abc123",
-                        "trafficSource": "total"
-                      },
-                      "values": [
-                        {
-                          "timestamp": 1709856000,
-                          "value": 125.5
-                        },
-                        {
-                          "timestamp": 1709859600,
-                          "value": 98.2
-                        }
-                      ]
-                    },
-                    {
-                      "labels": {
-                        "resource": "srv-abc123",
-                        "trafficSource": "http"
-                      },
-                      "values": [
-                        {
-                          "timestamp": 1709856000,
-                          "value": 100
-                        },
-                        {
-                          "timestamp": 1709859600,
-                          "value": 75.8
-                        }
-                      ]
-                    },
-                    {
-                      "labels": {
-                        "resource": "srv-abc123",
-                        "trafficSource": "websocket"
-                      },
-                      "values": [
-                        {
-                          "timestamp": 1709856000,
-                          "value": 25.5
-                        },
-                        {
-                          "timestamp": 1709859600,
-                          "value": 22.4
-                        }
-                      ]
-                    }
-                  ]
                 }
               }
             }
@@ -10359,19 +10326,9 @@
           "description": "The resolution of the returned data"
         },
         {
-          "name": "resource",
-          "in": "query",
-          "description": "Service ID to query. When multiple service ids are provided, they are ORed together",
-          "schema": {
-            "type": "string",
-            "example": "srv-xxxxx"
-          }
-        },
-        {
           "name": "service",
           "in": "query",
-          "deprecated": true,
-          "description": "This parameter is deprecated. Please use `resource` instead",
+          "description": "Service ID to query. The only resource parameter this endpoint accepts \u2014 it rejects `resource`. See Scripts/metrics-quirks.py.",
           "schema": {
             "type": "string",
             "example": "srv-xxxxx"
@@ -10445,29 +10402,12 @@
           "500": {
             "$ref": "#/components/responses/500InternalServerError"
           }
-        }
+        },
+        "parameters": []
       }
     },
     "/metrics/filters/path": {
       "parameters": [
-        {
-          "$ref": "#/components/parameters/startTimeParam"
-        },
-        {
-          "$ref": "#/components/parameters/endTimeParam"
-        },
-        {
-          "name": "resolutionSeconds",
-          "in": "query",
-          "schema": {
-            "type": "integer",
-            "minimum": 30,
-            "example": 60,
-            "default": 60
-          },
-          "required": false,
-          "description": "The resolution of the returned data"
-        },
         {
           "name": "resource",
           "in": "query",
@@ -10550,7 +10490,8 @@
           "500": {
             "$ref": "#/components/responses/500InternalServerError"
           }
-        }
+        },
+        "parameters": []
       }
     },
     "/metrics/task-runs-queued": {

@@ -57,6 +57,12 @@ echo "==> Making event details free-form"
 # decoder silently drops every field. A free-form object keeps them. See the script.
 python3 "$REPO_ROOT/Scripts/freeform-event-details.py" "$SPEC"
 
+echo "==> Correcting the metrics endpoints the spec misdescribes"
+# bandwidth-sources returns the ordinary time-series array, not the envelope the spec describes;
+# the filter endpoints reject parameters the spec declares (and require one it deprecates). See
+# the script.
+python3 "$REPO_ROOT/Scripts/metrics-quirks.py" "$SPEC"
+
 echo "==> Fixing numeric query parameter types"
 # The spec types every numeric query parameter as `number`, which the generator maps to Double or
 # Float — and Render accepts neither serialization: it rejects `resolutionSeconds=60.0` outright, and

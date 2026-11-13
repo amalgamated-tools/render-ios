@@ -18,6 +18,16 @@ struct MetricLine: Identifiable, Hashable, Sendable {
     var isSinglePoint: Bool { points.count == 1 }
 }
 
+/// What the metrics screen is narrowed to. Each filter only reaches the endpoints that accept it —
+/// see ``MetricChartSpec/followsInstanceFilter`` and ``MetricChartSpec/followsHTTPFilters``.
+struct MetricFilters: Hashable, Sendable {
+    var instance: String?
+    var host: String?
+    var path: String?
+
+    var isActive: Bool { instance != nil || host != nil || path != nil }
+}
+
 /// Backs the metrics screen: a time range, and every chart's series fetched for it.
 ///
 /// **One spinner, many requests.** A service's charts need up to twelve series and there is no
@@ -42,6 +52,14 @@ final class MetricsStore {
     private(set) var seriesByKind: [String: [MetricSeries]] = [:]
     private(set) var failedKindIDs: Set<String> = []
 
+    private(set) var filters = MetricFilters()
+    /// What the filter menu can offer. Empty until the first load, and left empty if the option
+    /// endpoints fail: a missing filter menu is no reason to hold back the charts.
+    private(set) var filterOptions = MetricFilterOptions.empty
+    /// Off for datastores. The option endpoints are service-shaped — HTTP options take only a
+    /// service ID — and a database has no HTTP charts to narrow.
+    let offersFilters: Bool
+
     private let client: RenderClient
     private let resourceID: String
     /// Injected so a test doesn't depend on the wall clock, and so every chart on one load shares
@@ -53,13 +71,33 @@ final class MetricsStore {
         resourceID: String,
         charts: [MetricChartSpec],
         range: MetricRange = .hour,
+        offersFilters: Bool = false,
         clock: @escaping @Sendable () -> Date = { Date() }
     ) {
         self.client = client
         self.resourceID = resourceID
         self.charts = charts
         self.range = range
+        self.offersFilters = offersFilters
         self.clock = clock
+    }
+
+    /// Whether any chart on this screen responds to the instance filter, and so whether to offer it.
+    var canFilterByInstance: Bool { offersFilters && charts.contains(where: \.followsInstanceFilter) }
+    var canFilterHTTP: Bool { offersFilters && charts.contains(where: \.followsHTTPFilters) }
+
+    /// The filters narrowing this chart, for a caption on the card — so a chart showing one instance
+    /// isn't mistaken for the whole service. `nil` when the chart shows everything.
+    func filterCaption(for chart: MetricChartSpec) -> String? {
+        var parts: [String] = []
+        if chart.followsInstanceFilter, let instance = filters.instance {
+            parts.append("instance \(Self.shortInstance(instance))")
+        }
+        if chart.followsHTTPFilters {
+            if let host = filters.host { parts.append(host) }
+            if let path = filters.path { parts.append(path) }
+        }
+        return parts.isEmpty ? nil : "Filtered to " + parts.joined(separator: " · ")
     }
 
     /// Every distinct series across every chart. Distinct because `cpu` appearing on two charts is
@@ -82,32 +120,8 @@ final class MetricsStore {
         defer { isLoading = false }
 
         let (start, end) = range.window(endingAt: clock())
-        let query = MetricsQuery(
-            resourceID: resourceID,
-            startTime: start,
-            endTime: end,
-            resolutionSeconds: range.resolutionSeconds
-        )
-
-        let client = client
-        let results = await withTaskGroup(
-            of: (id: String, series: [MetricSeries]?, error: String?).self
-        ) { group in
-            for kind in requiredKinds {
-                group.addTask {
-                    do {
-                        return (kind.id, try await client.metricSeries(kind, query), nil)
-                    } catch {
-                        return (kind.id, nil, RenderError.wrapping(error).errorDescription)
-                    }
-                }
-            }
-            var collected: [(id: String, series: [MetricSeries]?, error: String?)] = []
-            for await result in group {
-                collected.append(result)
-            }
-            return collected
-        }
+        async let options = fetchFilterOptions(start: start, end: end)
+        let results = await fetch(requiredKinds, start: start, end: end)
 
         var loaded: [String: [MetricSeries]] = [:]
         var failed: Set<String> = []
@@ -127,6 +141,105 @@ final class MetricsStore {
         // enough: twelve requests that all failed almost always failed for the same reason.
         errorMessage = loaded.isEmpty ? (firstError ?? "Couldn't load metrics.") : nil
         lastUpdated = failed.isEmpty ? clock() : lastUpdated
+        if let options = await options {
+            filterOptions = options
+        }
+    }
+
+    /// Narrows the charts and refetches only the ones the change reaches. Changing the host leaves
+    /// CPU alone — there's no reason to spend a request on a chart that will come back identical.
+    func apply(_ newFilters: MetricFilters) async {
+        guard newFilters != filters, !isLoading else { return }
+        let instanceChanged = newFilters.instance != filters.instance
+        let httpChanged = newFilters.host != filters.host || newFilters.path != filters.path
+        filters = newFilters
+
+        let affected = charts.filter {
+            (instanceChanged && $0.followsInstanceFilter) || (httpChanged && $0.followsHTTPFilters)
+        }
+        var seen: Set<String> = []
+        let kinds = affected.flatMap(\.kinds).filter { seen.insert($0.id).inserted }
+        guard !kinds.isEmpty else { return }
+
+        isLoading = true
+        defer { isLoading = false }
+        // Cleared first, as with a range change, so a chart can't show the old filter's lines while
+        // the new ones load.
+        for kind in kinds {
+            seriesByKind[kind.id] = nil
+            failedKindIDs.remove(kind.id)
+        }
+
+        let (start, end) = range.window(endingAt: clock())
+        for result in await fetch(kinds, start: start, end: end) {
+            if let series = result.series {
+                seriesByKind[result.id] = series
+            } else {
+                failedKindIDs.insert(result.id)
+            }
+        }
+    }
+
+    private func fetch(
+        _ kinds: [MetricKind],
+        start: Date,
+        end: Date
+    ) async -> [(id: String, series: [MetricSeries]?, error: String?)] {
+        let query = MetricsQuery(
+            resourceID: resourceID,
+            startTime: start,
+            endTime: end,
+            resolutionSeconds: range.resolutionSeconds,
+            instanceID: filters.instance,
+            host: filters.host,
+            path: filters.path
+        )
+        let client = client
+        return await withTaskGroup(
+            of: (id: String, series: [MetricSeries]?, error: String?).self
+        ) { group in
+            for kind in kinds {
+                group.addTask {
+                    do {
+                        return (kind.id, try await client.metricSeries(kind, query), nil)
+                    } catch {
+                        return (kind.id, nil, RenderError.wrapping(error).errorDescription)
+                    }
+                }
+            }
+            var collected: [(id: String, series: [MetricSeries]?, error: String?)] = []
+            for await result in group {
+                collected.append(result)
+            }
+            return collected
+        }
+    }
+
+    /// `nil` when nothing should change: filters aren't offered here, or every option request failed.
+    /// One list failing still updates the others, since each feeds its own menu.
+    private func fetchFilterOptions(start: Date, end: Date) async -> MetricFilterOptions? {
+        guard offersFilters else { return nil }
+        let client = client
+        let resourceID = resourceID
+        let wantsInstances = canFilterByInstance
+        let wantsHTTP = canFilterHTTP
+
+        async let instances = wantsInstances
+            ? try? client.metricInstanceOptions(resourceID: resourceID, startTime: start, endTime: end)
+            : []
+        async let hosts = wantsHTTP
+            ? try? client.metricHostOptions(serviceID: resourceID, startTime: start, endTime: end)
+            : []
+        async let paths = wantsHTTP ? try? client.metricPathOptions(resourceID: resourceID) : []
+
+        let (i, h, p) = await (instances, hosts, paths)
+        if i == nil, h == nil, p == nil { return nil }
+        return MetricFilterOptions(
+            instances: (i ?? []).sorted(),
+            hosts: (h ?? []).sorted(),
+            // Render's order, which is by frequency — the busiest path pattern first.
+            paths: p ?? []
+        )
     }
 
     /// Switches range and reloads. Data is cleared first so the charts can't briefly show the old
@@ -257,7 +370,7 @@ final class MetricsStore {
               let field = spec.distinguishingLabel,
               let value = series[label: field]
         else { return spec.name }
-        let label = field == "instance" ? shortInstance(value) : value
+        let label = spec.labelTitles[value] ?? (field == "instance" ? Self.shortInstance(value) : value)
         // On a chart whose spec names already carry meaning, the label refines them ("p95 · 500");
         // on a chart with one spec, the generic name ("Requests") has nothing to add.
         return refining ? "\(spec.name) · \(label)" : label
@@ -265,7 +378,7 @@ final class MetricsStore {
 
     /// `srv-d1abc2de3f4g5h6i7j8k-59d7b8f9c-x4kzp` → `x4kzp`. The service prefix is the same on every
     /// series in the chart, so it's noise in a legend that has to fit on a phone.
-    private func shortInstance(_ instance: String) -> String {
+    static func shortInstance(_ instance: String) -> String {
         instance.split(separator: "-").last.map(String.init) ?? instance
     }
 }

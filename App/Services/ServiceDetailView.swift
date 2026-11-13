@@ -300,7 +300,8 @@ struct ServiceDetailView: View {
                 MetricsView(
                     client: client,
                     resourceID: service.id,
-                    charts: MetricsCatalog.charts(for: service)
+                    charts: MetricsCatalog.charts(for: service),
+                    offersFilters: true
                 )
             } label: {
                 Label("Metrics", systemImage: "chart.xyaxis.line")

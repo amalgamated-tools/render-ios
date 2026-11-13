@@ -36,6 +36,12 @@ public struct MetricsQuery: Sendable, Hashable {
     private var clampedResolutionSeconds: Int
     /// Narrows to one instance. Only CPU and memory accept it; ignored elsewhere.
     public var instanceID: String?
+    /// Narrows the HTTP series to one host — `api.example.com`. Only the HTTP endpoints accept it;
+    /// ignored elsewhere.
+    public var host: String?
+    /// Narrows the HTTP series to requests matching a path pattern — `/api/*`. Only the HTTP
+    /// endpoints accept it; ignored elsewhere.
+    public var path: String?
     /// How to combine several instances' series into one. Only `/metrics/cpu` accepts it — an
     /// asymmetry in the spec, not a modelling choice here. `nil` leaves the series per-instance.
     public var aggregationMethod: AggregationMethod?
@@ -52,6 +58,8 @@ public struct MetricsQuery: Sendable, Hashable {
         endTime: Date,
         resolutionSeconds: Int,
         instanceID: String? = nil,
+        host: String? = nil,
+        path: String? = nil,
         aggregationMethod: AggregationMethod? = nil
     ) {
         self.resourceID = resourceID
@@ -59,6 +67,8 @@ public struct MetricsQuery: Sendable, Hashable {
         self.endTime = endTime
         self.clampedResolutionSeconds = max(Self.minimumResolutionSeconds, resolutionSeconds)
         self.instanceID = instanceID
+        self.host = host
+        self.path = path
         self.aggregationMethod = aggregationMethod
     }
 }
@@ -87,6 +97,12 @@ public enum MetricKind: Sendable, Hashable {
     case activeConnections
     case diskUsage
     case diskCapacity
+    /// Egress split by where it went — `http`, `websocket`, `nat`, `privatelink` — in the
+    /// `trafficSource` label. Render's own `total` series is dropped: the sources add up to it, and
+    /// drawn alongside them it would double every reading.
+    case bandwidthSources
+    /// Postgres replica lag in seconds. Asked of the primary, it returns one series per replica.
+    case replicationLag
 
     public enum HTTPRequestGrouping: String, Sendable, Hashable, CaseIterable {
         case statusCode
@@ -110,6 +126,8 @@ public enum MetricKind: Sendable, Hashable {
         case .activeConnections: "active-connections"
         case .diskUsage: "disk-usage"
         case .diskCapacity: "disk-capacity"
+        case .bandwidthSources: "bandwidth-sources"
+        case .replicationLag: "replication-lag"
         }
     }
 }
@@ -118,9 +136,9 @@ extension RenderClient {
     /// Fetches one metric series set.
     ///
     /// The switch is where the per-endpoint asymmetry lives, and it's deliberately explicit: only CPU
-    /// takes `aggregationMethod`, only CPU and memory take `instance`, `/metrics/bandwidth` takes no
-    /// `resolutionSeconds` at all, and latency and requests each take one parameter nothing else
-    /// does. Passing a parameter an endpoint doesn't declare would be a 400, so this can't be
+    /// takes `aggregationMethod`, only CPU and memory take `instance`, only HTTP takes `host` and
+    /// `path`, the two bandwidth endpoints take no `resolutionSeconds` at all, and latency and
+    /// requests each take one parameter nothing else does. Passing a parameter an endpoint doesn't declare would be a 400, so this can't be
     /// collapsed into a generic call without dropping information Render needs.
     ///
     /// Series with no data points are dropped — see ``MetricSeries/from(_:)``.
@@ -188,7 +206,7 @@ extension RenderClient {
             return MetricSeries.from(
                 try await api.getHttpRequests(query: .init(
                     startTime: start, endTime: end, resolutionSeconds: resolution,
-                    resource: resource,
+                    resource: resource, host: query.host, path: query.path,
                     aggregateBy: aggregateBy.map {
                         switch $0 {
                         case .statusCode: .statusCode
@@ -201,7 +219,7 @@ extension RenderClient {
             return MetricSeries.from(
                 try await api.getHttpLatency(query: .init(
                     startTime: start, endTime: end, resolutionSeconds: resolution,
-                    resource: resource,
+                    resource: resource, host: query.host, path: query.path,
                     // A Double, not the Float the spec's `format: float` would give — see
                     // Scripts/number-params.py. As a Float this went on the wire as 0.949999988079071
                     // instead of 0.95. (Render turned out to accept both; this is the honest spelling.)
@@ -237,6 +255,20 @@ extension RenderClient {
         case .diskCapacity:
             return MetricSeries.from(
                 try await api.getDiskCapacity(query: .init(
+                    startTime: start, endTime: end, resolutionSeconds: resolution, resource: resource
+                )).ok.body.json
+            )
+        case .bandwidthSources:
+            // Like /metrics/bandwidth, no resolutionSeconds. The response shape is corrected by
+            // Scripts/metrics-quirks.py — the spec describes one Render doesn't send.
+            return MetricSeries.from(
+                try await api.getBandwidthSources(query: .init(
+                    startTime: start, endTime: end, resource: resource
+                )).ok.body.json
+            ).filter { $0[label: "trafficSource"] != "total" }
+        case .replicationLag:
+            return MetricSeries.from(
+                try await api.getReplicationLag(query: .init(
                     startTime: start, endTime: end, resolutionSeconds: resolution, resource: resource
                 )).ok.body.json
             )
