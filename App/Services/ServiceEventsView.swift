@@ -63,7 +63,7 @@ struct ServiceEventsView: View {
     }
 }
 
-/// Display mapping for all 42 event types. Grouped by what the reader cares about — did something
+/// Display mapping for all 45 event types. Grouped by what the reader cares about — did something
 /// break, is something moving, or is this just bookkeeping — rather than one bespoke label each.
 extension Components.Schemas.ServiceEventWithCursor.EventPayload._TypePayload {
     var displayName: String {
@@ -86,6 +86,9 @@ extension Components.Schemas.ServiceEventWithCursor.EventPayload._TypePayload {
         case .diskCreated: "Disk created"
         case .diskUpdated: "Disk updated"
         case .diskDeleted: "Disk deleted"
+        case .diskSnapshotRestored: "Disk snapshot restored"
+        case .serviceDiskUsageHigh: "Disk usage high"
+        case .serviceDiskUsageRecovered: "Disk usage recovered"
         case .imagePullFailed: "Image pull failed"
         case .initialDeployHookEnded: "Initial deploy hook ended"
         case .initialDeployHookStarted: "Initial deploy hook started"
@@ -136,7 +139,8 @@ extension Components.Schemas.ServiceEventWithCursor.EventPayload._TypePayload {
             "arrow.up.arrow.down"
         case .maintenanceStarted, .maintenanceEnded, .maintenanceModeEnabled, .maintenanceModeUriUpdated:
             "wrench.and.screwdriver"
-        case .diskCreated, .diskUpdated, .diskDeleted:
+        case .diskCreated, .diskUpdated, .diskDeleted, .diskSnapshotRestored,
+             .serviceDiskUsageHigh, .serviceDiskUsageRecovered:
             "externaldrive"
         case .branchDeleted, .commitIgnored, .autoDeployDisabled, .autoDeployEnabled,
              .artifactSourceChanged, .planChanged:
@@ -150,9 +154,10 @@ extension Components.Schemas.ServiceEventWithCursor.EventPayload._TypePayload {
         case .artifactFetchFailed, .imagePullFailed, .serverFailed, .serverHardwareFailure,
              .pipelineMinutesExhausted, .serviceSuspended, .suspenderAdded:
             .red
-        case .serverAvailable, .serviceResumed, .suspenderRemoved:
+        case .serverAvailable, .serviceResumed, .suspenderRemoved, .serviceDiskUsageRecovered:
             .green
-        case .autoscalingStarted, .autoscalingEnded, .instanceCountChanged, .maintenanceStarted,
+        case .serviceDiskUsageHigh,
+             .autoscalingStarted, .autoscalingEnded, .instanceCountChanged, .maintenanceStarted,
              .maintenanceEnded, .maintenanceModeEnabled, .maintenanceModeUriUpdated:
             .orange
         case .buildStarted, .buildEnded, .deployStarted, .deployEnded, .preDeployStarted,
@@ -160,7 +165,7 @@ extension Components.Schemas.ServiceEventWithCursor.EventPayload._TypePayload {
              .initialDeployHookStarted, .initialDeployHookEnded, .serverRestarted:
             .blue
         case .cronJobRunStarted, .cronJobRunEnded, .jobRunEnded, .diskCreated, .diskUpdated,
-             .diskDeleted, .branchDeleted, .commitIgnored, .autoDeployDisabled, .autoDeployEnabled,
+             .diskDeleted, .diskSnapshotRestored, .branchDeleted, .commitIgnored, .autoDeployDisabled, .autoDeployEnabled,
              .artifactSourceChanged, .planChanged, .autoscalingConfigChanged:
             .secondary
         }
