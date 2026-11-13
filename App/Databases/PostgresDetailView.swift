@@ -187,6 +187,11 @@ struct PostgresDetailView: View {
             } label: {
                 Label("Metrics", systemImage: "chart.xyaxis.line")
             }
+            NavigationLink {
+                PostgresInsightsView(client: client, postgresID: database.id)
+            } label: {
+                Label("Query Insights", systemImage: "magnifyingglass")
+            }
         }
     }
 

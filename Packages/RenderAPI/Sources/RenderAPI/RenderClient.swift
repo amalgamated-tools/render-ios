@@ -21,6 +21,27 @@ public struct RenderClient: Sendable {
     /// it stays a parameter only so tests can point at a stub.
     public static let productionBaseURL = URL(string: "https://api.render.com/v1")!
 
+    // Kept so ``withRetryPolicy(_:)`` can rebuild the same stack with one thing changed.
+    private let baseURL: URL
+    private let apiKeyProvider: any APIKeyProvider
+    private let transport: any ClientTransport
+    private let logSocketConnector: any LogSocketConnecting
+    private let logReconnectPolicy: LogStream.ReconnectPolicy
+
+    /// The same client — same base URL, key, transport and middleware order — with a different
+    /// retry policy. For endpoints where an automatic retry is wrong, such as Postgres query
+    /// insights, whose one-request-a-minute allowance a retry would spend while the user waits.
+    public func withRetryPolicy(_ policy: RetryMiddleware.Policy) -> RenderClient {
+        RenderClient(
+            baseURL: baseURL,
+            apiKeyProvider: apiKeyProvider,
+            retryPolicy: policy,
+            transport: transport,
+            logSocketConnector: logSocketConnector,
+            logReconnectPolicy: logReconnectPolicy
+        )
+    }
+
     public init(
         baseURL: URL = RenderClient.productionBaseURL,
         apiKeyProvider: any APIKeyProvider,
@@ -29,6 +50,11 @@ public struct RenderClient: Sendable {
         logSocketConnector: any LogSocketConnecting = URLSessionLogSocketConnector(),
         logReconnectPolicy: LogStream.ReconnectPolicy = .default
     ) {
+        self.baseURL = baseURL
+        self.apiKeyProvider = apiKeyProvider
+        self.transport = transport
+        self.logSocketConnector = logSocketConnector
+        self.logReconnectPolicy = logReconnectPolicy
         self.logs = LogStream(
             baseURL: baseURL,
             apiKeyProvider: apiKeyProvider,
