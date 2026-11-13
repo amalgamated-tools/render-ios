@@ -310,6 +310,15 @@ struct ServiceDetailView: View {
             } label: {
                 Label("Events", systemImage: "list.bullet.rectangle")
             }
+            // Withheld for static sites: they're served from Render's CDN, with no instances of
+            // their own and no outbound traffic. See `ServiceConfigCatalog`.
+            if ServiceConfigCatalog.hasInstancesAndOutboundIPs(service.type) {
+                NavigationLink {
+                    ServiceNetworkView(client: client, serviceID: service.id)
+                } label: {
+                    Label("Instances & IPs", systemImage: "network")
+                }
+            }
             NavigationLink {
                 // A config write saves without deploying, so both screens carry a deployer: the
                 // success banner offers Deploy rather than sending the user back here for it.
