@@ -24,7 +24,7 @@ struct FailureAlert: Identifiable, Hashable, Sendable {
 /// **Why one request per watched service.** There is no account-wide events feed in the API — the
 /// only listable event collections are per service, per webhook, and per task run. And the
 /// per-service endpoint's `type` filter takes a *single* event type, not a list, so narrowing to the
-/// types worth alerting on would multiply the request count by seven rather than divide it. One
+/// types worth alerting on would multiply the request count by eight rather than divide it. One
 /// unfiltered request per service since its watermark is the cheapest correct thing available, and
 /// on an idle service it comes back empty. It only pages further when that request comes back full
 /// — see ``fetchEvents(serviceID:since:)``.
@@ -44,6 +44,10 @@ final class FailureWatcher {
         .commitIgnored,
         .pipelineMinutesExhausted,
         .serviceSuspended,
+        // A disk filling up is the one capacity warning worth waking someone for: unlike a plan or
+        // scaling change, it ends in an outage if nobody acts. Its `recovered` counterpart is
+        // deliberately absent — good news can wait for the timeline.
+        .serviceDiskUsageHigh,
     ]
 
     private let client: RenderClient

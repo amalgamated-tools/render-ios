@@ -71,6 +71,22 @@ struct FailureWatcherTests {
         #expect(alerts.first?.summary == "Server failed")
     }
 
+    @Test("a disk filling up alerts; its recovery does not")
+    func diskUsageHighAlerts() async throws {
+        let (watcher, _, _) = makeWatcher(route: Self.route(
+            events: Fixtures.eventsPage([
+                (id: "evt-1", type: "service_disk_usage_high", timestamp: Self.eventTime),
+                (id: "evt-2", type: "service_disk_usage_recovered", timestamp: Self.eventTime),
+            ])
+        ))
+
+        let alerts = await watcher.poll()
+
+        #expect(alerts.count == 1)
+        #expect(alerts.first?.id == "evt-1")
+        #expect(alerts.first?.summary == "Disk usage high")
+    }
+
     @Test("bookkeeping events are not failures")
     func nonFailureEventsIgnored() async throws {
         let (watcher, _, _) = makeWatcher(route: Self.route(

@@ -1216,8 +1216,8 @@ after a `BGAppRefreshTask` need neither. `make check` green — 93 package tests
    break" costs one request per service, inside a background budget measured in seconds. The user
    picks up to 20.
 2. **The poll is unfiltered.** `GET /services/{id}/events` takes `type` as a *single* value, not a
-   list, so filtering server-side to the seven types worth alerting on would multiply requests by
-   seven rather than divide them. One request per service since its watermark, filtered in
+   list, so filtering server-side to the eight types worth alerting on would multiply requests by
+   eight rather than divide them. One request per service since its watermark, filtered in
    `FailureWatcher`.
 3. **`deploy_ended` costs a second request.** It can't say whether the deploy succeeded — that lives
    in `event.details`, the union the app can't decode (§F of `docs/api-accommodations.md`). So the
