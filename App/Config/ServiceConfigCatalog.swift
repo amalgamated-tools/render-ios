@@ -36,6 +36,15 @@ enum ServiceConfigCatalog {
         type == .staticSite
     }
 
+    /// Running instances and outbound IPs: everything **except static sites**.
+    ///
+    /// A static site is files on Render's CDN — no process of its own to list and no traffic leaving
+    /// it. Withheld by the rule above; the outbound IPs endpoint declares `406` for exactly this kind
+    /// of mismatch, and `loadFailureMessage` phrases it if the gate is ever wrong.
+    static func hasInstancesAndOutboundIPs(_ type: Components.Schemas.ServiceType) -> Bool {
+        type != .staticSite
+    }
+
     /// What `406` means when one of these endpoints answers with it: not a fault, just a resource this
     /// service type doesn't have. Shown instead of the raw status in case a gate above is wrong.
     static let unsupportedMessage = "Not available for this service type."
