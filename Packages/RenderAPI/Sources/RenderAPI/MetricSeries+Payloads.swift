@@ -72,3 +72,13 @@ extension Operations.GetDiskUsage.Output.Ok.Body.JsonPayloadPayload: MetricSerie
 extension Operations.GetDiskCapacity.Output.Ok.Body.JsonPayloadPayload.LabelsPayloadPayload: MetricSeriesLabelPayload {}
 extension Operations.GetDiskCapacity.Output.Ok.Body.JsonPayloadPayload.ValuesPayloadPayload: MetricSeriesPointPayload {}
 extension Operations.GetDiskCapacity.Output.Ok.Body.JsonPayloadPayload: MetricSeriesPayload {}
+
+// MARK: - Traffic sources and replication
+
+extension Operations.GetBandwidthSources.Output.Ok.Body.JsonPayloadPayload.LabelsPayloadPayload: MetricSeriesLabelPayload {}
+extension Operations.GetBandwidthSources.Output.Ok.Body.JsonPayloadPayload.ValuesPayloadPayload: MetricSeriesPointPayload {}
+extension Operations.GetBandwidthSources.Output.Ok.Body.JsonPayloadPayload: MetricSeriesPayload {}
+
+extension Operations.GetReplicationLag.Output.Ok.Body.JsonPayloadPayload.LabelsPayloadPayload: MetricSeriesLabelPayload {}
+extension Operations.GetReplicationLag.Output.Ok.Body.JsonPayloadPayload.ValuesPayloadPayload: MetricSeriesPointPayload {}
+extension Operations.GetReplicationLag.Output.Ok.Body.JsonPayloadPayload: MetricSeriesPayload {}

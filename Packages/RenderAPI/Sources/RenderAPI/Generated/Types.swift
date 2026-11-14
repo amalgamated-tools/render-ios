@@ -2030,8 +2030,7 @@ public protocol APIProtocol: Sendable {
     func getFlowRunStep(_ input: Operations.GetFlowRunStep.Input) async throws -> Operations.GetFlowRunStep.Output
     /// List sandboxes
     ///
-    /// List sandboxes in a workspace. Each request must specify one workspace.
-    /// Sandboxes run in the region of their sandbox group.
+    /// List sandboxes in a workspace. Each request must specify one workspace. Sandboxes run in the region of their sandbox group.
     ///
     ///
     /// - Remark: HTTP `GET /sandboxes`.
@@ -2039,9 +2038,7 @@ public protocol APIProtocol: Sendable {
     func listSandboxes(_ input: Operations.ListSandboxes.Input) async throws -> Operations.ListSandboxes.Output
     /// Create sandbox
     ///
-    /// Create a sandbox and return its initial state. The sandbox might still be
-    /// starting when the response is returned. To use a saved snapshot or custom
-    /// image, provide `snapshotId`, `snapshotName`, `buildId`, or `buildName`.
+    /// Create a sandbox and return its initial state. The sandbox might still be starting when the response is returned. To use a saved snapshot or custom image, provide `snapshotId`, `snapshotName`, `buildId`, or `buildName`.
     ///
     ///
     /// - Remark: HTTP `POST /sandboxes`.
@@ -2049,9 +2046,7 @@ public protocol APIProtocol: Sendable {
     func createSandbox(_ input: Operations.CreateSandbox.Input) async throws -> Operations.CreateSandbox.Output
     /// List sandbox groups
     ///
-    /// List sandbox groups in a workspace, newest first. Returns up to 20 groups
-    /// by default, with a maximum of 100. To fetch the next page, pass the last
-    /// result's cursor as `cursor`. Continue until the response is empty.
+    /// List sandbox groups in a workspace, newest first. Returns up to 20 groups by default, with a maximum of 100. To fetch the next page, pass the last result's cursor as `cursor`. Continue until the response is empty.
     ///
     ///
     /// - Remark: HTTP `GET /sandbox-groups`.
@@ -2087,9 +2082,7 @@ public protocol APIProtocol: Sendable {
     func retrieveSandboxExecution(_ input: Operations.RetrieveSandboxExecution.Input) async throws -> Operations.RetrieveSandboxExecution.Output
     /// Terminate sandbox
     ///
-    /// Terminate the sandbox with the provided ID. Returns HTTP 204 even if the
-    /// sandbox is already terminated. You can also terminate a sandbox while it
-    /// is starting (`creating`).
+    /// Terminate the sandbox with the provided ID. Returns HTTP 204 even if the sandbox is already terminated. You can also terminate a sandbox while it is starting (`creating`).
     ///
     ///
     /// - Remark: HTTP `POST /sandboxes/{sandboxId}/terminate`.
@@ -2097,10 +2090,7 @@ public protocol APIProtocol: Sendable {
     func terminateSandbox(_ input: Operations.TerminateSandbox.Input) async throws -> Operations.TerminateSandbox.Output
     /// Create sandbox snapshot
     ///
-    /// Capture a snapshot of a running sandbox. Returns HTTP 202 with the snapshot
-    /// in `creating` status. Retrieve the snapshot until its status is `available`
-    /// or `failed`. The sandbox continues running, with a brief pause when capturing
-    /// a runtime snapshot.
+    /// Capture a snapshot of a running sandbox. Returns HTTP 202 with the snapshot in `creating` status. Retrieve the snapshot until its status is `available` or `failed`. The sandbox continues running, with a brief pause when capturing a runtime snapshot.
     ///
     ///
     /// - Remark: HTTP `POST /sandboxes/{sandboxId}/snapshots`.
@@ -2115,8 +2105,7 @@ public protocol APIProtocol: Sendable {
     func retrieveSandboxGroup(_ input: Operations.RetrieveSandboxGroup.Input) async throws -> Operations.RetrieveSandboxGroup.Output
     /// Update sandbox group
     ///
-    /// Update a sandbox group's concurrency limit. The response contains the
-    /// effective limit after applying Render's limit for the workspace.
+    /// Update a sandbox group's concurrency limit. The response contains the effective limit after applying Render's limit for the workspace.
     ///
     ///
     /// - Remark: HTTP `PATCH /sandbox-groups/{sandboxGroupId}`.
@@ -2124,9 +2113,7 @@ public protocol APIProtocol: Sendable {
     func updateSandboxGroup(_ input: Operations.UpdateSandboxGroup.Input) async throws -> Operations.UpdateSandboxGroup.Output
     /// List sandbox group credentials
     ///
-    /// List credentials in the sandbox group, sorted by credential ID. Returns
-    /// credential settings and metadata. These endpoints do not return secret values,
-    /// including to admins.
+    /// List credentials in the sandbox group, sorted by credential ID. Returns credential settings and metadata. These endpoints do not return secret values, including to admins.
     ///
     ///
     /// - Remark: HTTP `GET /sandbox-groups/{sandboxGroupId}/credentials`.
@@ -2134,17 +2121,11 @@ public protocol APIProtocol: Sendable {
     func listSandboxGroupCredentials(_ input: Operations.ListSandboxGroupCredentials.Input) async throws -> Operations.ListSandboxGroupCredentials.Output
     /// Create sandbox group credential
     ///
-    /// Configure a credential for injection into matching outbound HTTPS requests
-    /// from sandboxes in this group. Requires an admin. You assign the credential ID.
+    /// Configure a credential for injection into matching outbound HTTPS requests from sandboxes in this group. Requires an admin. You assign the credential ID.
     ///
-    /// Each group supports up to 25 credentials. Current credential settings and
-    /// secret values have a combined serialized size limit of 200 KiB (204800
-    /// bytes). Render retains the current configuration and three distinct prior
-    /// configurations per credential, with a total storage limit of 1 MiB including
-    /// version metadata.
+    /// Each group supports up to 25 credentials. Current credential settings and secret values have a combined serialized size limit of 200 KiB (204800 bytes). Render retains the current configuration and three distinct prior configurations per credential, with a total storage limit of 1 MiB including version metadata.
     ///
-    /// The response confirms the configuration was saved. It does not confirm that
-    /// credential injection is active for a particular sandbox.
+    /// The response confirms the configuration was saved. It does not confirm that credential injection is active for a particular sandbox.
     ///
     ///
     /// - Remark: HTTP `POST /sandbox-groups/{sandboxGroupId}/credentials`.
@@ -2152,8 +2133,7 @@ public protocol APIProtocol: Sendable {
     func createSandboxGroupCredential(_ input: Operations.CreateSandboxGroupCredential.Input) async throws -> Operations.CreateSandboxGroupCredential.Output
     /// Retrieve sandbox group credential
     ///
-    /// Retrieve the settings and metadata for a credential in this sandbox group.
-    /// These endpoints do not return secret values, including to admins.
+    /// Retrieve the settings and metadata for a credential in this sandbox group. These endpoints do not return secret values, including to admins.
     ///
     ///
     /// - Remark: HTTP `GET /sandbox-groups/{sandboxGroupId}/credentials/{credentialId}`.
@@ -2161,18 +2141,11 @@ public protocol APIProtocol: Sendable {
     func retrieveSandboxGroupCredential(_ input: Operations.RetrieveSandboxGroupCredential.Input) async throws -> Operations.RetrieveSandboxGroupCredential.Output
     /// Update sandbox group credential
     ///
-    /// Update a credential. Developers can change `injection`, `methods`, `paths`,
-    /// and `enabled`. Changing `domain` or `value` requires an admin.
+    /// Update a credential. Developers can change `injection`, `methods`, `paths`, and `enabled`. Changing `domain` or `value` requires an admin.
     ///
-    /// Omitted top-level fields keep their current values. Providing `injection`
-    /// replaces the entire object. Its `template` defaults to `${SECRET}` when
-    /// omitted. An empty `methods` or `paths` list removes that filter. Providing
-    /// `value` creates a new version.
-    /// The combined serialized size of current credential settings and secret
-    /// values in the group must remain within 200 KiB (204800 bytes).
+    /// Omitted top-level fields keep their current values. Providing `injection` replaces the entire object. Its `template` defaults to `${SECRET}` when omitted. An empty `methods` or `paths` list removes that filter. Providing `value` creates a new version. The combined serialized size of current credential settings and secret values in the group must remain within 200 KiB (204800 bytes).
     ///
-    /// The response confirms the configuration was saved. It does not confirm that
-    /// credential injection is active for a particular sandbox.
+    /// The response confirms the configuration was saved. It does not confirm that credential injection is active for a particular sandbox.
     ///
     ///
     /// - Remark: HTTP `PATCH /sandbox-groups/{sandboxGroupId}/credentials/{credentialId}`.
@@ -2180,8 +2153,7 @@ public protocol APIProtocol: Sendable {
     func updateSandboxGroupCredential(_ input: Operations.UpdateSandboxGroupCredential.Input) async throws -> Operations.UpdateSandboxGroupCredential.Output
     /// Delete sandbox group credential
     ///
-    /// Delete a credential from the sandbox group. Requires an admin. Repeated
-    /// delete requests are accepted, including if the credential is already absent.
+    /// Delete a credential from the sandbox group. Requires an admin. Repeated delete requests are accepted, including if the credential is already absent.
     ///
     ///
     /// - Remark: HTTP `DELETE /sandbox-groups/{sandboxGroupId}/credentials/{credentialId}`.
@@ -2189,13 +2161,9 @@ public protocol APIProtocol: Sendable {
     func deleteSandboxGroupCredential(_ input: Operations.DeleteSandboxGroupCredential.Input) async throws -> Operations.DeleteSandboxGroupCredential.Output
     /// List sandbox credential versions
     ///
-    /// List retained credential versions, newest version ID first. Versions with
-    /// identical settings and secret values share a fingerprint.
+    /// List retained credential versions, newest version ID first. Versions with identical settings and secret values share a fingerprint.
     ///
-    /// Render retains the current configuration and the three distinct prior
-    /// configurations most recently active. When an older configuration is removed,
-    /// all versions that refer to it are also removed. These endpoints do not return
-    /// secret values.
+    /// Render retains the current configuration and the three distinct prior configurations most recently active. When an older configuration is removed, all versions that refer to it are also removed. These endpoints do not return secret values.
     ///
     ///
     /// - Remark: HTTP `GET /sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/versions`.
@@ -2203,18 +2171,11 @@ public protocol APIProtocol: Sendable {
     func listSandboxGroupCredentialVersions(_ input: Operations.ListSandboxGroupCredentialVersions.Input) async throws -> Operations.ListSandboxGroupCredentialVersions.Output
     /// Restore sandbox credential configuration
     ///
-    /// Restore a retained credential version, including its routing settings,
-    /// injection settings, and secret value, as a new current version. Requires
-    /// an admin.
+    /// Restore a retained credential version, including its routing settings, injection settings, and secret value, as a new current version. Requires an admin.
     ///
-    /// The new version has a higher ID, records who restored it and when, and
-    /// identifies the source in `restoredFromVersionId`. Its fingerprint matches
-    /// the source version. Render retains the current configuration and the three
-    /// distinct prior configurations most recently active. Removing an older
-    /// configuration also removes all versions that refer to it.
+    /// The new version has a higher ID, records who restored it and when, and identifies the source in `restoredFromVersionId`. Its fingerprint matches the source version. Render retains the current configuration and the three distinct prior configurations most recently active. Removing an older configuration also removes all versions that refer to it.
     ///
-    /// The response confirms the configuration was saved. It does not confirm that
-    /// credential injection is active for a particular sandbox.
+    /// The response confirms the configuration was saved. It does not confirm that credential injection is active for a particular sandbox.
     ///
     /// These endpoints do not return secret values.
     ///
@@ -2231,14 +2192,9 @@ public protocol APIProtocol: Sendable {
     func listSandboxBuilds(_ input: Operations.ListSandboxBuilds.Input) async throws -> Operations.ListSandboxBuilds.Output
     /// Create sandbox build
     ///
-    /// Start converting an OCI container image into an image that sandboxes can
-    /// use. New builds run asynchronously. Retrieve the build until its status is
-    /// `succeeded` or `failed`. After it succeeds, provide its ID as `buildId` when
-    /// creating a sandbox.
+    /// Start converting an OCI container image into an image that sandboxes can use. New builds run asynchronously. Retrieve the build until its status is `succeeded` or `failed`. After it succeeds, provide its ID as `buildId` when creating a sandbox.
     ///
-    /// If the group already has a pending, running, or succeeded build for the same
-    /// name and image digest, Render returns that build. Retrying a failed build
-    /// starts a new build.
+    /// If the group already has a pending, running, or succeeded build for the same name and image digest, Render returns that build. Retrying a failed build starts a new build.
     ///
     ///
     /// - Remark: HTTP `POST /sandbox-groups/{sandboxGroupId}/builds`.
@@ -2253,9 +2209,7 @@ public protocol APIProtocol: Sendable {
     func retrieveSandboxBuild(_ input: Operations.RetrieveSandboxBuild.Input) async throws -> Operations.RetrieveSandboxBuild.Output
     /// Delete sandbox build
     ///
-    /// Delete a build of a sandbox image. The build no longer appears in lists
-    /// and cannot be retrieved or used to create sandboxes, including by image
-    /// name. Repeated requests to delete the build return HTTP 204.
+    /// Delete a build of a sandbox image. The build no longer appears in lists and cannot be retrieved or used to create sandboxes, including by image name. Repeated requests to delete the build return HTTP 204.
     ///
     ///
     /// - Remark: HTTP `DELETE /sandbox-groups/{sandboxGroupId}/builds/{buildId}`.
@@ -2263,8 +2217,7 @@ public protocol APIProtocol: Sendable {
     func deleteSandboxBuild(_ input: Operations.DeleteSandboxBuild.Input) async throws -> Operations.DeleteSandboxBuild.Output
     /// List sandbox snapshots
     ///
-    /// List snapshots in a sandbox group, newest first. Excludes expired and
-    /// deleted snapshots.
+    /// List snapshots in a sandbox group, newest first. Excludes expired and deleted snapshots.
     ///
     ///
     /// - Remark: HTTP `GET /sandbox-groups/{sandboxGroupId}/snapshots`.
@@ -2279,8 +2232,7 @@ public protocol APIProtocol: Sendable {
     func retrieveSandboxSnapshot(_ input: Operations.RetrieveSandboxSnapshot.Input) async throws -> Operations.RetrieveSandboxSnapshot.Output
     /// Delete sandbox snapshot
     ///
-    /// Delete a snapshot. Sandboxes created from it are not affected. Returns
-    /// HTTP 204 if the snapshot is already deleted or expired.
+    /// Delete a snapshot. Sandboxes created from it are not affected. Returns HTTP 204 if the snapshot is already deleted or expired.
     ///
     ///
     /// - Remark: HTTP `DELETE /sandbox-groups/{sandboxGroupId}/snapshots/{snapshotId}`.
@@ -2288,9 +2240,7 @@ public protocol APIProtocol: Sendable {
     func deleteSandboxSnapshot(_ input: Operations.DeleteSandboxSnapshot.Input) async throws -> Operations.DeleteSandboxSnapshot.Output
     /// Create a connect token for a sandbox run
     ///
-    /// Create a short-lived connect token for a command run in this sandbox.
-    /// Send the command to the URL in the response, using the token as the bearer
-    /// token. The token authorizes only the requested operation.
+    /// Create a short-lived connect token for a command run in this sandbox. Send the command to the URL in the response, using the token as the bearer token. The token authorizes only the requested operation.
     ///
     ///
     /// - Remark: HTTP `POST /sandboxes/{sandboxId}/runs/{operation}/token`.
@@ -2298,14 +2248,9 @@ public protocol APIProtocol: Sendable {
     func connectSandboxRun(_ input: Operations.ConnectSandboxRun.Input) async throws -> Operations.ConnectSandboxRun.Output
     /// Mint a connect token for a sandbox file transfer
     ///
-    /// Create a short-lived connect token for a file upload or download. Transfer
-    /// the file directly to or from the URL in the response, using the token as
-    /// the bearer token. The token authorizes only the specified sandbox, operation,
-    /// and path. Its expiration time is returned in `expiresAt`.
+    /// Create a short-lived connect token for a file upload or download. Transfer the file directly to or from the URL in the response, using the token as the bearer token. The token authorizes only the specified sandbox, operation, and path. Its expiration time is returned in `expiresAt`.
     ///
-    /// Use `application/octet-stream` for a single file or `application/x-tar` for
-    /// a directory archive. For gzip compression, also set `Content-Encoding: gzip`.
-    /// Directory downloads return `application/x-tar` with `Content-Encoding: gzip`.
+    /// Use `application/octet-stream` for a single file or `application/x-tar` for a directory archive. For gzip compression, also set `Content-Encoding: gzip`. Directory downloads return `application/x-tar` with `Content-Encoding: gzip`.
     ///
     ///
     /// - Remark: HTTP `POST /sandboxes/{sandboxId}/files/{operation}/token`.
@@ -6348,8 +6293,7 @@ extension APIProtocol {
     }
     /// List sandboxes
     ///
-    /// List sandboxes in a workspace. Each request must specify one workspace.
-    /// Sandboxes run in the region of their sandbox group.
+    /// List sandboxes in a workspace. Each request must specify one workspace. Sandboxes run in the region of their sandbox group.
     ///
     ///
     /// - Remark: HTTP `GET /sandboxes`.
@@ -6365,9 +6309,7 @@ extension APIProtocol {
     }
     /// Create sandbox
     ///
-    /// Create a sandbox and return its initial state. The sandbox might still be
-    /// starting when the response is returned. To use a saved snapshot or custom
-    /// image, provide `snapshotId`, `snapshotName`, `buildId`, or `buildName`.
+    /// Create a sandbox and return its initial state. The sandbox might still be starting when the response is returned. To use a saved snapshot or custom image, provide `snapshotId`, `snapshotName`, `buildId`, or `buildName`.
     ///
     ///
     /// - Remark: HTTP `POST /sandboxes`.
@@ -6383,9 +6325,7 @@ extension APIProtocol {
     }
     /// List sandbox groups
     ///
-    /// List sandbox groups in a workspace, newest first. Returns up to 20 groups
-    /// by default, with a maximum of 100. To fetch the next page, pass the last
-    /// result's cursor as `cursor`. Continue until the response is empty.
+    /// List sandbox groups in a workspace, newest first. Returns up to 20 groups by default, with a maximum of 100. To fetch the next page, pass the last result's cursor as `cursor`. Continue until the response is empty.
     ///
     ///
     /// - Remark: HTTP `GET /sandbox-groups`.
@@ -6467,9 +6407,7 @@ extension APIProtocol {
     }
     /// Terminate sandbox
     ///
-    /// Terminate the sandbox with the provided ID. Returns HTTP 204 even if the
-    /// sandbox is already terminated. You can also terminate a sandbox while it
-    /// is starting (`creating`).
+    /// Terminate the sandbox with the provided ID. Returns HTTP 204 even if the sandbox is already terminated. You can also terminate a sandbox while it is starting (`creating`).
     ///
     ///
     /// - Remark: HTTP `POST /sandboxes/{sandboxId}/terminate`.
@@ -6487,10 +6425,7 @@ extension APIProtocol {
     }
     /// Create sandbox snapshot
     ///
-    /// Capture a snapshot of a running sandbox. Returns HTTP 202 with the snapshot
-    /// in `creating` status. Retrieve the snapshot until its status is `available`
-    /// or `failed`. The sandbox continues running, with a brief pause when capturing
-    /// a runtime snapshot.
+    /// Capture a snapshot of a running sandbox. Returns HTTP 202 with the snapshot in `creating` status. Retrieve the snapshot until its status is `available` or `failed`. The sandbox continues running, with a brief pause when capturing a runtime snapshot.
     ///
     ///
     /// - Remark: HTTP `POST /sandboxes/{sandboxId}/snapshots`.
@@ -6525,8 +6460,7 @@ extension APIProtocol {
     }
     /// Update sandbox group
     ///
-    /// Update a sandbox group's concurrency limit. The response contains the
-    /// effective limit after applying Render's limit for the workspace.
+    /// Update a sandbox group's concurrency limit. The response contains the effective limit after applying Render's limit for the workspace.
     ///
     ///
     /// - Remark: HTTP `PATCH /sandbox-groups/{sandboxGroupId}`.
@@ -6544,9 +6478,7 @@ extension APIProtocol {
     }
     /// List sandbox group credentials
     ///
-    /// List credentials in the sandbox group, sorted by credential ID. Returns
-    /// credential settings and metadata. These endpoints do not return secret values,
-    /// including to admins.
+    /// List credentials in the sandbox group, sorted by credential ID. Returns credential settings and metadata. These endpoints do not return secret values, including to admins.
     ///
     ///
     /// - Remark: HTTP `GET /sandbox-groups/{sandboxGroupId}/credentials`.
@@ -6562,17 +6494,11 @@ extension APIProtocol {
     }
     /// Create sandbox group credential
     ///
-    /// Configure a credential for injection into matching outbound HTTPS requests
-    /// from sandboxes in this group. Requires an admin. You assign the credential ID.
+    /// Configure a credential for injection into matching outbound HTTPS requests from sandboxes in this group. Requires an admin. You assign the credential ID.
     ///
-    /// Each group supports up to 25 credentials. Current credential settings and
-    /// secret values have a combined serialized size limit of 200 KiB (204800
-    /// bytes). Render retains the current configuration and three distinct prior
-    /// configurations per credential, with a total storage limit of 1 MiB including
-    /// version metadata.
+    /// Each group supports up to 25 credentials. Current credential settings and secret values have a combined serialized size limit of 200 KiB (204800 bytes). Render retains the current configuration and three distinct prior configurations per credential, with a total storage limit of 1 MiB including version metadata.
     ///
-    /// The response confirms the configuration was saved. It does not confirm that
-    /// credential injection is active for a particular sandbox.
+    /// The response confirms the configuration was saved. It does not confirm that credential injection is active for a particular sandbox.
     ///
     ///
     /// - Remark: HTTP `POST /sandbox-groups/{sandboxGroupId}/credentials`.
@@ -6590,8 +6516,7 @@ extension APIProtocol {
     }
     /// Retrieve sandbox group credential
     ///
-    /// Retrieve the settings and metadata for a credential in this sandbox group.
-    /// These endpoints do not return secret values, including to admins.
+    /// Retrieve the settings and metadata for a credential in this sandbox group. These endpoints do not return secret values, including to admins.
     ///
     ///
     /// - Remark: HTTP `GET /sandbox-groups/{sandboxGroupId}/credentials/{credentialId}`.
@@ -6607,18 +6532,11 @@ extension APIProtocol {
     }
     /// Update sandbox group credential
     ///
-    /// Update a credential. Developers can change `injection`, `methods`, `paths`,
-    /// and `enabled`. Changing `domain` or `value` requires an admin.
+    /// Update a credential. Developers can change `injection`, `methods`, `paths`, and `enabled`. Changing `domain` or `value` requires an admin.
     ///
-    /// Omitted top-level fields keep their current values. Providing `injection`
-    /// replaces the entire object. Its `template` defaults to `${SECRET}` when
-    /// omitted. An empty `methods` or `paths` list removes that filter. Providing
-    /// `value` creates a new version.
-    /// The combined serialized size of current credential settings and secret
-    /// values in the group must remain within 200 KiB (204800 bytes).
+    /// Omitted top-level fields keep their current values. Providing `injection` replaces the entire object. Its `template` defaults to `${SECRET}` when omitted. An empty `methods` or `paths` list removes that filter. Providing `value` creates a new version. The combined serialized size of current credential settings and secret values in the group must remain within 200 KiB (204800 bytes).
     ///
-    /// The response confirms the configuration was saved. It does not confirm that
-    /// credential injection is active for a particular sandbox.
+    /// The response confirms the configuration was saved. It does not confirm that credential injection is active for a particular sandbox.
     ///
     ///
     /// - Remark: HTTP `PATCH /sandbox-groups/{sandboxGroupId}/credentials/{credentialId}`.
@@ -6636,8 +6554,7 @@ extension APIProtocol {
     }
     /// Delete sandbox group credential
     ///
-    /// Delete a credential from the sandbox group. Requires an admin. Repeated
-    /// delete requests are accepted, including if the credential is already absent.
+    /// Delete a credential from the sandbox group. Requires an admin. Repeated delete requests are accepted, including if the credential is already absent.
     ///
     ///
     /// - Remark: HTTP `DELETE /sandbox-groups/{sandboxGroupId}/credentials/{credentialId}`.
@@ -6653,13 +6570,9 @@ extension APIProtocol {
     }
     /// List sandbox credential versions
     ///
-    /// List retained credential versions, newest version ID first. Versions with
-    /// identical settings and secret values share a fingerprint.
+    /// List retained credential versions, newest version ID first. Versions with identical settings and secret values share a fingerprint.
     ///
-    /// Render retains the current configuration and the three distinct prior
-    /// configurations most recently active. When an older configuration is removed,
-    /// all versions that refer to it are also removed. These endpoints do not return
-    /// secret values.
+    /// Render retains the current configuration and the three distinct prior configurations most recently active. When an older configuration is removed, all versions that refer to it are also removed. These endpoints do not return secret values.
     ///
     ///
     /// - Remark: HTTP `GET /sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/versions`.
@@ -6675,18 +6588,11 @@ extension APIProtocol {
     }
     /// Restore sandbox credential configuration
     ///
-    /// Restore a retained credential version, including its routing settings,
-    /// injection settings, and secret value, as a new current version. Requires
-    /// an admin.
+    /// Restore a retained credential version, including its routing settings, injection settings, and secret value, as a new current version. Requires an admin.
     ///
-    /// The new version has a higher ID, records who restored it and when, and
-    /// identifies the source in `restoredFromVersionId`. Its fingerprint matches
-    /// the source version. Render retains the current configuration and the three
-    /// distinct prior configurations most recently active. Removing an older
-    /// configuration also removes all versions that refer to it.
+    /// The new version has a higher ID, records who restored it and when, and identifies the source in `restoredFromVersionId`. Its fingerprint matches the source version. Render retains the current configuration and the three distinct prior configurations most recently active. Removing an older configuration also removes all versions that refer to it.
     ///
-    /// The response confirms the configuration was saved. It does not confirm that
-    /// credential injection is active for a particular sandbox.
+    /// The response confirms the configuration was saved. It does not confirm that credential injection is active for a particular sandbox.
     ///
     /// These endpoints do not return secret values.
     ///
@@ -6723,14 +6629,9 @@ extension APIProtocol {
     }
     /// Create sandbox build
     ///
-    /// Start converting an OCI container image into an image that sandboxes can
-    /// use. New builds run asynchronously. Retrieve the build until its status is
-    /// `succeeded` or `failed`. After it succeeds, provide its ID as `buildId` when
-    /// creating a sandbox.
+    /// Start converting an OCI container image into an image that sandboxes can use. New builds run asynchronously. Retrieve the build until its status is `succeeded` or `failed`. After it succeeds, provide its ID as `buildId` when creating a sandbox.
     ///
-    /// If the group already has a pending, running, or succeeded build for the same
-    /// name and image digest, Render returns that build. Retrying a failed build
-    /// starts a new build.
+    /// If the group already has a pending, running, or succeeded build for the same name and image digest, Render returns that build. Retrying a failed build starts a new build.
     ///
     ///
     /// - Remark: HTTP `POST /sandbox-groups/{sandboxGroupId}/builds`.
@@ -6763,9 +6664,7 @@ extension APIProtocol {
     }
     /// Delete sandbox build
     ///
-    /// Delete a build of a sandbox image. The build no longer appears in lists
-    /// and cannot be retrieved or used to create sandboxes, including by image
-    /// name. Repeated requests to delete the build return HTTP 204.
+    /// Delete a build of a sandbox image. The build no longer appears in lists and cannot be retrieved or used to create sandboxes, including by image name. Repeated requests to delete the build return HTTP 204.
     ///
     ///
     /// - Remark: HTTP `DELETE /sandbox-groups/{sandboxGroupId}/builds/{buildId}`.
@@ -6781,8 +6680,7 @@ extension APIProtocol {
     }
     /// List sandbox snapshots
     ///
-    /// List snapshots in a sandbox group, newest first. Excludes expired and
-    /// deleted snapshots.
+    /// List snapshots in a sandbox group, newest first. Excludes expired and deleted snapshots.
     ///
     ///
     /// - Remark: HTTP `GET /sandbox-groups/{sandboxGroupId}/snapshots`.
@@ -6817,8 +6715,7 @@ extension APIProtocol {
     }
     /// Delete sandbox snapshot
     ///
-    /// Delete a snapshot. Sandboxes created from it are not affected. Returns
-    /// HTTP 204 if the snapshot is already deleted or expired.
+    /// Delete a snapshot. Sandboxes created from it are not affected. Returns HTTP 204 if the snapshot is already deleted or expired.
     ///
     ///
     /// - Remark: HTTP `DELETE /sandbox-groups/{sandboxGroupId}/snapshots/{snapshotId}`.
@@ -6836,9 +6733,7 @@ extension APIProtocol {
     }
     /// Create a connect token for a sandbox run
     ///
-    /// Create a short-lived connect token for a command run in this sandbox.
-    /// Send the command to the URL in the response, using the token as the bearer
-    /// token. The token authorizes only the requested operation.
+    /// Create a short-lived connect token for a command run in this sandbox. Send the command to the URL in the response, using the token as the bearer token. The token authorizes only the requested operation.
     ///
     ///
     /// - Remark: HTTP `POST /sandboxes/{sandboxId}/runs/{operation}/token`.
@@ -6856,14 +6751,9 @@ extension APIProtocol {
     }
     /// Mint a connect token for a sandbox file transfer
     ///
-    /// Create a short-lived connect token for a file upload or download. Transfer
-    /// the file directly to or from the URL in the response, using the token as
-    /// the bearer token. The token authorizes only the specified sandbox, operation,
-    /// and path. Its expiration time is returned in `expiresAt`.
+    /// Create a short-lived connect token for a file upload or download. Transfer the file directly to or from the URL in the response, using the token as the bearer token. The token authorizes only the specified sandbox, operation, and path. Its expiration time is returned in `expiresAt`.
     ///
-    /// Use `application/octet-stream` for a single file or `application/x-tar` for
-    /// a directory archive. For gzip compression, also set `Content-Encoding: gzip`.
-    /// Directory downloads return `application/x-tar` with `Content-Encoding: gzip`.
+    /// Use `application/octet-stream` for a single file or `application/x-tar` for a directory archive. For gzip compression, also set `Content-Encoding: gzip`. Directory downloads return `application/x-tar` with `Content-Encoding: gzip`.
     ///
     ///
     /// - Remark: HTTP `POST /sandboxes/{sandboxId}/files/{operation}/token`.
@@ -15083,9 +14973,7 @@ public enum Components {
                     ///
                     /// - Remark: Generated from `#/components/schemas/sandboxWithCursor/sandbox/networkPolicy/RulesPayload`.
                     public struct RulesPayloadPayload: Codable, Hashable, Sendable {
-                        /// The hostname this rule allows, up to 253 characters. Matching is exact:
-                        /// `foo.local` does not match `api.foo.local`. Use a separate rule or
-                        /// `*.foo.local` for subdomains. A wildcard is allowed only as the leftmost label.
+                        /// The hostname this rule allows, up to 253 characters. Matching is exact: `foo.local` does not match `api.foo.local`. Use a separate rule or `*.foo.local` for subdomains. A wildcard is allowed only as the leftmost label.
                         ///
                         ///
                         /// - Remark: Generated from `#/components/schemas/sandboxWithCursor/sandbox/networkPolicy/RulesPayload/domain`.
@@ -15103,7 +14991,7 @@ public enum Components {
                         /// Creates a new `RulesPayloadPayload`.
                         ///
                         /// - Parameters:
-                        ///   - domain: The hostname this rule allows, up to 253 characters. Matching is exact:
+                        ///   - domain: The hostname this rule allows, up to 253 characters. Matching is exact: `foo.local` does not match `api.foo.local`. Use a separate rule or `*.foo.local` for subdomains. A wildcard is allowed only as the leftmost label.
                         ///   - _protocol: The protocol allowed for this destination. Defaults to `https`. The `allow-list` policy blocks outbound traffic that uses other protocols.
                         public init(
                             domain: Swift.String,
@@ -15117,14 +15005,12 @@ public enum Components {
                             case _protocol = "protocol"
                         }
                     }
-                    /// Destinations the sandbox may reach, present when `type` is
-                    /// `allow-list` and absent otherwise. Each domain may be listed once.
+                    /// Destinations the sandbox may reach, present when `type` is `allow-list` and absent otherwise. Each domain may be listed once.
                     ///
                     ///
                     /// - Remark: Generated from `#/components/schemas/sandboxWithCursor/sandbox/networkPolicy/rules`.
                     public typealias RulesPayload = [Components.Schemas.SandboxWithCursor.SandboxPayload.NetworkPolicyPayload.RulesPayloadPayload]
-                    /// Destinations the sandbox may reach, present when `type` is
-                    /// `allow-list` and absent otherwise. Each domain may be listed once.
+                    /// Destinations the sandbox may reach, present when `type` is `allow-list` and absent otherwise. Each domain may be listed once.
                     ///
                     ///
                     /// - Remark: Generated from `#/components/schemas/sandboxWithCursor/sandbox/networkPolicy/rules`.
@@ -15134,7 +15020,7 @@ public enum Components {
                     /// - Parameters:
                     ///   - _type: How Render handles outbound traffic from the sandbox. The `allow-list` policy requires `rules`.
                     ///   - _default: How Render handles outbound traffic from the sandbox. The `allow-list` policy requires `rules`.
-                    ///   - rules: Destinations the sandbox may reach, present when `type` is
+                    ///   - rules: Destinations the sandbox may reach, present when `type` is `allow-list` and absent otherwise. Each domain may be listed once.
                     public init(
                         _type: Components.Schemas.SandboxWithCursor.SandboxPayload.NetworkPolicyPayload._TypePayload,
                         _default: Components.Schemas.SandboxWithCursor.SandboxPayload.NetworkPolicyPayload.DefaultPayload? = nil,
@@ -15158,9 +15044,7 @@ public enum Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/sandboxWithCursor/sandbox/region`.
                 public var region: Swift.String
-                /// The maximum time the sandbox can run continuously, in seconds. The sandbox
-                /// terminates when this time elapses. If the sandbox is suspended and later
-                /// resumed, this timeout restarts. A value of 0 disables the runtime timeout.
+                /// The maximum time the sandbox can run continuously, in seconds. The sandbox terminates when this time elapses. If the sandbox is suspended and later resumed, this timeout restarts. A value of 0 disables the runtime timeout.
                 ///
                 ///
                 /// - Remark: Generated from `#/components/schemas/sandboxWithCursor/sandbox/timeoutSeconds`.
@@ -15187,7 +15071,7 @@ public enum Components {
                 ///   - plan: The sandbox's compute plan. See `sandboxPlan` for known values.
                 ///   - networkPolicy: The policy that controls outbound traffic from the sandbox.
                 ///   - region: The Render region where the sandbox runs.
-                ///   - timeoutSeconds: The maximum time the sandbox can run continuously, in seconds. The sandbox
+                ///   - timeoutSeconds: The maximum time the sandbox can run continuously, in seconds. The sandbox terminates when this time elapses. If the sandbox is suspended and later resumed, this timeout restarts. A value of 0 disables the runtime timeout.
                 ///   - idleTimeoutSeconds: The number of seconds of inactivity before Render suspends the sandbox. A value of 0 disables automatic idle suspension.
                 ///   - createdAt: The timestamp when the sandbox was created, in ISO 8601 format.
                 ///   - terminatedAt: The timestamp when the sandbox was terminated, in ISO 8601 format. Null if the sandbox has not been terminated.
@@ -15257,10 +15141,7 @@ public enum Components {
         ///
         /// - Remark: Generated from `#/components/schemas/executionWithCursor`.
         public struct ExecutionWithCursor: Codable, Hashable, Sendable {
-            /// A record of a command run or file transfer in a sandbox. `startedAt` records
-            /// when the connect token was created. The command can appear while the
-            /// execution is running. `stoppedAt` and `exitCode` are omitted until Render
-            /// receives the result or finalizes the execution when the sandbox stops.
+            /// A record of a command run or file transfer in a sandbox. `startedAt` records when the connect token was created. The command can appear while the execution is running. `stoppedAt` and `exitCode` are omitted until Render receives the result or finalizes the execution when the sandbox stops.
             ///
             ///
             /// - Remark: Generated from `#/components/schemas/executionWithCursor/execution`.
@@ -15297,9 +15178,7 @@ public enum Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/executionWithCursor/execution/operation`.
                 public var operation: Components.Schemas.ExecutionWithCursor.ExecutionPayload.OperationPayload
-                /// The command run in the sandbox, or the target path for a file transfer.
-                /// Command text may be redacted or truncated. Omitted if you do not have
-                /// permission to view execution commands.
+                /// The command run in the sandbox, or the target path for a file transfer. Command text may be redacted or truncated. Omitted if you do not have permission to view execution commands.
                 ///
                 ///
                 /// - Remark: Generated from `#/components/schemas/executionWithCursor/execution/command`.
@@ -15327,7 +15206,7 @@ public enum Components {
                 ///   - sandboxId: The ID of the sandbox.
                 ///   - _type: Whether the execution is a command run or a file transfer.
                 ///   - operation: The command run or file transfer operation authorized by the connect token.
-                ///   - command: The command run in the sandbox, or the target path for a file transfer.
+                ///   - command: The command run in the sandbox, or the target path for a file transfer. Command text may be redacted or truncated. Omitted if you do not have permission to view execution commands.
                 ///   - userId: The ID of the user the execution token was created for.
                 ///   - startedAt: The timestamp when the execution token was created, in ISO 8601 format.
                 ///   - stoppedAt: The timestamp when the execution stopped, in ISO 8601 format. Omitted until a result is available.
@@ -15365,10 +15244,7 @@ public enum Components {
                     case exitCode
                 }
             }
-            /// A record of a command run or file transfer in a sandbox. `startedAt` records
-            /// when the connect token was created. The command can appear while the
-            /// execution is running. `stoppedAt` and `exitCode` are omitted until Render
-            /// receives the result or finalizes the execution when the sandbox stops.
+            /// A record of a command run or file transfer in a sandbox. `startedAt` records when the connect token was created. The command can appear while the execution is running. `stoppedAt` and `exitCode` are omitted until Render receives the result or finalizes the execution when the sandbox stops.
             ///
             ///
             /// - Remark: Generated from `#/components/schemas/executionWithCursor/execution`.
@@ -15378,7 +15254,7 @@ public enum Components {
             /// Creates a new `ExecutionWithCursor`.
             ///
             /// - Parameters:
-            ///   - execution: A record of a command run or file transfer in a sandbox. `startedAt` records
+            ///   - execution: A record of a command run or file transfer in a sandbox. `startedAt` records when the connect token was created. The command can appear while the execution is running. `stoppedAt` and `exitCode` are omitted until Render receives the result or finalizes the execution when the sandbox stops.
             ///   - cursor:
             public init(
                 execution: Components.Schemas.ExecutionWithCursor.ExecutionPayload,
@@ -15412,18 +15288,12 @@ public enum Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/sandboxSnapshotWithCursor/snapshot/sourceSandboxId`.
                 public var sourceSandboxId: Swift.String
-                /// A case-sensitive name for snapshots in a sandbox group, up to 64 characters.
-                /// Must not start with `snp-`. Multiple snapshots can share a name. When creating
-                /// a sandbox by snapshot name, Render uses the most recently created snapshot
-                /// with that name that is `available` and unexpired.
+                /// A case-sensitive name for snapshots in a sandbox group, up to 64 characters. Must not start with `snp-`. Multiple snapshots can share a name. When creating a sandbox by snapshot name, Render uses the most recently created snapshot with that name that is `available` and unexpired.
                 ///
                 ///
                 /// - Remark: Generated from `#/components/schemas/sandboxSnapshotWithCursor/snapshot/name`.
                 public var name: Swift.String?
-                /// The state to capture. A `filesystem` snapshot captures the writable
-                /// filesystem and can be restored to any plan. A `runtime` snapshot also
-                /// captures memory and CPU state and must be restored to the source sandbox
-                /// plan.
+                /// The state to capture. A `filesystem` snapshot captures the writable filesystem and can be restored to any plan. A `runtime` snapshot also captures memory and CPU state and must be restored to the source sandbox plan.
                 ///
                 ///
                 /// - Remark: Generated from `#/components/schemas/sandboxSnapshotWithCursor/snapshot/kind`.
@@ -15431,10 +15301,7 @@ public enum Components {
                     case filesystem = "filesystem"
                     case runtime = "runtime"
                 }
-                /// The state to capture. A `filesystem` snapshot captures the writable
-                /// filesystem and can be restored to any plan. A `runtime` snapshot also
-                /// captures memory and CPU state and must be restored to the source sandbox
-                /// plan.
+                /// The state to capture. A `filesystem` snapshot captures the writable filesystem and can be restored to any plan. A `runtime` snapshot also captures memory and CPU state and must be restored to the source sandbox plan.
                 ///
                 ///
                 /// - Remark: Generated from `#/components/schemas/sandboxSnapshotWithCursor/snapshot/kind`.
@@ -15526,18 +15393,12 @@ public enum Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/sandboxSnapshotWithCursor/snapshot/capturedAt`.
                 public var capturedAt: Foundation.Date?
-                /// The timestamp after which the snapshot can no longer be retrieved or
-                /// restored, in ISO 8601 format. Each time you create a sandbox from this
-                /// snapshot, Render resets its expiration to `ttlSeconds` seconds after that
-                /// use. For snapshots with no expiration (`ttlSeconds: 0`), this is
-                /// `9999-12-31T23:59:59Z`.
+                /// The timestamp after which the snapshot can no longer be retrieved or restored, in ISO 8601 format. Each time you create a sandbox from this snapshot, Render resets its expiration to `ttlSeconds` seconds after that use. For snapshots with no expiration (`ttlSeconds: 0`), this is `9999-12-31T23:59:59Z`.
                 ///
                 ///
                 /// - Remark: Generated from `#/components/schemas/sandboxSnapshotWithCursor/snapshot/expiresAt`.
                 public var expiresAt: Foundation.Date
-                /// The snapshot's lifetime after its last use, in seconds. A value of 0 means
-                /// the snapshot does not expire. If omitted, Render's default snapshot
-                /// lifetime applies.
+                /// The snapshot's lifetime after its last use, in seconds. A value of 0 means the snapshot does not expire. If omitted, Render's default snapshot lifetime applies.
                 ///
                 ///
                 /// - Remark: Generated from `#/components/schemas/sandboxSnapshotWithCursor/snapshot/ttlSeconds`.
@@ -15556,14 +15417,14 @@ public enum Components {
                 ///   - id: The ID of the sandbox snapshot.
                 ///   - sandboxGroupId: The ID of the sandbox group.
                 ///   - sourceSandboxId: The ID of the sandbox.
-                ///   - name: A case-sensitive name for snapshots in a sandbox group, up to 64 characters.
-                ///   - kind: The state to capture. A `filesystem` snapshot captures the writable
+                ///   - name: A case-sensitive name for snapshots in a sandbox group, up to 64 characters. Must not start with `snp-`. Multiple snapshots can share a name. When creating a sandbox by snapshot name, Render uses the most recently created snapshot with that name that is `available` and unexpired.
+                ///   - kind: The state to capture. A `filesystem` snapshot captures the writable filesystem and can be restored to any plan. A `runtime` snapshot also captures memory and CPU state and must be restored to the source sandbox plan.
                 ///   - status: The snapshot's current status.
                 ///   - plan: The source sandbox's compute plan when the snapshot was captured. See `sandboxPlan` for known values.
                 ///   - requestedAt: The timestamp when the snapshot was requested, in ISO 8601 format.
                 ///   - capturedAt: The timestamp when capture completed, in ISO 8601 format. Null until the snapshot is `available`.
-                ///   - expiresAt: The timestamp after which the snapshot can no longer be retrieved or
-                ///   - ttlSeconds: The snapshot's lifetime after its last use, in seconds. A value of 0 means
+                ///   - expiresAt: The timestamp after which the snapshot can no longer be retrieved or restored, in ISO 8601 format. Each time you create a sandbox from this snapshot, Render resets its expiration to `ttlSeconds` seconds after that use. For snapshots with no expiration (`ttlSeconds: 0`), this is `9999-12-31T23:59:59Z`.
+                ///   - ttlSeconds: The snapshot's lifetime after its last use, in seconds. A value of 0 means the snapshot does not expire. If omitted, Render's default snapshot lifetime applies.
                 ///   - sizeBytes: The size of the snapshot, in bytes. Null until the snapshot is `available`.
                 ///   - error: The reason the snapshot failed. Null unless its status is `failed`.
                 public init(
@@ -15712,17 +15573,12 @@ public enum Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/sandboxBuildWithCursor/build/status`.
                 public var status: Components.Schemas.SandboxBuildWithCursor.BuildPayload.StatusPayload
-                /// A description of why the build failed. Null unless the status is `failed`.
-                /// May include error text from the image registry. When displaying errors, use
-                /// `failureCode` to select the main message and show this value as additional
-                /// detail.
+                /// A description of why the build failed. Null unless the status is `failed`. May include error text from the image registry. When displaying errors, use `failureCode` to select the main message and show this value as additional detail.
                 ///
                 ///
                 /// - Remark: Generated from `#/components/schemas/sandboxBuildWithCursor/build/failureReason`.
                 public var failureReason: Swift.String?
-                /// A machine-readable reason the build failed. Null unless the status is
-                /// `failed`. See `sandboxBuildFailureCode` for known codes. Treat unrecognized
-                /// codes as `internal_error`.
+                /// A machine-readable reason the build failed. Null unless the status is `failed`. See `sandboxBuildFailureCode` for known codes. Treat unrecognized codes as `internal_error`.
                 ///
                 ///
                 /// - Remark: Generated from `#/components/schemas/sandboxBuildWithCursor/build/failureCode`.
@@ -15744,8 +15600,8 @@ public enum Components {
                 ///   - source: The source container image used for this build.
                 ///   - sourceDigest: The digest of the source image converted by this build.
                 ///   - status: The sandbox build's current status.
-                ///   - failureReason: A description of why the build failed. Null unless the status is `failed`.
-                ///   - failureCode: A machine-readable reason the build failed. Null unless the status is
+                ///   - failureReason: A description of why the build failed. Null unless the status is `failed`. May include error text from the image registry. When displaying errors, use `failureCode` to select the main message and show this value as additional detail.
+                ///   - failureCode: A machine-readable reason the build failed. Null unless the status is `failed`. See `sandboxBuildFailureCode` for known codes. Treat unrecognized codes as `internal_error`.
                 ///   - createdAt: The timestamp when the sandbox build was created, in ISO 8601 format.
                 ///   - finishedAt: The timestamp when the build succeeded or failed, in ISO 8601 format. Null while the build is pending or running.
                 public init(
@@ -17953,6 +17809,7 @@ public enum Components {
                                 case task = "task"
                                 case taskRun = "taskRun"
                                 case sandbox = "sandbox"
+                                case build = "build"
                                 case _type = "type"
                                 case text = "text"
                                 case path = "path"
@@ -18336,8 +18193,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//blueprints/get(list-blueprints)/responses/429`.
@@ -18798,8 +18654,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//blueprints/validate/post(validate-blueprint)/responses/429`.
@@ -19129,8 +18984,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//owners/{ownerId}/members/{userId}/patch(update-workspace-member)/responses/429`.
@@ -19420,8 +19274,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//owners/{ownerId}/members/{userId}/delete(remove-workspace-member)/responses/429`.
@@ -19882,8 +19735,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//blueprints/{blueprintId}/get(retrieve-blueprint)/responses/429`.
@@ -20429,8 +20281,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//blueprints/{blueprintId}/patch(update-blueprint)/responses/429`.
@@ -20736,8 +20587,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//blueprints/{blueprintId}/delete(disconnect-blueprint)/responses/429`.
@@ -21085,8 +20935,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//blueprints/{blueprintId}/syncs/get(list-blueprint-syncs)/responses/429`.
@@ -21395,8 +21244,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//dedicated-ips/get(list-dedicated-ips)/responses/429`.
@@ -21732,8 +21580,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//dedicated-ips/post(create-dedicated-ip)/responses/429`.
@@ -22052,8 +21899,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//dedicated-ips/{dedicatedIpId}/get(retrieve-dedicated-ip)/responses/429`.
@@ -22428,8 +22274,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//dedicated-ips/{dedicatedIpId}/patch(update-dedicated-ip)/responses/429`.
@@ -22733,8 +22578,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//dedicated-ips/{dedicatedIpId}/delete(delete-dedicated-ip)/responses/429`.
@@ -23119,8 +22963,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//disks/get(list-disks)/responses/429`.
@@ -23544,8 +23387,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//disks/post(add-disk)/responses/429`.
@@ -23918,8 +23760,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//disks/{diskId}/get(retrieve-disk)/responses/429`.
@@ -24357,8 +24198,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//disks/{diskId}/patch(update-disk)/responses/429`.
@@ -24664,8 +24504,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//disks/{diskId}/delete(delete-disk)/responses/429`.
@@ -25008,8 +24847,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//disks/{diskId}/snapshots/get(list-snapshots)/responses/429`.
@@ -25418,8 +25256,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//disks/{diskId}/snapshots/restore/post(restore-snapshot)/responses/429`.
@@ -25650,8 +25487,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//users/get(get-user)/responses/429`.
@@ -25925,8 +25761,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//owners/get(list-owners)/responses/429`.
@@ -26225,8 +26060,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//owners/{ownerId}/get(retrieve-owner)/responses/429`.
@@ -26523,8 +26357,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//owners/{ownerId}/members/get(retrieve-owner-members)/responses/429`.
@@ -26922,8 +26755,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//owners/{ownerId}/audit-logs/get(list-owner-audit-logs)/responses/429`.
@@ -27321,8 +27153,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//organizations/{orgId}/audit-logs/get(list-organization-audit-logs)/responses/429`.
@@ -27622,8 +27453,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//notification-settings/owners/{ownerId}/get(retrieve-owner-notification-settings)/responses/429`.
@@ -27965,8 +27795,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//notification-settings/owners/{ownerId}/patch(patch-owner-notification-settings)/responses/429`.
@@ -28240,8 +28069,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//notification-settings/overrides/get(list-notification-overrides)/responses/429`.
@@ -28536,8 +28364,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//notification-settings/overrides/services/{serviceId}/get(retrieve-service-notification-overrides)/responses/429`.
@@ -28875,8 +28702,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//notification-settings/overrides/services/{serviceId}/patch(patch-service-notification-overrides)/responses/429`.
@@ -29192,8 +29018,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//registrycredentials/get(list-registry-credentials)/responses/429`.
@@ -29544,8 +29369,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//registrycredentials/post(create-registry-credential)/responses/429`.
@@ -29864,8 +29688,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//registrycredentials/{registryCredentialId}/get(retrieve-registry-credential)/responses/429`.
@@ -30297,8 +30120,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//registrycredentials/{registryCredentialId}/patch(update-registry-credential)/responses/429`.
@@ -30601,8 +30423,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//registrycredentials/{registryCredentialId}/delete(delete-registry-credential)/responses/429`.
@@ -30954,8 +30775,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/get(list-services)/responses/429`.
@@ -31292,8 +31112,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/post(create-service)/responses/429`.
@@ -31613,8 +31432,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/get(retrieve-service)/responses/429`.
@@ -32015,8 +31833,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/patch(update-service)/responses/429`.
@@ -32320,8 +32137,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/delete(delete-service)/responses/429`.
@@ -32648,8 +32464,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/cache/purge/post(purge-cache)/responses/429`.
@@ -33045,8 +32860,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/deploys/get(list-deploys)/responses/429`.
@@ -33500,8 +33314,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/deploys/post(create-deploy)/responses/429`.
@@ -33830,8 +33643,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/deploys/{deployId}/get(retrieve-deploy)/responses/429`.
@@ -34139,8 +33951,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/deploys/{deployId}/cancel/post(cancel-deploy)/responses/429`.
@@ -34467,8 +34278,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/rollback/post(rollback-deploy)/responses/429`.
@@ -34815,8 +34625,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/env-vars/get(get-env-vars-for-service)/responses/429`.
@@ -35252,8 +35061,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/env-vars/put(update-env-vars-for-service)/responses/429`.
@@ -35584,8 +35392,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/env-vars/{envVarKey}/get(retrieve-env-var)/responses/429`.
@@ -35948,8 +35755,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/env-vars/{envVarKey}/put(update-env-var)/responses/429`.
@@ -36264,8 +36070,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/env-vars/{envVarKey}/delete(delete-env-var)/responses/429`.
@@ -36612,8 +36417,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/secret-files/get(list-secret-files-for-service)/responses/429`.
@@ -36994,8 +36798,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/secret-files/put(update-secret-files-for-service)/responses/429`.
@@ -37326,8 +37129,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/secret-files/{envVarKey}/get(retrieve-secret-file)/responses/429`.
@@ -37705,8 +37507,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/secret-files/{envVarKey}/put(add-or-update-secret-file)/responses/429`.
@@ -38021,8 +37822,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/secret-files/{envVarKey}/delete(delete-secret-file)/responses/429`.
@@ -38390,8 +38190,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/events/get(list-events)/responses/429`.
@@ -38759,8 +38558,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/headers/get(list-headers)/responses/429`.
@@ -39104,8 +38902,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/headers/post(add-headers)/responses/429`.
@@ -39459,8 +39256,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/headers/put(update-headers)/responses/429`.
@@ -39773,8 +39569,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/headers/{headerId}/delete(delete-header)/responses/429`.
@@ -40149,8 +39944,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/routes/get(list-routes)/responses/429`.
@@ -40502,8 +40296,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/routes/post(add-route)/responses/429`.
@@ -40859,8 +40652,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/routes/put(put-routes)/responses/429`.
@@ -41217,8 +41009,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/routes/{routeId}/patch(patch-route)/responses/429`.
@@ -41531,8 +41322,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/routes/{routeId}/delete(delete-route)/responses/429`.
@@ -41947,8 +41737,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/custom-domains/get(list-custom-domains)/responses/429`.
@@ -42361,8 +42150,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/custom-domains/post(create-custom-domain)/responses/429`.
@@ -42714,8 +42502,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/custom-domains/{customDomainNameOrID}/get(retrieve-custom-domain)/responses/429`.
@@ -43051,8 +42838,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/custom-domains/{customDomainNameOrID}/delete(delete-custom-domain)/responses/429`.
@@ -43388,8 +43174,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/custom-domains/{customDomainNameOrID}/verify/post(refresh-custom-domain)/responses/429`.
@@ -43716,8 +43501,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/suspend/post(suspend-service)/responses/429`.
@@ -44044,8 +43828,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/resume/post(resume-service)/responses/429`.
@@ -44374,8 +44157,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/restart/post(restart-service)/responses/429`.
@@ -44728,8 +44510,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/scale/post(scale-service)/responses/429`.
@@ -45309,8 +45090,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/autoscaling/put(autoscale-service)/responses/429`.
@@ -45614,8 +45394,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/autoscaling/delete(delete-autoscaling-config)/responses/429`.
@@ -45925,8 +45704,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/preview/post(preview-service)/responses/429`.
@@ -46286,8 +46064,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/jobs/get(list-job)/responses/429`.
@@ -46660,8 +46437,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/jobs/post(post-job)/responses/429`.
@@ -47011,8 +46787,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/jobs/{jobId}/get(retrieve-job)/responses/429`.
@@ -47362,8 +47137,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/jobs/{jobId}/cancel/post(cancel-job)/responses/429`.
@@ -47613,8 +47387,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/instances/get(list-instances)/responses/429`.
@@ -47913,8 +47686,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//services/{serviceId}/outbound-ips/get(retrieve-service-outbound-ips)/responses/429`.
@@ -48164,8 +47936,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//cron-jobs/{cronJobId}/runs/post(run-cron-job)/responses/429`.
@@ -48399,8 +48170,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//cron-jobs/{cronJobId}/runs/delete(cancel-cron-job-run)/responses/429`.
@@ -48877,8 +48647,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//events/{eventId}/get(retrieve-event)/responses/429`.
@@ -49050,6 +48819,10 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/logs/GET/query/sandbox`.
                 public var sandbox: [Swift.String]?
+                /// Filter logs by build ID, such as a service build or a sandbox image build.
+                ///
+                /// - Remark: Generated from `#/paths/logs/GET/query/build`.
+                public var build: [Swift.String]?
                 /// Filter logs by their severity level. [Wildcards and regex](https://render.com/docs/logging#wildcards-and-regular-expressions) are supported.
                 ///
                 /// - Remark: Generated from `#/paths/logs/GET/query/level`.
@@ -49085,6 +48858,7 @@ public enum Operations {
                 ///   - task: Filter logs by their task(s)
                 ///   - taskRun: Filter logs by their task run id(s)
                 ///   - sandbox: Filter logs by sandbox ID.
+                ///   - build: Filter logs by build ID, such as a service build or a sandbox image build.
                 ///   - level: Filter logs by their severity level. [Wildcards and regex](https://render.com/docs/logging#wildcards-and-regular-expressions) are supported.
                 ///   - _type: Filter logs by their type. Types include `app` for application logs, `request` for request logs, and `build` for build logs. You can find the full set of types available for a query by using the `GET /logs/values` endpoint.
                 ///   - text: Filter by the text of the logs. [Wildcards and regex](https://render.com/docs/logging#wildcards-and-regular-expressions) are supported.
@@ -49103,6 +48877,7 @@ public enum Operations {
                     task: [Swift.String]? = nil,
                     taskRun: [Swift.String]? = nil,
                     sandbox: [Swift.String]? = nil,
+                    build: [Swift.String]? = nil,
                     level: [Swift.String]? = nil,
                     _type: [Swift.String]? = nil,
                     text: [Swift.String]? = nil,
@@ -49121,6 +48896,7 @@ public enum Operations {
                     self.task = task
                     self.taskRun = taskRun
                     self.sandbox = sandbox
+                    self.build = build
                     self.level = level
                     self._type = _type
                     self.text = text
@@ -49318,8 +49094,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//logs/get(list-logs)/responses/429`.
@@ -49489,6 +49264,10 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/logs/subscribe/GET/query/sandbox`.
                 public var sandbox: [Swift.String]?
+                /// Filter logs by build ID, such as a service build or a sandbox image build.
+                ///
+                /// - Remark: Generated from `#/paths/logs/subscribe/GET/query/build`.
+                public var build: [Swift.String]?
                 /// Filter logs by their severity level. [Wildcards and regex](https://render.com/docs/logging#wildcards-and-regular-expressions) are supported.
                 ///
                 /// - Remark: Generated from `#/paths/logs/subscribe/GET/query/level`.
@@ -49524,6 +49303,7 @@ public enum Operations {
                 ///   - task: Filter logs by their task(s)
                 ///   - taskRun: Filter logs by their task run id(s)
                 ///   - sandbox: Filter logs by sandbox ID.
+                ///   - build: Filter logs by build ID, such as a service build or a sandbox image build.
                 ///   - level: Filter logs by their severity level. [Wildcards and regex](https://render.com/docs/logging#wildcards-and-regular-expressions) are supported.
                 ///   - _type: Filter logs by their type. Types include `app` for application logs, `request` for request logs, and `build` for build logs. You can find the full set of types available for a query by using the `GET /logs/values` endpoint.
                 ///   - text: Filter by the text of the logs. [Wildcards and regex](https://render.com/docs/logging#wildcards-and-regular-expressions) are supported.
@@ -49542,6 +49322,7 @@ public enum Operations {
                     task: [Swift.String]? = nil,
                     taskRun: [Swift.String]? = nil,
                     sandbox: [Swift.String]? = nil,
+                    build: [Swift.String]? = nil,
                     level: [Swift.String]? = nil,
                     _type: [Swift.String]? = nil,
                     text: [Swift.String]? = nil,
@@ -49560,6 +49341,7 @@ public enum Operations {
                     self.task = task
                     self.taskRun = taskRun
                     self.sandbox = sandbox
+                    self.build = build
                     self.level = level
                     self._type = _type
                     self.text = text
@@ -49632,6 +49414,7 @@ public enum Operations {
                                 case task = "task"
                                 case taskRun = "taskRun"
                                 case sandbox = "sandbox"
+                                case build = "build"
                                 case _type = "type"
                                 case text = "text"
                                 case path = "path"
@@ -49879,8 +49662,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//logs/subscribe/get(subscribe-logs)/responses/429`.
@@ -50060,6 +49842,10 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/logs/values/GET/query/sandbox`.
                 public var sandbox: [Swift.String]?
+                /// Filter logs by build ID, such as a service build or a sandbox image build.
+                ///
+                /// - Remark: Generated from `#/paths/logs/values/GET/query/build`.
+                public var build: [Swift.String]?
                 /// Filter logs by their severity level. [Wildcards and regex](https://render.com/docs/logging#wildcards-and-regular-expressions) are supported.
                 ///
                 /// - Remark: Generated from `#/paths/logs/values/GET/query/level`.
@@ -50096,6 +49882,7 @@ public enum Operations {
                 ///   - task: Filter logs by their task(s)
                 ///   - taskRun: Filter logs by their task run id(s)
                 ///   - sandbox: Filter logs by sandbox ID.
+                ///   - build: Filter logs by build ID, such as a service build or a sandbox image build.
                 ///   - level: Filter logs by their severity level. [Wildcards and regex](https://render.com/docs/logging#wildcards-and-regular-expressions) are supported.
                 ///   - _type: Filter logs by their type. Types include `app` for application logs, `request` for request logs, and `build` for build logs. You can find the full set of types available for a query by using the `GET /logs/values` endpoint.
                 ///   - text: Filter by the text of the logs. [Wildcards and regex](https://render.com/docs/logging#wildcards-and-regular-expressions) are supported.
@@ -50115,6 +49902,7 @@ public enum Operations {
                     task: [Swift.String]? = nil,
                     taskRun: [Swift.String]? = nil,
                     sandbox: [Swift.String]? = nil,
+                    build: [Swift.String]? = nil,
                     level: [Swift.String]? = nil,
                     _type: [Swift.String]? = nil,
                     text: [Swift.String]? = nil,
@@ -50134,6 +49922,7 @@ public enum Operations {
                     self.task = task
                     self.taskRun = taskRun
                     self.sandbox = sandbox
+                    self.build = build
                     self.level = level
                     self._type = _type
                     self.text = text
@@ -50331,8 +50120,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//logs/values/get(list-logs-values)/responses/429`.
@@ -50718,8 +50506,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//logs/streams/owner/{ownerId}/get(get-owner-log-stream)/responses/429`.
@@ -51156,8 +50943,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//logs/streams/owner/{ownerId}/put(update-owner-log-stream)/responses/429`.
@@ -51414,8 +51200,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//logs/streams/owner/{ownerId}/delete(delete-owner-log-stream)/responses/429`.
@@ -51849,8 +51634,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//logs/streams/resource/get(list-resource-log-streams)/responses/429`.
@@ -52236,8 +52020,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//logs/streams/resource/{resourceId}/get(get-resource-log-stream)/responses/429`.
@@ -52674,8 +52457,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//logs/streams/resource/{resourceId}/put(update-resource-log-stream)/responses/429`.
@@ -52932,8 +52714,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//logs/streams/resource/{resourceId}/delete(delete-resource-log-stream)/responses/429`.
@@ -56719,102 +56500,103 @@ public enum Operations {
             public struct Ok: Sendable, Hashable {
                 /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content`.
                 @frozen public enum Body: Sendable, Hashable {
-                    /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/json`.
-                    public struct JsonPayload: Codable, Hashable, Sendable {
-                        /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/json/DataPayload`.
-                        public struct DataPayloadPayload: Codable, Hashable, Sendable {
-                            /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/json/DataPayload/labels`.
-                            public struct LabelsPayload: Codable, Hashable, Sendable {
-                                /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/json/DataPayload/labels/resource`.
-                                public var resource: Swift.String?
-                                /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/json/DataPayload/labels/trafficSource`.
-                                @frozen public enum TrafficSourcePayload: String, Codable, Hashable, Sendable, CaseIterable {
-                                    case total = "total"
-                                    case http = "http"
-                                    case websocket = "websocket"
-                                    case nat = "nat"
-                                    case privatelink = "privatelink"
-                                }
-                                /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/json/DataPayload/labels/trafficSource`.
-                                public var trafficSource: Operations.GetBandwidthSources.Output.Ok.Body.JsonPayload.DataPayloadPayload.LabelsPayload.TrafficSourcePayload?
-                                /// Creates a new `LabelsPayload`.
-                                ///
-                                /// - Parameters:
-                                ///   - resource:
-                                ///   - trafficSource:
-                                public init(
-                                    resource: Swift.String? = nil,
-                                    trafficSource: Operations.GetBandwidthSources.Output.Ok.Body.JsonPayload.DataPayloadPayload.LabelsPayload.TrafficSourcePayload? = nil
-                                ) {
-                                    self.resource = resource
-                                    self.trafficSource = trafficSource
-                                }
-                                public enum CodingKeys: String, CodingKey {
-                                    case resource
-                                    case trafficSource
-                                }
-                            }
-                            /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/json/DataPayload/labels`.
-                            public var labels: Operations.GetBandwidthSources.Output.Ok.Body.JsonPayload.DataPayloadPayload.LabelsPayload?
-                            /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/json/DataPayload/ValuesPayload`.
-                            public struct ValuesPayloadPayload: Codable, Hashable, Sendable {
-                                /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/json/DataPayload/ValuesPayload/timestamp`.
-                                public var timestamp: Swift.Int?
-                                /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/json/DataPayload/ValuesPayload/value`.
-                                public var value: Swift.Double?
-                                /// Creates a new `ValuesPayloadPayload`.
-                                ///
-                                /// - Parameters:
-                                ///   - timestamp:
-                                ///   - value:
-                                public init(
-                                    timestamp: Swift.Int? = nil,
-                                    value: Swift.Double? = nil
-                                ) {
-                                    self.timestamp = timestamp
-                                    self.value = value
-                                }
-                                public enum CodingKeys: String, CodingKey {
-                                    case timestamp
-                                    case value
-                                }
-                            }
-                            /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/json/DataPayload/values`.
-                            public typealias ValuesPayload = [Operations.GetBandwidthSources.Output.Ok.Body.JsonPayload.DataPayloadPayload.ValuesPayloadPayload]
-                            /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/json/DataPayload/values`.
-                            public var values: Operations.GetBandwidthSources.Output.Ok.Body.JsonPayload.DataPayloadPayload.ValuesPayload?
-                            /// Creates a new `DataPayloadPayload`.
+                    /// A time series data point
+                    ///
+                    /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/JsonPayload`.
+                    public struct JsonPayloadPayload: Codable, Hashable, Sendable {
+                        /// A time series datapoint label
+                        ///
+                        /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/JsonPayload/LabelsPayload`.
+                        public struct LabelsPayloadPayload: Codable, Hashable, Sendable {
+                            /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/JsonPayload/LabelsPayload/field`.
+                            public var field: Swift.String
+                            /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/JsonPayload/LabelsPayload/value`.
+                            public var value: Swift.String
+                            /// Creates a new `LabelsPayloadPayload`.
                             ///
                             /// - Parameters:
-                            ///   - labels:
-                            ///   - values:
+                            ///   - field:
+                            ///   - value:
                             public init(
-                                labels: Operations.GetBandwidthSources.Output.Ok.Body.JsonPayload.DataPayloadPayload.LabelsPayload? = nil,
-                                values: Operations.GetBandwidthSources.Output.Ok.Body.JsonPayload.DataPayloadPayload.ValuesPayload? = nil
+                                field: Swift.String,
+                                value: Swift.String
                             ) {
-                                self.labels = labels
-                                self.values = values
+                                self.field = field
+                                self.value = value
                             }
                             public enum CodingKeys: String, CodingKey {
-                                case labels
-                                case values
+                                case field
+                                case value
                             }
                         }
-                        /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/json/data`.
-                        public typealias DataPayload = [Operations.GetBandwidthSources.Output.Ok.Body.JsonPayload.DataPayloadPayload]
-                        /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/json/data`.
-                        public var data: Operations.GetBandwidthSources.Output.Ok.Body.JsonPayload.DataPayload?
-                        /// Creates a new `JsonPayload`.
+                        /// List of labels describing the time series
+                        ///
+                        /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/JsonPayload/labels`.
+                        public typealias LabelsPayload = [Operations.GetBandwidthSources.Output.Ok.Body.JsonPayloadPayload.LabelsPayloadPayload]
+                        /// List of labels describing the time series
+                        ///
+                        /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/JsonPayload/labels`.
+                        public var labels: Operations.GetBandwidthSources.Output.Ok.Body.JsonPayloadPayload.LabelsPayload
+                        /// A time series datapoint value
+                        ///
+                        /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/JsonPayload/ValuesPayload`.
+                        public struct ValuesPayloadPayload: Codable, Hashable, Sendable {
+                            /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/JsonPayload/ValuesPayload/timestamp`.
+                            public var timestamp: Foundation.Date
+                            /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/JsonPayload/ValuesPayload/value`.
+                            public var value: Swift.Double
+                            /// Creates a new `ValuesPayloadPayload`.
+                            ///
+                            /// - Parameters:
+                            ///   - timestamp:
+                            ///   - value:
+                            public init(
+                                timestamp: Foundation.Date,
+                                value: Swift.Double
+                            ) {
+                                self.timestamp = timestamp
+                                self.value = value
+                            }
+                            public enum CodingKeys: String, CodingKey {
+                                case timestamp
+                                case value
+                            }
+                        }
+                        /// The values of the time series
+                        ///
+                        /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/JsonPayload/values`.
+                        public typealias ValuesPayload = [Operations.GetBandwidthSources.Output.Ok.Body.JsonPayloadPayload.ValuesPayloadPayload]
+                        /// The values of the time series
+                        ///
+                        /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/JsonPayload/values`.
+                        public var values: Operations.GetBandwidthSources.Output.Ok.Body.JsonPayloadPayload.ValuesPayload
+                        /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/JsonPayload/unit`.
+                        public var unit: Swift.String
+                        /// Creates a new `JsonPayloadPayload`.
                         ///
                         /// - Parameters:
-                        ///   - data:
-                        public init(data: Operations.GetBandwidthSources.Output.Ok.Body.JsonPayload.DataPayload? = nil) {
-                            self.data = data
+                        ///   - labels: List of labels describing the time series
+                        ///   - values: The values of the time series
+                        ///   - unit:
+                        public init(
+                            labels: Operations.GetBandwidthSources.Output.Ok.Body.JsonPayloadPayload.LabelsPayload,
+                            values: Operations.GetBandwidthSources.Output.Ok.Body.JsonPayloadPayload.ValuesPayload,
+                            unit: Swift.String
+                        ) {
+                            self.labels = labels
+                            self.values = values
+                            self.unit = unit
                         }
                         public enum CodingKeys: String, CodingKey {
-                            case data
+                            case labels
+                            case values
+                            case unit
                         }
                     }
+                    /// A collection of time series
+                    ///
+                    /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/json`.
+                    public typealias JsonPayload = [Operations.GetBandwidthSources.Output.Ok.Body.JsonPayloadPayload]
                     /// - Remark: Generated from `#/paths/metrics/bandwidth-sources/GET/responses/200/content/application\/json`.
                     case json(Operations.GetBandwidthSources.Output.Ok.Body.JsonPayload)
                     /// The associated value of the enum case if `self` is `.json`.
@@ -56840,7 +56622,7 @@ public enum Operations {
                     self.body = body
                 }
             }
-            /// A successful response with traffic source breakdown
+            /// A successful response
             ///
             /// - Remark: Generated from `#/paths//metrics/bandwidth-sources/get(get-bandwidth-sources)/responses/200`.
             ///
@@ -58760,14 +58542,9 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/metrics/filters/http/GET/query/resolutionSeconds`.
                 public var resolutionSeconds: Swift.Int?
-                /// Service ID to query. When multiple service ids are provided, they are ORed together
-                ///
-                /// - Remark: Generated from `#/paths/metrics/filters/http/GET/query/resource`.
-                public var resource: Swift.String?
-                /// This parameter is deprecated. Please use `resource` instead
+                /// Service ID to query. The only resource parameter this endpoint accepts — it rejects `resource`. See Scripts/metrics-quirks.py.
                 ///
                 /// - Remark: Generated from `#/paths/metrics/filters/http/GET/query/service`.
-                @available(*, deprecated)
                 public var service: Swift.String?
                 /// The hosts of HTTP requests to filter to. When multiple host query params are provided, they are ORed together
                 ///
@@ -58783,15 +58560,13 @@ public enum Operations {
                 ///   - startTime: Epoch/Unix timestamp of start of time range to return. Defaults to `now() - 1 hour`.
                 ///   - endTime: Epoch/Unix timestamp of end of time range to return. Defaults to `now()`.
                 ///   - resolutionSeconds: The resolution of the returned data
-                ///   - resource: Service ID to query. When multiple service ids are provided, they are ORed together
-                ///   - service: This parameter is deprecated. Please use `resource` instead
+                ///   - service: Service ID to query. The only resource parameter this endpoint accepts — it rejects `resource`. See Scripts/metrics-quirks.py.
                 ///   - host: The hosts of HTTP requests to filter to. When multiple host query params are provided, they are ORed together
                 ///   - statusCode: The status codes of HTTP requests to filter to. When multiple status code query params are provided, they are ORed together
                 public init(
                     startTime: Components.Parameters.StartTimeParam? = nil,
                     endTime: Components.Parameters.EndTimeParam? = nil,
                     resolutionSeconds: Swift.Int? = nil,
-                    resource: Swift.String? = nil,
                     service: Swift.String? = nil,
                     host: Swift.String? = nil,
                     statusCode: Swift.String? = nil
@@ -58799,7 +58574,6 @@ public enum Operations {
                     self.startTime = startTime
                     self.endTime = endTime
                     self.resolutionSeconds = resolutionSeconds
-                    self.resource = resource
                     self.service = service
                     self.host = host
                     self.statusCode = statusCode
@@ -59003,18 +58777,6 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/metrics/filters/path/GET/query`.
             public struct Query: Sendable, Hashable {
-                /// Epoch/Unix timestamp of start of time range to return. Defaults to `now() - 1 hour`.
-                ///
-                /// - Remark: Generated from `#/paths/metrics/filters/path/GET/query/startTime`.
-                public var startTime: Components.Parameters.StartTimeParam?
-                /// Epoch/Unix timestamp of end of time range to return. Defaults to `now()`.
-                ///
-                /// - Remark: Generated from `#/paths/metrics/filters/path/GET/query/endTime`.
-                public var endTime: Components.Parameters.EndTimeParam?
-                /// The resolution of the returned data
-                ///
-                /// - Remark: Generated from `#/paths/metrics/filters/path/GET/query/resolutionSeconds`.
-                public var resolutionSeconds: Swift.Int?
                 /// Service ID to query. When multiple service ids are provided, they are ORed together
                 ///
                 /// - Remark: Generated from `#/paths/metrics/filters/path/GET/query/resource`.
@@ -59039,27 +58801,18 @@ public enum Operations {
                 /// Creates a new `Query`.
                 ///
                 /// - Parameters:
-                ///   - startTime: Epoch/Unix timestamp of start of time range to return. Defaults to `now() - 1 hour`.
-                ///   - endTime: Epoch/Unix timestamp of end of time range to return. Defaults to `now()`.
-                ///   - resolutionSeconds: The resolution of the returned data
                 ///   - resource: Service ID to query. When multiple service ids are provided, they are ORed together
                 ///   - service: This parameter is deprecated. Please use `resource` instead
                 ///   - host: The hosts of HTTP requests to filter to. When multiple host query params are provided, they are ORed together
                 ///   - statusCode: The status codes of HTTP requests to filter to. When multiple status code query params are provided, they are ORed together
                 ///   - path: The paths of HTTP requests to filter to. When multiple path query params are provided, they are ORed together
                 public init(
-                    startTime: Components.Parameters.StartTimeParam? = nil,
-                    endTime: Components.Parameters.EndTimeParam? = nil,
-                    resolutionSeconds: Swift.Int? = nil,
                     resource: Swift.String? = nil,
                     service: Swift.String? = nil,
                     host: Swift.String? = nil,
                     statusCode: Swift.String? = nil,
                     path: Swift.String? = nil
                 ) {
-                    self.startTime = startTime
-                    self.endTime = endTime
-                    self.resolutionSeconds = resolutionSeconds
                     self.resource = resource
                     self.service = service
                     self.host = host
@@ -60104,8 +59857,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//key-value/get(list-key-value)/responses/429`.
@@ -60370,8 +60122,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//key-value/post(create-key-value)/responses/429`.
@@ -60643,8 +60394,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//key-value/{redisId}/get(retrieve-key-value)/responses/429`.
@@ -60948,8 +60698,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//key-value/{redisId}/patch(update-key-value)/responses/429`.
@@ -61205,8 +60954,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//key-value/{redisId}/delete(delete-key-value)/responses/429`.
@@ -61478,8 +61226,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//key-value/{redisId}/connection-info/get(retrieve-key-value-connection-info)/responses/429`.
@@ -61804,8 +61551,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//key-value/{redisId}/suspend/post(suspend-key-value)/responses/429`.
@@ -62130,8 +61876,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//key-value/{redisId}/resume/post(resume-key-value)/responses/429`.
@@ -62494,8 +62239,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//redis/get(list-redis)/responses/429`.
@@ -62760,8 +62504,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//redis/post(create-redis)/responses/429`.
@@ -63033,8 +62776,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//redis/{redisId}/get(retrieve-redis)/responses/429`.
@@ -63338,8 +63080,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//redis/{redisId}/patch(update-redis)/responses/429`.
@@ -63595,8 +63336,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//redis/{redisId}/delete(delete-redis)/responses/429`.
@@ -63869,8 +63609,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//redis/{redisId}/connection-info/get(retrieve-redis-connection-info)/responses/429`.
@@ -64195,8 +63934,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//redis/{redisId}/suspend/post(suspend-redis)/responses/429`.
@@ -64521,8 +64259,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//redis/{redisId}/resume/post(resume-redis)/responses/429`.
@@ -64905,8 +64642,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//postgres/get(list-postgres)/responses/429`.
@@ -65171,8 +64907,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//postgres/post(create-postgres)/responses/429`.
@@ -65444,8 +65179,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/get(retrieve-postgres)/responses/429`.
@@ -65749,8 +65483,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/patch(update-postgres)/responses/429`.
@@ -66007,8 +65740,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/delete(delete-postgres)/responses/429`.
@@ -66280,8 +66012,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/connection-info/get(retrieve-postgres-connection-info)/responses/429`.
@@ -66586,8 +66317,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/recovery/get(retrieve-postgres-recovery-info)/responses/429`.
@@ -66996,8 +66726,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/recovery/post(recover-postgres)/responses/429`.
@@ -67322,8 +67051,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/suspend/post(suspend-postgres)/responses/429`.
@@ -67648,8 +67376,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/resume/post(resume-postgres)/responses/429`.
@@ -67974,8 +67701,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/restart/post(restart-postgres)/responses/429`.
@@ -68300,8 +68026,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/failover/post(failover-postgres)/responses/429`.
@@ -68606,8 +68331,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/export/get(list-postgres-export)/responses/429`.
@@ -68932,8 +68656,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/export/post(create-postgres-export)/responses/429`.
@@ -69242,8 +68965,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/credentials/get(list-postgres-users)/responses/429`.
@@ -69594,8 +69316,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/credentials/post(create-postgres-user)/responses/429`.
@@ -69858,8 +69579,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/credentials/{username}/delete(delete-postgres-user)/responses/429`.
@@ -70243,8 +69963,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/query/processes/get(list-postgres-processes)/responses/429`.
@@ -70660,8 +70379,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/query/top-queries/get(list-postgres-top-queries)/responses/429`.
@@ -70993,8 +70711,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/query/sizes/get(list-postgres-sizes)/responses/429`.
@@ -71320,8 +71037,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//postgres/{postgresId}/query/table-scans/get(list-postgres-table-scans)/responses/429`.
@@ -71646,8 +71362,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//projects/get(list-projects)/responses/429`.
@@ -71912,8 +71627,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//projects/post(create-project)/responses/429`.
@@ -72185,8 +71899,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//projects/{projectId}/get(retrieve-project)/responses/429`.
@@ -72469,8 +72182,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//projects/{projectId}/patch(update-project)/responses/429`.
@@ -72732,8 +72444,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//projects/{projectId}/delete(delete-project)/responses/429`.
@@ -73072,8 +72783,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//environments/get(list-environments)/responses/429`.
@@ -73338,8 +73048,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//environments/post(create-environment)/responses/429`.
@@ -73610,8 +73319,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//environments/{environmentId}/get(retrieve-environment)/responses/429`.
@@ -73891,8 +73599,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//environments/{environmentId}/patch(update-environment)/responses/429`.
@@ -74154,8 +73861,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//environments/{environmentId}/delete(delete-environment)/responses/429`.
@@ -74436,8 +74142,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//environments/{environmentId}/resources/post(add-resources-to-environment)/responses/429`.
@@ -74709,8 +74414,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//environments/{environmentId}/resources/delete(remove-resources-from-environment)/responses/429`.
@@ -75042,8 +74746,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//env-groups/get(list-env-groups)/responses/429`.
@@ -75308,8 +75011,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//env-groups/post(create-env-group)/responses/429`.
@@ -75583,8 +75285,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//env-groups/{envGroupId}/get(retrieve-env-group)/responses/429`.
@@ -75864,8 +75565,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//env-groups/{envGroupId}/patch(update-env-group)/responses/429`.
@@ -76120,8 +75820,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//env-groups/{envGroupId}/delete(delete-env-group)/responses/429`.
@@ -76406,8 +76105,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//env-groups/{envGroupId}/services/{serviceId}/post(link-service-to-env-group)/responses/429`.
@@ -76672,8 +76370,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//env-groups/{envGroupId}/services/{serviceId}/delete(unlink-service-from-env-group)/responses/429`.
@@ -76956,8 +76653,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//env-groups/{envGroupId}/env-vars/{envVarKey}/get(retrieve-env-group-env-var)/responses/429`.
@@ -77249,8 +76945,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//env-groups/{envGroupId}/env-vars/{envVarKey}/put(update-env-group-env-var)/responses/429`.
@@ -77515,8 +77210,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//env-groups/{envGroupId}/env-vars/{envVarKey}/delete(delete-env-group-env-var)/responses/429`.
@@ -77799,8 +77493,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//env-groups/{envGroupId}/secret-files/{envVarKey}/get(retrieve-env-group-secret-file)/responses/429`.
@@ -78103,8 +77796,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//env-groups/{envGroupId}/secret-files/{envVarKey}/put(update-env-group-secret-file)/responses/429`.
@@ -78371,8 +78063,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//env-groups/{envGroupId}/secret-files/{envVarKey}/delete(delete-env-group-secret-file)/responses/429`.
@@ -78731,8 +78422,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//maintenance/get(list-maintenance)/responses/429`.
@@ -79063,8 +78753,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//maintenance/{maintenanceRunID}/get(retrieve-maintenance)/responses/429`.
@@ -79348,8 +79037,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//maintenance/{maintenanceRunID}/patch(update-maintenance)/responses/429`.
@@ -79609,8 +79297,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//maintenance/{maintenanceRunID}/trigger/post(trigger-maintenance)/responses/429`.
@@ -80220,8 +79907,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//build-sources/get(list-build-sources)/responses/429`.
@@ -81111,8 +80797,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//build-sources/post(create-build-source)/responses/429`.
@@ -81631,8 +81316,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//build-sources/{buildSourceId}/get(get-build-source)/responses/429`.
@@ -82388,8 +82072,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//build-sources/{buildSourceId}/patch(update-build-source)/responses/429`.
@@ -82645,8 +82328,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//build-sources/{buildSourceId}/delete(delete-build-source)/responses/429`.
@@ -83172,8 +82854,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//build-sources/{buildSourceId}/builds/get(list-builds-in-build-source)/responses/429`.
@@ -83687,8 +83368,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//build-sources/{buildSourceId}/builds/post(trigger-build-source-build)/responses/429`.
@@ -84191,8 +83871,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//build-sources/{buildSourceId}/builds/{buildId}/get(retrieve-build-source-build)/responses/429`.
@@ -84537,8 +84216,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//build-sources/{buildSourceId}/env-vars/get(get-env-vars-for-build-source)/responses/429`.
@@ -84972,8 +84650,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//build-sources/{buildSourceId}/env-vars/put(update-env-vars-for-build-source)/responses/429`.
@@ -85302,8 +84979,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//build-sources/{buildSourceId}/env-vars/{envVarKey}/get(retrieve-build-source-env-var)/responses/429`.
@@ -85664,8 +85340,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//build-sources/{buildSourceId}/env-vars/{envVarKey}/put(update-build-source-env-var)/responses/429`.
@@ -85978,8 +85653,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//build-sources/{buildSourceId}/env-vars/{envVarKey}/delete(delete-build-source-env-var)/responses/429`.
@@ -86324,8 +85998,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//build-sources/{buildSourceId}/secret-files/get(list-secret-files-for-build-source)/responses/429`.
@@ -86704,8 +86377,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//build-sources/{buildSourceId}/secret-files/put(update-secret-files-for-build-source)/responses/429`.
@@ -87034,8 +86706,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//build-sources/{buildSourceId}/secret-files/{envVarKey}/get(retrieve-build-source-secret-file)/responses/429`.
@@ -87411,8 +87082,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//build-sources/{buildSourceId}/secret-files/{envVarKey}/put(add-or-update-build-source-secret-file)/responses/429`.
@@ -87725,8 +87395,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//build-sources/{buildSourceId}/secret-files/{envVarKey}/delete(delete-build-source-secret-file)/responses/429`.
@@ -88009,8 +87678,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//build-sources/{buildSourceId}/env-groups/{envGroupId}/post(link-env-group-to-build-source)/responses/429`.
@@ -88277,8 +87945,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//build-sources/{buildSourceId}/env-groups/{envGroupId}/delete(unlink-env-group-from-build-source)/responses/429`.
@@ -88567,8 +88234,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//webhooks/get(list-webhooks)/responses/429`.
@@ -89077,8 +88743,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//webhooks/post(create-webhook)/responses/429`.
@@ -89452,8 +89117,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//webhooks/{webhookId}/get(retrieve-webhook)/responses/429`.
@@ -89972,8 +89636,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//webhooks/{webhookId}/patch(update-webhook)/responses/429`.
@@ -90208,8 +89871,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//webhooks/{webhookId}/delete(delete-webhook)/responses/429`.
@@ -90524,8 +90186,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//webhooks/{webhookId}/events/get(list-webhook-events)/responses/429`.
@@ -90835,8 +90496,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//workflows/get(listWorkflows)/responses/429`.
@@ -91493,8 +91153,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//workflows/post(createWorkflow)/responses/429`.
@@ -91937,8 +91596,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//workflows/{workflowId}/get(getWorkflow)/responses/429`.
@@ -92502,8 +92160,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//workflows/{workflowId}/patch(updateWorkflow)/responses/429`.
@@ -92760,8 +92417,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//workflows/{workflowId}/delete(deleteWorkflow)/responses/429`.
@@ -93064,8 +92720,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//workflowversions/get(listWorkflowVersions)/responses/429`.
@@ -93336,8 +92991,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//workflowversions/post(createWorkflowVersion)/responses/429`.
@@ -93660,8 +93314,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//workflowversions/{workflowVersionId}/get(getWorkflowVersion)/responses/429`.
@@ -93971,8 +93624,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//tasks/get(listTasks)/responses/429`.
@@ -94286,8 +93938,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//tasks/{taskId}/get(getTask)/responses/429`.
@@ -94627,8 +94278,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//task-runs/get(listTaskRuns)/responses/429`.
@@ -95161,8 +94811,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//task-runs/post(createTask)/responses/429`.
@@ -95511,8 +95160,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//task-runs/events/get(streamTaskRunsEvents)/responses/429`.
@@ -96061,8 +95709,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//task-runs/{taskRunId}/get(getTaskRun)/responses/429`.
@@ -96342,8 +95989,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//task-runs/{taskRunId}/delete(cancelTaskRun)/responses/429`.
@@ -96676,8 +96322,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//flows/get(listFlows)/responses/429`.
@@ -96991,8 +96636,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//flows/{flowId}/get(getFlow)/responses/429`.
@@ -97354,8 +96998,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//flow-runs/get(listFlowRuns)/responses/429`.
@@ -97794,8 +97437,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//flow-runs/post(startFlowRun)/responses/429`.
@@ -98392,8 +98034,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//flow-runs/{flowRunId}/get(getFlowRun)/responses/429`.
@@ -98673,8 +98314,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//flow-runs/{flowRunId}/delete(cancelFlowRun)/responses/429`.
@@ -99127,8 +98767,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//flow-runs/{flowRunId}/steps/get(listFlowRunSteps)/responses/429`.
@@ -99570,8 +99209,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//flow-runs/{flowRunId}/steps/{stepSeq}/get(getFlowRunStep)/responses/429`.
@@ -99674,8 +99312,7 @@ public enum Operations {
     }
     /// List sandboxes
     ///
-    /// List sandboxes in a workspace. Each request must specify one workspace.
-    /// Sandboxes run in the region of their sandbox group.
+    /// List sandboxes in a workspace. Each request must specify one workspace. Sandboxes run in the region of their sandbox group.
     ///
     ///
     /// - Remark: HTTP `GET /sandboxes`.
@@ -99719,9 +99356,7 @@ public enum Operations {
                 }
                 /// - Remark: Generated from `#/paths/sandboxes/GET/query/status`.
                 public typealias StatusPayload = [Operations.ListSandboxes.Input.Query.StatusPayloadPayload]
-                /// Filter for sandboxes with the specified statuses. By default, returns all
-                /// statuses except `terminated`. Include `terminated` explicitly to return
-                /// terminated sandboxes.
+                /// Filter for sandboxes with the specified statuses. By default, returns all statuses except `terminated`. Include `terminated` explicitly to return terminated sandboxes.
                 ///
                 ///
                 /// - Remark: Generated from `#/paths/sandboxes/GET/query/status`.
@@ -99734,7 +99369,7 @@ public enum Operations {
                 ///   - name: Filter for sandboxes with exactly this name. Names are not unique, so multiple sandboxes can match.
                 ///   - cursor: The position in the result list to start from when fetching paginated results. For details, see [Pagination](https://api-docs.render.com/reference/pagination).
                 ///   - limit: The maximum number of items to return. For details, see [Pagination](https://api-docs.render.com/reference/pagination).
-                ///   - status: Filter for sandboxes with the specified statuses. By default, returns all
+                ///   - status: Filter for sandboxes with the specified statuses. By default, returns all statuses except `terminated`. Include `terminated` explicitly to return terminated sandboxes.
                 public init(
                     ownerId: Swift.String,
                     sandboxGroupId: Swift.String? = nil,
@@ -99923,8 +99558,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandboxes/get(list-sandboxes)/responses/429`.
@@ -100027,9 +99661,7 @@ public enum Operations {
     }
     /// Create sandbox
     ///
-    /// Create a sandbox and return its initial state. The sandbox might still be
-    /// starting when the response is returned. To use a saved snapshot or custom
-    /// image, provide `snapshotId`, `snapshotName`, `buildId`, or `buildName`.
+    /// Create a sandbox and return its initial state. The sandbox might still be starting when the response is returned. To use a saved snapshot or custom image, provide `snapshotId`, `snapshotName`, `buildId`, or `buildName`.
     ///
     ///
     /// - Remark: HTTP `POST /sandboxes`.
@@ -100063,15 +99695,12 @@ public enum Operations {
                     ///
                     /// - Remark: Generated from `#/paths/sandboxes/POST/requestBody/json/sandboxGroupId`.
                     public var sandboxGroupId: Swift.String?
-                    /// A label for the sandbox, such as `my-agent`, up to 64 characters. Names do
-                    /// not have to be unique; use the sandbox ID to identify a specific sandbox.
-                    /// Must not start with `sbx-`.
+                    /// A label for the sandbox, such as `my-agent`, up to 64 characters. Names do not have to be unique; use the sandbox ID to identify a specific sandbox. Must not start with `sbx-`.
                     ///
                     ///
                     /// - Remark: Generated from `#/paths/sandboxes/POST/requestBody/json/name`.
                     public var name: Swift.String?
-                    /// The outbound traffic policy to apply to the sandbox. Provide `type` or its
-                    /// deprecated alias `default`. If both are provided, they must match.
+                    /// The outbound traffic policy to apply to the sandbox. Provide `type` or its deprecated alias `default`. If both are provided, they must match.
                     ///
                     ///
                     /// - Remark: Generated from `#/paths/sandboxes/POST/requestBody/json/networkPolicy`.
@@ -100105,9 +99734,7 @@ public enum Operations {
                         ///
                         /// - Remark: Generated from `#/paths/sandboxes/POST/requestBody/json/networkPolicy/RulesPayload`.
                         public struct RulesPayloadPayload: Codable, Hashable, Sendable {
-                            /// The hostname this rule allows, up to 253 characters. Matching is exact:
-                            /// `foo.local` does not match `api.foo.local`. Use a separate rule or
-                            /// `*.foo.local` for subdomains. A wildcard is allowed only as the leftmost label.
+                            /// The hostname this rule allows, up to 253 characters. Matching is exact: `foo.local` does not match `api.foo.local`. Use a separate rule or `*.foo.local` for subdomains. A wildcard is allowed only as the leftmost label.
                             ///
                             ///
                             /// - Remark: Generated from `#/paths/sandboxes/POST/requestBody/json/networkPolicy/RulesPayload/domain`.
@@ -100125,7 +99752,7 @@ public enum Operations {
                             /// Creates a new `RulesPayloadPayload`.
                             ///
                             /// - Parameters:
-                            ///   - domain: The hostname this rule allows, up to 253 characters. Matching is exact:
+                            ///   - domain: The hostname this rule allows, up to 253 characters. Matching is exact: `foo.local` does not match `api.foo.local`. Use a separate rule or `*.foo.local` for subdomains. A wildcard is allowed only as the leftmost label.
                             ///   - _protocol: The protocol allowed for this destination. Defaults to `https`. The `allow-list` policy blocks outbound traffic that uses other protocols.
                             public init(
                                 domain: Swift.String,
@@ -100139,14 +99766,12 @@ public enum Operations {
                                 case _protocol = "protocol"
                             }
                         }
-                        /// Destinations the sandbox may reach, required when the policy is
-                        /// `allow-list` and rejected otherwise. Each domain may be listed once.
+                        /// Destinations the sandbox may reach, required when the policy is `allow-list` and rejected otherwise. Each domain may be listed once.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandboxes/POST/requestBody/json/networkPolicy/rules`.
                         public typealias RulesPayload = [Operations.CreateSandbox.Input.Body.JsonPayload.NetworkPolicyPayload.RulesPayloadPayload]
-                        /// Destinations the sandbox may reach, required when the policy is
-                        /// `allow-list` and rejected otherwise. Each domain may be listed once.
+                        /// Destinations the sandbox may reach, required when the policy is `allow-list` and rejected otherwise. Each domain may be listed once.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandboxes/POST/requestBody/json/networkPolicy/rules`.
@@ -100156,7 +99781,7 @@ public enum Operations {
                         /// - Parameters:
                         ///   - _type: How Render handles outbound traffic from the sandbox. The `allow-list` policy requires `rules`.
                         ///   - _default: How Render handles outbound traffic from the sandbox. The `allow-list` policy requires `rules`.
-                        ///   - rules: Destinations the sandbox may reach, required when the policy is
+                        ///   - rules: Destinations the sandbox may reach, required when the policy is `allow-list` and rejected otherwise. Each domain may be listed once.
                         public init(
                             _type: Operations.CreateSandbox.Input.Body.JsonPayload.NetworkPolicyPayload._TypePayload? = nil,
                             _default: Operations.CreateSandbox.Input.Body.JsonPayload.NetworkPolicyPayload.DefaultPayload? = nil,
@@ -100172,8 +99797,7 @@ public enum Operations {
                             case rules
                         }
                     }
-                    /// The outbound traffic policy to apply to the sandbox. Provide `type` or its
-                    /// deprecated alias `default`. If both are provided, they must match.
+                    /// The outbound traffic policy to apply to the sandbox. Provide `type` or its deprecated alias `default`. If both are provided, they must match.
                     ///
                     ///
                     /// - Remark: Generated from `#/paths/sandboxes/POST/requestBody/json/networkPolicy`.
@@ -100245,21 +99869,14 @@ public enum Operations {
                     ///
                     /// - Remark: Generated from `#/paths/sandboxes/POST/requestBody/json/plan`.
                     public var plan: Operations.CreateSandbox.Input.Body.JsonPayload.PlanPayload?
-                    /// The maximum time the sandbox can run continuously, in seconds. The sandbox
-                    /// terminates when this time elapses. If the sandbox is suspended and later
-                    /// resumed, this timeout restarts.
+                    /// The maximum time the sandbox can run continuously, in seconds. The sandbox terminates when this time elapses. If the sandbox is suspended and later resumed, this timeout restarts.
                     ///
-                    /// Use 0 to disable the runtime timeout. Positive values must be between 60
-                    /// and 2592000 (30 days). Defaults to 86400, or to the source sandbox's runtime
-                    /// timeout when creating a sandbox from a snapshot.
+                    /// Use 0 to disable the runtime timeout. Positive values must be between 60 and 2592000 (30 days). Defaults to 86400, or to the source sandbox's runtime timeout when creating a sandbox from a snapshot.
                     ///
                     ///
                     /// - Remark: Generated from `#/paths/sandboxes/POST/requestBody/json/timeoutSeconds`.
                     public var timeoutSeconds: Swift.Int?
-                    /// The number of seconds of inactivity before Render suspends the sandbox.
-                    /// Use 0 to disable automatic idle suspension. Positive values must be between
-                    /// 300 and 86400. Defaults to 900, or to the source sandbox's idle timeout when
-                    /// creating a sandbox from a snapshot.
+                    /// The number of seconds of inactivity before Render suspends the sandbox. Use 0 to disable automatic idle suspension. Positive values must be between 300 and 86400. Defaults to 900, or to the source sandbox's idle timeout when creating a sandbox from a snapshot.
                     ///
                     ///
                     /// - Remark: Generated from `#/paths/sandboxes/POST/requestBody/json/idleTimeoutSeconds`.
@@ -100292,10 +99909,7 @@ public enum Operations {
                     ///
                     /// - Remark: Generated from `#/paths/sandboxes/POST/requestBody/json/snapshotId`.
                     public var snapshotId: Swift.String?
-                    /// A case-sensitive name for snapshots in a sandbox group, up to 64 characters.
-                    /// Must not start with `snp-`. Multiple snapshots can share a name. When creating
-                    /// a sandbox by snapshot name, Render uses the most recently created snapshot
-                    /// with that name that is `available` and unexpired.
+                    /// A case-sensitive name for snapshots in a sandbox group, up to 64 characters. Must not start with `snp-`. Multiple snapshots can share a name. When creating a sandbox by snapshot name, Render uses the most recently created snapshot with that name that is `available` and unexpired.
                     ///
                     ///
                     /// - Remark: Generated from `#/paths/sandboxes/POST/requestBody/json/snapshotName`.
@@ -100304,9 +99918,7 @@ public enum Operations {
                     ///
                     /// - Remark: Generated from `#/paths/sandboxes/POST/requestBody/json/buildId`.
                     public var buildId: Swift.String?
-                    /// The name of the build to create the sandbox from instead of the base image.
-                    /// Uses the newest successful build with this name in the sandbox group. Cannot
-                    /// be combined with `buildId`, `snapshotId`, or `snapshotName`.
+                    /// The name of the build to create the sandbox from instead of the base image. Uses the newest successful build with this name in the sandbox group. Cannot be combined with `buildId`, `snapshotId`, or `snapshotName`.
                     ///
                     ///
                     /// - Remark: Generated from `#/paths/sandboxes/POST/requestBody/json/buildName`.
@@ -100316,16 +99928,16 @@ public enum Operations {
                     /// - Parameters:
                     ///   - ownerId: The ID of the workspace the sandbox belongs to.
                     ///   - sandboxGroupId: The ID of the sandbox group.
-                    ///   - name: A label for the sandbox, such as `my-agent`, up to 64 characters. Names do
-                    ///   - networkPolicy: The outbound traffic policy to apply to the sandbox. Provide `type` or its
+                    ///   - name: A label for the sandbox, such as `my-agent`, up to 64 characters. Names do not have to be unique; use the sandbox ID to identify a specific sandbox. Must not start with `sbx-`.
+                    ///   - networkPolicy: The outbound traffic policy to apply to the sandbox. Provide `type` or its deprecated alias `default`. If both are provided, they must match.
                     ///   - plan: The compute plan for the sandbox. See `sandboxPlan` for known values.
-                    ///   - timeoutSeconds: The maximum time the sandbox can run continuously, in seconds. The sandbox
-                    ///   - idleTimeoutSeconds: The number of seconds of inactivity before Render suspends the sandbox.
+                    ///   - timeoutSeconds: The maximum time the sandbox can run continuously, in seconds. The sandbox terminates when this time elapses. If the sandbox is suspended and later resumed, this timeout restarts.
+                    ///   - idleTimeoutSeconds: The number of seconds of inactivity before Render suspends the sandbox. Use 0 to disable automatic idle suspension. Positive values must be between 300 and 86400. Defaults to 900, or to the source sandbox's idle timeout when creating a sandbox from a snapshot.
                     ///   - env: The environment variables to set when creating the sandbox.
                     ///   - snapshotId: The ID of the sandbox snapshot.
-                    ///   - snapshotName: A case-sensitive name for snapshots in a sandbox group, up to 64 characters.
+                    ///   - snapshotName: A case-sensitive name for snapshots in a sandbox group, up to 64 characters. Must not start with `snp-`. Multiple snapshots can share a name. When creating a sandbox by snapshot name, Render uses the most recently created snapshot with that name that is `available` and unexpired.
                     ///   - buildId: The ID of the sandbox build.
-                    ///   - buildName: The name of the build to create the sandbox from instead of the base image.
+                    ///   - buildName: The name of the build to create the sandbox from instead of the base image. Uses the newest successful build with this name in the sandbox group. Cannot be combined with `buildId`, `snapshotId`, or `snapshotName`.
                     public init(
                         ownerId: Swift.String,
                         sandboxGroupId: Swift.String? = nil,
@@ -100521,9 +100133,7 @@ public enum Operations {
                             ///
                             /// - Remark: Generated from `#/paths/sandboxes/POST/responses/201/content/json/networkPolicy/RulesPayload`.
                             public struct RulesPayloadPayload: Codable, Hashable, Sendable {
-                                /// The hostname this rule allows, up to 253 characters. Matching is exact:
-                                /// `foo.local` does not match `api.foo.local`. Use a separate rule or
-                                /// `*.foo.local` for subdomains. A wildcard is allowed only as the leftmost label.
+                                /// The hostname this rule allows, up to 253 characters. Matching is exact: `foo.local` does not match `api.foo.local`. Use a separate rule or `*.foo.local` for subdomains. A wildcard is allowed only as the leftmost label.
                                 ///
                                 ///
                                 /// - Remark: Generated from `#/paths/sandboxes/POST/responses/201/content/json/networkPolicy/RulesPayload/domain`.
@@ -100541,7 +100151,7 @@ public enum Operations {
                                 /// Creates a new `RulesPayloadPayload`.
                                 ///
                                 /// - Parameters:
-                                ///   - domain: The hostname this rule allows, up to 253 characters. Matching is exact:
+                                ///   - domain: The hostname this rule allows, up to 253 characters. Matching is exact: `foo.local` does not match `api.foo.local`. Use a separate rule or `*.foo.local` for subdomains. A wildcard is allowed only as the leftmost label.
                                 ///   - _protocol: The protocol allowed for this destination. Defaults to `https`. The `allow-list` policy blocks outbound traffic that uses other protocols.
                                 public init(
                                     domain: Swift.String,
@@ -100555,14 +100165,12 @@ public enum Operations {
                                     case _protocol = "protocol"
                                 }
                             }
-                            /// Destinations the sandbox may reach, present when `type` is
-                            /// `allow-list` and absent otherwise. Each domain may be listed once.
+                            /// Destinations the sandbox may reach, present when `type` is `allow-list` and absent otherwise. Each domain may be listed once.
                             ///
                             ///
                             /// - Remark: Generated from `#/paths/sandboxes/POST/responses/201/content/json/networkPolicy/rules`.
                             public typealias RulesPayload = [Operations.CreateSandbox.Output.Created.Body.JsonPayload.NetworkPolicyPayload.RulesPayloadPayload]
-                            /// Destinations the sandbox may reach, present when `type` is
-                            /// `allow-list` and absent otherwise. Each domain may be listed once.
+                            /// Destinations the sandbox may reach, present when `type` is `allow-list` and absent otherwise. Each domain may be listed once.
                             ///
                             ///
                             /// - Remark: Generated from `#/paths/sandboxes/POST/responses/201/content/json/networkPolicy/rules`.
@@ -100572,7 +100180,7 @@ public enum Operations {
                             /// - Parameters:
                             ///   - _type: How Render handles outbound traffic from the sandbox. The `allow-list` policy requires `rules`.
                             ///   - _default: How Render handles outbound traffic from the sandbox. The `allow-list` policy requires `rules`.
-                            ///   - rules: Destinations the sandbox may reach, present when `type` is
+                            ///   - rules: Destinations the sandbox may reach, present when `type` is `allow-list` and absent otherwise. Each domain may be listed once.
                             public init(
                                 _type: Operations.CreateSandbox.Output.Created.Body.JsonPayload.NetworkPolicyPayload._TypePayload,
                                 _default: Operations.CreateSandbox.Output.Created.Body.JsonPayload.NetworkPolicyPayload.DefaultPayload? = nil,
@@ -100596,9 +100204,7 @@ public enum Operations {
                         ///
                         /// - Remark: Generated from `#/paths/sandboxes/POST/responses/201/content/json/region`.
                         public var region: Swift.String
-                        /// The maximum time the sandbox can run continuously, in seconds. The sandbox
-                        /// terminates when this time elapses. If the sandbox is suspended and later
-                        /// resumed, this timeout restarts. A value of 0 disables the runtime timeout.
+                        /// The maximum time the sandbox can run continuously, in seconds. The sandbox terminates when this time elapses. If the sandbox is suspended and later resumed, this timeout restarts. A value of 0 disables the runtime timeout.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandboxes/POST/responses/201/content/json/timeoutSeconds`.
@@ -100625,7 +100231,7 @@ public enum Operations {
                         ///   - plan: The sandbox's compute plan. See `sandboxPlan` for known values.
                         ///   - networkPolicy: The policy that controls outbound traffic from the sandbox.
                         ///   - region: The Render region where the sandbox runs.
-                        ///   - timeoutSeconds: The maximum time the sandbox can run continuously, in seconds. The sandbox
+                        ///   - timeoutSeconds: The maximum time the sandbox can run continuously, in seconds. The sandbox terminates when this time elapses. If the sandbox is suspended and later resumed, this timeout restarts. A value of 0 disables the runtime timeout.
                         ///   - idleTimeoutSeconds: The number of seconds of inactivity before Render suspends the sandbox. A value of 0 disables automatic idle suspension.
                         ///   - createdAt: The timestamp when the sandbox was created, in ISO 8601 format.
                         ///   - terminatedAt: The timestamp when the sandbox was terminated, in ISO 8601 format. Null if the sandbox has not been terminated.
@@ -100747,17 +100353,11 @@ public enum Operations {
             /// The request is invalid.
             ///
             /// - `invalid_snapshot_name`: `snapshotName` is malformed.
-            /// - Both `snapshotId` and `snapshotName` are provided. No error code is
-            ///   returned.
-            /// - `invalid_sandbox_name`: `name` exceeds 64 characters or starts with
-            ///   `sbx-`.
-            /// - `sandbox_group_limit_reached`: The workspace has no default sandbox group
-            ///   and has reached its sandbox group limit.
-            /// - `invalid_sandbox_plan`: The plan is not supported. The error message lists
-            ///   accepted plans.
-            /// - `invalid_timeout_seconds`: A nonzero `timeoutSeconds` is outside the
-            ///   range of 60 to the workspace's maximum, which defaults to 2592000
-            ///   (30 days).
+            /// - Both `snapshotId` and `snapshotName` are provided. No error code is returned.
+            /// - `invalid_sandbox_name`: `name` exceeds 64 characters or starts with `sbx-`.
+            /// - `sandbox_group_limit_reached`: The workspace has no default sandbox group and has reached its sandbox group limit.
+            /// - `invalid_sandbox_plan`: The plan is not supported. The error message lists accepted plans.
+            /// - `invalid_timeout_seconds`: A nonzero `timeoutSeconds` is outside the range of 60 to the workspace's maximum, which defaults to 2592000 (30 days).
             ///
             ///
             /// - Remark: Generated from `#/paths//sandboxes/post(create-sandbox)/responses/400`.
@@ -100857,10 +100457,8 @@ public enum Operations {
             }
             /// The requested resource was not found.
             ///
-            /// - `snapshot_not_found`: The snapshot ID does not exist or no available
-            ///   snapshot in the group has the specified name.
-            /// - `build_not_found`: The specified build does not belong to the sandbox
-            ///   group, or no build in the group has the specified name.
+            /// - `snapshot_not_found`: The snapshot ID does not exist or no available snapshot in the group has the specified name.
+            /// - `build_not_found`: The specified build does not belong to the sandbox group, or no build in the group has the specified name.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandboxes/post(create-sandbox)/responses/404`.
@@ -100914,13 +100512,10 @@ public enum Operations {
             }
             /// The current state of the resource conflicts with this request.
             ///
-            /// - `snapshot_not_available`: The snapshot is not `available`. This also
-            ///   applies to snapshots selected by name.
-            /// - `snapshot_plan_mismatch`: A runtime snapshot requires a different compute
-            ///   plan. This also applies to snapshots selected by name.
+            /// - `snapshot_not_available`: The snapshot is not `available`. This also applies to snapshots selected by name.
+            /// - `snapshot_plan_mismatch`: A runtime snapshot requires a different compute plan. This also applies to snapshots selected by name.
             /// - `sandbox_group_suspended`: The sandbox group is suspended.
-            /// - `build_not_succeeded`: The specified build has not succeeded, or no build
-            ///   with the specified name has succeeded.
+            /// - `build_not_succeeded`: The specified build has not succeeded, or no build with the specified name has succeeded.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandboxes/post(create-sandbox)/responses/409`.
@@ -100946,8 +100541,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandboxes/post(create-sandbox)/responses/429`.
@@ -101050,9 +100644,7 @@ public enum Operations {
     }
     /// List sandbox groups
     ///
-    /// List sandbox groups in a workspace, newest first. Returns up to 20 groups
-    /// by default, with a maximum of 100. To fetch the next page, pass the last
-    /// result's cursor as `cursor`. Continue until the response is empty.
+    /// List sandbox groups in a workspace, newest first. Returns up to 20 groups by default, with a maximum of 100. To fetch the next page, pass the last result's cursor as `cursor`. Continue until the response is empty.
     ///
     ///
     /// - Remark: HTTP `GET /sandbox-groups`.
@@ -101262,8 +100854,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandbox-groups/get(list-sandbox-groups)/responses/429`.
@@ -101726,8 +101317,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandbox-groups/post(create-sandbox-group)/responses/429`.
@@ -102031,9 +101621,7 @@ public enum Operations {
                             ///
                             /// - Remark: Generated from `#/paths/sandboxes/{sandboxId}/GET/responses/200/content/json/networkPolicy/RulesPayload`.
                             public struct RulesPayloadPayload: Codable, Hashable, Sendable {
-                                /// The hostname this rule allows, up to 253 characters. Matching is exact:
-                                /// `foo.local` does not match `api.foo.local`. Use a separate rule or
-                                /// `*.foo.local` for subdomains. A wildcard is allowed only as the leftmost label.
+                                /// The hostname this rule allows, up to 253 characters. Matching is exact: `foo.local` does not match `api.foo.local`. Use a separate rule or `*.foo.local` for subdomains. A wildcard is allowed only as the leftmost label.
                                 ///
                                 ///
                                 /// - Remark: Generated from `#/paths/sandboxes/{sandboxId}/GET/responses/200/content/json/networkPolicy/RulesPayload/domain`.
@@ -102051,7 +101639,7 @@ public enum Operations {
                                 /// Creates a new `RulesPayloadPayload`.
                                 ///
                                 /// - Parameters:
-                                ///   - domain: The hostname this rule allows, up to 253 characters. Matching is exact:
+                                ///   - domain: The hostname this rule allows, up to 253 characters. Matching is exact: `foo.local` does not match `api.foo.local`. Use a separate rule or `*.foo.local` for subdomains. A wildcard is allowed only as the leftmost label.
                                 ///   - _protocol: The protocol allowed for this destination. Defaults to `https`. The `allow-list` policy blocks outbound traffic that uses other protocols.
                                 public init(
                                     domain: Swift.String,
@@ -102065,14 +101653,12 @@ public enum Operations {
                                     case _protocol = "protocol"
                                 }
                             }
-                            /// Destinations the sandbox may reach, present when `type` is
-                            /// `allow-list` and absent otherwise. Each domain may be listed once.
+                            /// Destinations the sandbox may reach, present when `type` is `allow-list` and absent otherwise. Each domain may be listed once.
                             ///
                             ///
                             /// - Remark: Generated from `#/paths/sandboxes/{sandboxId}/GET/responses/200/content/json/networkPolicy/rules`.
                             public typealias RulesPayload = [Operations.RetrieveSandbox.Output.Ok.Body.JsonPayload.NetworkPolicyPayload.RulesPayloadPayload]
-                            /// Destinations the sandbox may reach, present when `type` is
-                            /// `allow-list` and absent otherwise. Each domain may be listed once.
+                            /// Destinations the sandbox may reach, present when `type` is `allow-list` and absent otherwise. Each domain may be listed once.
                             ///
                             ///
                             /// - Remark: Generated from `#/paths/sandboxes/{sandboxId}/GET/responses/200/content/json/networkPolicy/rules`.
@@ -102082,7 +101668,7 @@ public enum Operations {
                             /// - Parameters:
                             ///   - _type: How Render handles outbound traffic from the sandbox. The `allow-list` policy requires `rules`.
                             ///   - _default: How Render handles outbound traffic from the sandbox. The `allow-list` policy requires `rules`.
-                            ///   - rules: Destinations the sandbox may reach, present when `type` is
+                            ///   - rules: Destinations the sandbox may reach, present when `type` is `allow-list` and absent otherwise. Each domain may be listed once.
                             public init(
                                 _type: Operations.RetrieveSandbox.Output.Ok.Body.JsonPayload.NetworkPolicyPayload._TypePayload,
                                 _default: Operations.RetrieveSandbox.Output.Ok.Body.JsonPayload.NetworkPolicyPayload.DefaultPayload? = nil,
@@ -102106,9 +101692,7 @@ public enum Operations {
                         ///
                         /// - Remark: Generated from `#/paths/sandboxes/{sandboxId}/GET/responses/200/content/json/region`.
                         public var region: Swift.String
-                        /// The maximum time the sandbox can run continuously, in seconds. The sandbox
-                        /// terminates when this time elapses. If the sandbox is suspended and later
-                        /// resumed, this timeout restarts. A value of 0 disables the runtime timeout.
+                        /// The maximum time the sandbox can run continuously, in seconds. The sandbox terminates when this time elapses. If the sandbox is suspended and later resumed, this timeout restarts. A value of 0 disables the runtime timeout.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandboxes/{sandboxId}/GET/responses/200/content/json/timeoutSeconds`.
@@ -102135,7 +101719,7 @@ public enum Operations {
                         ///   - plan: The sandbox's compute plan. See `sandboxPlan` for known values.
                         ///   - networkPolicy: The policy that controls outbound traffic from the sandbox.
                         ///   - region: The Render region where the sandbox runs.
-                        ///   - timeoutSeconds: The maximum time the sandbox can run continuously, in seconds. The sandbox
+                        ///   - timeoutSeconds: The maximum time the sandbox can run continuously, in seconds. The sandbox terminates when this time elapses. If the sandbox is suspended and later resumed, this timeout restarts. A value of 0 disables the runtime timeout.
                         ///   - idleTimeoutSeconds: The number of seconds of inactivity before Render suspends the sandbox. A value of 0 disables automatic idle suspension.
                         ///   - createdAt: The timestamp when the sandbox was created, in ISO 8601 format.
                         ///   - terminatedAt: The timestamp when the sandbox was terminated, in ISO 8601 format. Null if the sandbox has not been terminated.
@@ -102297,8 +101881,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandboxes/{sandboxId}/get(retrieve-sandbox)/responses/429`.
@@ -102628,8 +102211,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandboxes/{sandboxId}/execs/get(list-sandbox-executions)/responses/429`.
@@ -102810,10 +102392,7 @@ public enum Operations {
             public struct Ok: Sendable, Hashable {
                 /// - Remark: Generated from `#/paths/sandboxes/{sandboxId}/execs/{execId}/GET/responses/200/content`.
                 @frozen public enum Body: Sendable, Hashable {
-                    /// A record of a command run or file transfer in a sandbox. `startedAt` records
-                    /// when the connect token was created. The command can appear while the
-                    /// execution is running. `stoppedAt` and `exitCode` are omitted until Render
-                    /// receives the result or finalizes the execution when the sandbox stops.
+                    /// A record of a command run or file transfer in a sandbox. `startedAt` records when the connect token was created. The command can appear while the execution is running. `stoppedAt` and `exitCode` are omitted until Render receives the result or finalizes the execution when the sandbox stops.
                     ///
                     ///
                     /// - Remark: Generated from `#/paths/sandboxes/{sandboxId}/execs/{execId}/GET/responses/200/content/json`.
@@ -102850,9 +102429,7 @@ public enum Operations {
                         ///
                         /// - Remark: Generated from `#/paths/sandboxes/{sandboxId}/execs/{execId}/GET/responses/200/content/json/operation`.
                         public var operation: Operations.RetrieveSandboxExecution.Output.Ok.Body.JsonPayload.OperationPayload
-                        /// The command run in the sandbox, or the target path for a file transfer.
-                        /// Command text may be redacted or truncated. Omitted if you do not have
-                        /// permission to view execution commands.
+                        /// The command run in the sandbox, or the target path for a file transfer. Command text may be redacted or truncated. Omitted if you do not have permission to view execution commands.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandboxes/{sandboxId}/execs/{execId}/GET/responses/200/content/json/command`.
@@ -102880,7 +102457,7 @@ public enum Operations {
                         ///   - sandboxId: The ID of the sandbox.
                         ///   - _type: Whether the execution is a command run or a file transfer.
                         ///   - operation: The command run or file transfer operation authorized by the connect token.
-                        ///   - command: The command run in the sandbox, or the target path for a file transfer.
+                        ///   - command: The command run in the sandbox, or the target path for a file transfer. Command text may be redacted or truncated. Omitted if you do not have permission to view execution commands.
                         ///   - userId: The ID of the user the execution token was created for.
                         ///   - startedAt: The timestamp when the execution token was created, in ISO 8601 format.
                         ///   - stoppedAt: The timestamp when the execution stopped, in ISO 8601 format. Omitted until a result is available.
@@ -103037,8 +102614,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandboxes/{sandboxId}/execs/{execId}/get(retrieve-sandbox-execution)/responses/429`.
@@ -103141,9 +102717,7 @@ public enum Operations {
     }
     /// Terminate sandbox
     ///
-    /// Terminate the sandbox with the provided ID. Returns HTTP 204 even if the
-    /// sandbox is already terminated. You can also terminate a sandbox while it
-    /// is starting (`creating`).
+    /// Terminate the sandbox with the provided ID. Returns HTTP 204 even if the sandbox is already terminated. You can also terminate a sandbox while it is starting (`creating`).
     ///
     ///
     /// - Remark: HTTP `POST /sandboxes/{sandboxId}/terminate`.
@@ -103316,8 +102890,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandboxes/{sandboxId}/terminate/post(terminate-sandbox)/responses/429`.
@@ -103420,10 +102993,7 @@ public enum Operations {
     }
     /// Create sandbox snapshot
     ///
-    /// Capture a snapshot of a running sandbox. Returns HTTP 202 with the snapshot
-    /// in `creating` status. Retrieve the snapshot until its status is `available`
-    /// or `failed`. The sandbox continues running, with a brief pause when capturing
-    /// a runtime snapshot.
+    /// Capture a snapshot of a running sandbox. Returns HTTP 202 with the snapshot in `creating` status. Retrieve the snapshot until its status is `available` or `failed`. The sandbox continues running, with a brief pause when capturing a runtime snapshot.
     ///
     ///
     /// - Remark: HTTP `POST /sandboxes/{sandboxId}/snapshots`.
@@ -103479,10 +103049,7 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/sandboxes/{sandboxId}/snapshots/POST/requestBody/json`.
                 public struct JsonPayload: Codable, Hashable, Sendable {
-                    /// The state to capture. A `filesystem` snapshot captures the writable
-                    /// filesystem and can be restored to any plan. A `runtime` snapshot also
-                    /// captures memory and CPU state and must be restored to the source sandbox
-                    /// plan.
+                    /// The state to capture. A `filesystem` snapshot captures the writable filesystem and can be restored to any plan. A `runtime` snapshot also captures memory and CPU state and must be restored to the source sandbox plan.
                     ///
                     ///
                     /// - Remark: Generated from `#/paths/sandboxes/{sandboxId}/snapshots/POST/requestBody/json/kind`.
@@ -103490,33 +103057,22 @@ public enum Operations {
                         case filesystem = "filesystem"
                         case runtime = "runtime"
                     }
-                    /// The state to capture. A `filesystem` snapshot captures the writable
-                    /// filesystem and can be restored to any plan. A `runtime` snapshot also
-                    /// captures memory and CPU state and must be restored to the source sandbox
-                    /// plan.
+                    /// The state to capture. A `filesystem` snapshot captures the writable filesystem and can be restored to any plan. A `runtime` snapshot also captures memory and CPU state and must be restored to the source sandbox plan.
                     ///
                     ///
                     /// - Remark: Generated from `#/paths/sandboxes/{sandboxId}/snapshots/POST/requestBody/json/kind`.
                     public var kind: Operations.CreateSandboxSnapshot.Input.Body.JsonPayload.KindPayload?
-                    /// A case-sensitive name for snapshots in a sandbox group, up to 64 characters.
-                    /// Must not start with `snp-`. Multiple snapshots can share a name. When creating
-                    /// a sandbox by snapshot name, Render uses the most recently created snapshot
-                    /// with that name that is `available` and unexpired.
+                    /// A case-sensitive name for snapshots in a sandbox group, up to 64 characters. Must not start with `snp-`. Multiple snapshots can share a name. When creating a sandbox by snapshot name, Render uses the most recently created snapshot with that name that is `available` and unexpired.
                     ///
                     ///
                     /// - Remark: Generated from `#/paths/sandboxes/{sandboxId}/snapshots/POST/requestBody/json/name`.
                     public var name: Swift.String?
-                    /// The snapshot's lifetime after its last use, in seconds. Creating a sandbox
-                    /// from this snapshot resets its remaining lifetime to this duration. Use 0
-                    /// to keep the snapshot until you delete it. Defaults to Render's snapshot
-                    /// lifetime. Cannot be combined with `expiresAt`.
+                    /// The snapshot's lifetime after its last use, in seconds. Creating a sandbox from this snapshot resets its remaining lifetime to this duration. Use 0 to keep the snapshot until you delete it. Defaults to Render's snapshot lifetime. Cannot be combined with `expiresAt`.
                     ///
                     ///
                     /// - Remark: Generated from `#/paths/sandboxes/{sandboxId}/snapshots/POST/requestBody/json/ttlSeconds`.
                     public var ttlSeconds: Swift.Int?
-                    /// The expiration timestamp, in ISO 8601 format. Deprecated; use `ttlSeconds`
-                    /// instead. Must be in the future. Render sets the snapshot lifetime to the
-                    /// duration between the request and this timestamp.
+                    /// The expiration timestamp, in ISO 8601 format. Deprecated; use `ttlSeconds` instead. Must be in the future. Render sets the snapshot lifetime to the duration between the request and this timestamp.
                     ///
                     ///
                     /// - Remark: Generated from `#/paths/sandboxes/{sandboxId}/snapshots/POST/requestBody/json/expiresAt`.
@@ -103525,10 +103081,10 @@ public enum Operations {
                     /// Creates a new `JsonPayload`.
                     ///
                     /// - Parameters:
-                    ///   - kind: The state to capture. A `filesystem` snapshot captures the writable
-                    ///   - name: A case-sensitive name for snapshots in a sandbox group, up to 64 characters.
-                    ///   - ttlSeconds: The snapshot's lifetime after its last use, in seconds. Creating a sandbox
-                    ///   - expiresAt: The expiration timestamp, in ISO 8601 format. Deprecated; use `ttlSeconds`
+                    ///   - kind: The state to capture. A `filesystem` snapshot captures the writable filesystem and can be restored to any plan. A `runtime` snapshot also captures memory and CPU state and must be restored to the source sandbox plan.
+                    ///   - name: A case-sensitive name for snapshots in a sandbox group, up to 64 characters. Must not start with `snp-`. Multiple snapshots can share a name. When creating a sandbox by snapshot name, Render uses the most recently created snapshot with that name that is `available` and unexpired.
+                    ///   - ttlSeconds: The snapshot's lifetime after its last use, in seconds. Creating a sandbox from this snapshot resets its remaining lifetime to this duration. Use 0 to keep the snapshot until you delete it. Defaults to Render's snapshot lifetime. Cannot be combined with `expiresAt`.
+                    ///   - expiresAt: The expiration timestamp, in ISO 8601 format. Deprecated; use `ttlSeconds` instead. Must be in the future. Render sets the snapshot lifetime to the duration between the request and this timestamp.
                     public init(
                         kind: Operations.CreateSandboxSnapshot.Input.Body.JsonPayload.KindPayload? = nil,
                         name: Swift.String? = nil,
@@ -103590,18 +103146,12 @@ public enum Operations {
                         ///
                         /// - Remark: Generated from `#/paths/sandboxes/{sandboxId}/snapshots/POST/responses/202/content/json/sourceSandboxId`.
                         public var sourceSandboxId: Swift.String
-                        /// A case-sensitive name for snapshots in a sandbox group, up to 64 characters.
-                        /// Must not start with `snp-`. Multiple snapshots can share a name. When creating
-                        /// a sandbox by snapshot name, Render uses the most recently created snapshot
-                        /// with that name that is `available` and unexpired.
+                        /// A case-sensitive name for snapshots in a sandbox group, up to 64 characters. Must not start with `snp-`. Multiple snapshots can share a name. When creating a sandbox by snapshot name, Render uses the most recently created snapshot with that name that is `available` and unexpired.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandboxes/{sandboxId}/snapshots/POST/responses/202/content/json/name`.
                         public var name: Swift.String?
-                        /// The state to capture. A `filesystem` snapshot captures the writable
-                        /// filesystem and can be restored to any plan. A `runtime` snapshot also
-                        /// captures memory and CPU state and must be restored to the source sandbox
-                        /// plan.
+                        /// The state to capture. A `filesystem` snapshot captures the writable filesystem and can be restored to any plan. A `runtime` snapshot also captures memory and CPU state and must be restored to the source sandbox plan.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandboxes/{sandboxId}/snapshots/POST/responses/202/content/json/kind`.
@@ -103609,10 +103159,7 @@ public enum Operations {
                             case filesystem = "filesystem"
                             case runtime = "runtime"
                         }
-                        /// The state to capture. A `filesystem` snapshot captures the writable
-                        /// filesystem and can be restored to any plan. A `runtime` snapshot also
-                        /// captures memory and CPU state and must be restored to the source sandbox
-                        /// plan.
+                        /// The state to capture. A `filesystem` snapshot captures the writable filesystem and can be restored to any plan. A `runtime` snapshot also captures memory and CPU state and must be restored to the source sandbox plan.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandboxes/{sandboxId}/snapshots/POST/responses/202/content/json/kind`.
@@ -103704,18 +103251,12 @@ public enum Operations {
                         ///
                         /// - Remark: Generated from `#/paths/sandboxes/{sandboxId}/snapshots/POST/responses/202/content/json/capturedAt`.
                         public var capturedAt: Foundation.Date?
-                        /// The timestamp after which the snapshot can no longer be retrieved or
-                        /// restored, in ISO 8601 format. Each time you create a sandbox from this
-                        /// snapshot, Render resets its expiration to `ttlSeconds` seconds after that
-                        /// use. For snapshots with no expiration (`ttlSeconds: 0`), this is
-                        /// `9999-12-31T23:59:59Z`.
+                        /// The timestamp after which the snapshot can no longer be retrieved or restored, in ISO 8601 format. Each time you create a sandbox from this snapshot, Render resets its expiration to `ttlSeconds` seconds after that use. For snapshots with no expiration (`ttlSeconds: 0`), this is `9999-12-31T23:59:59Z`.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandboxes/{sandboxId}/snapshots/POST/responses/202/content/json/expiresAt`.
                         public var expiresAt: Foundation.Date
-                        /// The snapshot's lifetime after its last use, in seconds. A value of 0 means
-                        /// the snapshot does not expire. If omitted, Render's default snapshot
-                        /// lifetime applies.
+                        /// The snapshot's lifetime after its last use, in seconds. A value of 0 means the snapshot does not expire. If omitted, Render's default snapshot lifetime applies.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandboxes/{sandboxId}/snapshots/POST/responses/202/content/json/ttlSeconds`.
@@ -103734,14 +103275,14 @@ public enum Operations {
                         ///   - id: The ID of the sandbox snapshot.
                         ///   - sandboxGroupId: The ID of the sandbox group.
                         ///   - sourceSandboxId: The ID of the sandbox.
-                        ///   - name: A case-sensitive name for snapshots in a sandbox group, up to 64 characters.
-                        ///   - kind: The state to capture. A `filesystem` snapshot captures the writable
+                        ///   - name: A case-sensitive name for snapshots in a sandbox group, up to 64 characters. Must not start with `snp-`. Multiple snapshots can share a name. When creating a sandbox by snapshot name, Render uses the most recently created snapshot with that name that is `available` and unexpired.
+                        ///   - kind: The state to capture. A `filesystem` snapshot captures the writable filesystem and can be restored to any plan. A `runtime` snapshot also captures memory and CPU state and must be restored to the source sandbox plan.
                         ///   - status: The snapshot's current status.
                         ///   - plan: The source sandbox's compute plan when the snapshot was captured. See `sandboxPlan` for known values.
                         ///   - requestedAt: The timestamp when the snapshot was requested, in ISO 8601 format.
                         ///   - capturedAt: The timestamp when capture completed, in ISO 8601 format. Null until the snapshot is `available`.
-                        ///   - expiresAt: The timestamp after which the snapshot can no longer be retrieved or
-                        ///   - ttlSeconds: The snapshot's lifetime after its last use, in seconds. A value of 0 means
+                        ///   - expiresAt: The timestamp after which the snapshot can no longer be retrieved or restored, in ISO 8601 format. Each time you create a sandbox from this snapshot, Render resets its expiration to `ttlSeconds` seconds after that use. For snapshots with no expiration (`ttlSeconds: 0`), this is `9999-12-31T23:59:59Z`.
+                        ///   - ttlSeconds: The snapshot's lifetime after its last use, in seconds. A value of 0 means the snapshot does not expire. If omitted, Render's default snapshot lifetime applies.
                         ///   - sizeBytes: The size of the snapshot, in bytes. Null until the snapshot is `available`.
                         ///   - error: The reason the snapshot failed. Null unless its status is `failed`.
                         public init(
@@ -104017,8 +103558,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandboxes/{sandboxId}/snapshots/post(create-sandbox-snapshot)/responses/429`.
@@ -104402,8 +103942,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandbox-groups/{sandboxGroupId}/get(retrieve-sandbox-group)/responses/429`.
@@ -104506,8 +104045,7 @@ public enum Operations {
     }
     /// Update sandbox group
     ///
-    /// Update a sandbox group's concurrency limit. The response contains the
-    /// effective limit after applying Render's limit for the workspace.
+    /// Update a sandbox group's concurrency limit. The response contains the effective limit after applying Render's limit for the workspace.
     ///
     ///
     /// - Remark: HTTP `PATCH /sandbox-groups/{sandboxGroupId}`.
@@ -104548,9 +104086,7 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/PATCH/requestBody/json`.
                 public struct JsonPayload: Codable, Hashable, Sendable {
-                    /// The maximum number of active sandboxes allowed in this group. Must be at
-                    /// least 1. Render caps this value at the workspace's limit and returns the
-                    /// effective limit. Lowering the limit does not stop existing sandboxes.
+                    /// The maximum number of active sandboxes allowed in this group. Must be at least 1. Render caps this value at the workspace's limit and returns the effective limit. Lowering the limit does not stop existing sandboxes.
                     ///
                     ///
                     /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/PATCH/requestBody/json/concurrencyLimit`.
@@ -104558,7 +104094,7 @@ public enum Operations {
                     /// Creates a new `JsonPayload`.
                     ///
                     /// - Parameters:
-                    ///   - concurrencyLimit: The maximum number of active sandboxes allowed in this group. Must be at
+                    ///   - concurrencyLimit: The maximum number of active sandboxes allowed in this group. Must be at least 1. Render caps this value at the workspace's limit and returns the effective limit. Lowering the limit does not stop existing sandboxes.
                     public init(concurrencyLimit: Swift.Int) {
                         self.concurrencyLimit = concurrencyLimit
                     }
@@ -104872,8 +104408,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandbox-groups/{sandboxGroupId}/patch(update-sandbox-group)/responses/429`.
@@ -104976,9 +104511,7 @@ public enum Operations {
     }
     /// List sandbox group credentials
     ///
-    /// List credentials in the sandbox group, sorted by credential ID. Returns
-    /// credential settings and metadata. These endpoints do not return secret values,
-    /// including to admins.
+    /// List credentials in the sandbox group, sorted by credential ID. Returns credential settings and metadata. These endpoints do not return secret values, including to admins.
     ///
     ///
     /// - Remark: HTTP `GET /sandbox-groups/{sandboxGroupId}/credentials`.
@@ -105030,28 +104563,19 @@ public enum Operations {
             public struct Ok: Sendable, Hashable {
                 /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/GET/responses/200/content`.
                 @frozen public enum Body: Sendable, Hashable {
-                    /// A credential configured for injection into matching outbound HTTPS requests
-                    /// from sandboxes in one sandbox group. Each credential stores its own secret
-                    /// value. These endpoints do not return secret values, including to admins.
+                    /// A credential configured for injection into matching outbound HTTPS requests from sandboxes in one sandbox group. Each credential stores its own secret value. These endpoints do not return secret values, including to admins.
                     ///
-                    /// Credential injection supports HTTPS requests on port 443. Avoid overlapping
-                    /// credential configurations for the same hostname. Multiple matching credentials
-                    /// are not combined.
+                    /// Credential injection supports HTTPS requests on port 443. Avoid overlapping credential configurations for the same hostname. Multiple matching credentials are not combined.
                     ///
                     ///
                     /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/GET/responses/200/content/JsonPayload`.
                     public struct JsonPayloadPayload: Codable, Hashable, Sendable {
-                        /// The case-sensitive ID you assign to the credential, unique within its sandbox group.
-                        /// Use only letters, numbers, periods, underscores, tildes, and hyphens. The names
-                        /// `.` and `..` and IDs starting with `rnd-` are reserved.
+                        /// The case-sensitive ID you assign to the credential, unique within its sandbox group. Use only letters, numbers, periods, underscores, tildes, and hyphens. The names `.` and `..` and IDs starting with `rnd-` are reserved.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/GET/responses/200/content/JsonPayload/id`.
                         public var id: Swift.String
-                        /// The destination hostname to match for credential injection. Must
-                        /// be a public DNS hostname. Render normalizes it to lowercase and matches it
-                        /// exactly. IP addresses, ports, wildcards, and local or internal hostnames are
-                        /// not supported.
+                        /// The destination hostname to match for credential injection. Must be a public DNS hostname. Render normalizes it to lowercase and matches it exactly. IP addresses, ports, wildcards, and local or internal hostnames are not supported.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/GET/responses/200/content/JsonPayload/domain`.
@@ -105072,9 +104596,7 @@ public enum Operations {
                             ///
                             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/GET/responses/200/content/JsonPayload/version/updatedBy`.
                             public var updatedBy: Swift.String
-                            /// A fingerprint of the routing settings, injection settings, and secret value.
-                            /// Matching fingerprints identify equivalent credential configurations within
-                            /// the same sandbox group. Fingerprints cannot be compared across groups.
+                            /// A fingerprint of the routing settings, injection settings, and secret value. Matching fingerprints identify equivalent credential configurations within the same sandbox group. Fingerprints cannot be compared across groups.
                             ///
                             ///
                             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/GET/responses/200/content/JsonPayload/version/fingerprint`.
@@ -105089,7 +104611,7 @@ public enum Operations {
                             ///   - id: The ID of the credential version. Each new version receives a higher ID, including versions created by a restore.
                             ///   - updatedAt: The timestamp when this credential version was created, in ISO 8601 format.
                             ///   - updatedBy: The ID of the authenticated identity that created this credential version.
-                            ///   - fingerprint: A fingerprint of the routing settings, injection settings, and secret value.
+                            ///   - fingerprint: A fingerprint of the routing settings, injection settings, and secret value. Matching fingerprints identify equivalent credential configurations within the same sandbox group. Fingerprints cannot be compared across groups.
                             ///   - restoredFromVersionId: The ID of the credential version restored to create this version. Omitted for versions created by a create or update request.
                             public init(
                                 id: Swift.Int64,
@@ -105120,21 +104642,12 @@ public enum Operations {
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/GET/responses/200/content/JsonPayload/enabled`.
                         public var enabled: Swift.Bool
-                        /// The HTTP methods to match for credential injection.
-                        /// Supported methods are GET, HEAD, POST, PUT, PATCH, DELETE, and OPTIONS,
-                        /// normalized to uppercase.
-                        /// An empty list matches any method.
+                        /// The HTTP methods to match for credential injection. Supported methods are GET, HEAD, POST, PUT, PATCH, DELETE, and OPTIONS, normalized to uppercase. An empty list matches any method.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/GET/responses/200/content/JsonPayload/methods`.
                         public var methods: [Swift.String]
-                        /// The request path patterns to match for credential injection. Each
-                        /// pattern must match the entire absolute path. Use `*` for one nonempty path segment or
-                        /// `**` for one or more segments. Wildcards must occupy whole segments. For
-                        /// example, `/a/*` matches `/a/b`, and `/a/**` also matches `/a/b/c`. Neither
-                        /// matches `/a`. Patterns do not support query strings, fragments, or escaping.
-                        /// Request query strings do not affect matching.
-                        /// An empty list matches any path.
+                        /// The request path patterns to match for credential injection. Each pattern must match the entire absolute path. Use `*` for one nonempty path segment or `**` for one or more segments. Wildcards must occupy whole segments. For example, `/a/*` matches `/a/b`, and `/a/**` also matches `/a/b/c`. Neither matches `/a`. Patterns do not support query strings, fragments, or escaping. Request query strings do not affect matching. An empty list matches any path.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/GET/responses/200/content/JsonPayload/paths`.
@@ -105143,9 +104656,7 @@ public enum Operations {
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/GET/responses/200/content/JsonPayload/injection`.
                         public struct InjectionPayload: Codable, Hashable, Sendable {
-                            /// How Render adds the credential to a matching request. For `basic`, the value
-                            /// after applying `template` must have the form `username:password`. Do not
-                            /// provide `name`.
+                            /// How Render adds the credential to a matching request. For `basic`, the value after applying `template` must have the form `username:password`. Do not provide `name`.
                             ///
                             ///
                             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/GET/responses/200/content/JsonPayload/injection/type`.
@@ -105155,23 +104666,17 @@ public enum Operations {
                                 case cookie = "cookie"
                                 case query = "query"
                             }
-                            /// How Render adds the credential to a matching request. For `basic`, the value
-                            /// after applying `template` must have the form `username:password`. Do not
-                            /// provide `name`.
+                            /// How Render adds the credential to a matching request. For `basic`, the value after applying `template` must have the form `username:password`. Do not provide `name`.
                             ///
                             ///
                             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/GET/responses/200/content/JsonPayload/injection/type`.
                             public var _type: Operations.ListSandboxGroupCredentials.Output.Ok.Body.JsonPayloadPayload.InjectionPayload._TypePayload
-                            /// The header, cookie, or query parameter to set. Required for `header`,
-                            /// `cookie`, and `query`. Headers that control routing or connection behavior
-                            /// cannot be used.
+                            /// The header, cookie, or query parameter to set. Required for `header`, `cookie`, and `query`. Headers that control routing or connection behavior cannot be used.
                             ///
                             ///
                             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/GET/responses/200/content/JsonPayload/injection/name`.
                             public var name: Swift.String?
-                            /// A template containing 1–5 occurrences of `${SECRET}`, such as
-                            /// `Bearer ${SECRET}`. Render replaces each occurrence with the secret value.
-                            /// Omit to use the secret value without a template.
+                            /// A template containing 1–5 occurrences of `${SECRET}`, such as `Bearer ${SECRET}`. Render replaces each occurrence with the secret value. Omit to use the secret value without a template.
                             ///
                             ///
                             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/GET/responses/200/content/JsonPayload/injection/template`.
@@ -105179,9 +104684,9 @@ public enum Operations {
                             /// Creates a new `InjectionPayload`.
                             ///
                             /// - Parameters:
-                            ///   - _type: How Render adds the credential to a matching request. For `basic`, the value
-                            ///   - name: The header, cookie, or query parameter to set. Required for `header`,
-                            ///   - template: A template containing 1–5 occurrences of `${SECRET}`, such as
+                            ///   - _type: How Render adds the credential to a matching request. For `basic`, the value after applying `template` must have the form `username:password`. Do not provide `name`.
+                            ///   - name: The header, cookie, or query parameter to set. Required for `header`, `cookie`, and `query`. Headers that control routing or connection behavior cannot be used.
+                            ///   - template: A template containing 1–5 occurrences of `${SECRET}`, such as `Bearer ${SECRET}`. Render replaces each occurrence with the secret value. Omit to use the secret value without a template.
                             public init(
                                 _type: Operations.ListSandboxGroupCredentials.Output.Ok.Body.JsonPayloadPayload.InjectionPayload._TypePayload,
                                 name: Swift.String? = nil,
@@ -105204,12 +104709,12 @@ public enum Operations {
                         /// Creates a new `JsonPayloadPayload`.
                         ///
                         /// - Parameters:
-                        ///   - id: The case-sensitive ID you assign to the credential, unique within its sandbox group.
-                        ///   - domain: The destination hostname to match for credential injection. Must
+                        ///   - id: The case-sensitive ID you assign to the credential, unique within its sandbox group. Use only letters, numbers, periods, underscores, tildes, and hyphens. The names `.` and `..` and IDs starting with `rnd-` are reserved.
+                        ///   - domain: The destination hostname to match for credential injection. Must be a public DNS hostname. Render normalizes it to lowercase and matches it exactly. IP addresses, ports, wildcards, and local or internal hostnames are not supported.
                         ///   - version: Metadata for a credential version. These endpoints do not return secret values.
                         ///   - enabled: Whether this credential is enabled for injection.
-                        ///   - methods: The HTTP methods to match for credential injection.
-                        ///   - paths: The request path patterns to match for credential injection. Each
+                        ///   - methods: The HTTP methods to match for credential injection. Supported methods are GET, HEAD, POST, PUT, PATCH, DELETE, and OPTIONS, normalized to uppercase. An empty list matches any method.
+                        ///   - paths: The request path patterns to match for credential injection. Each pattern must match the entire absolute path. Use `*` for one nonempty path segment or `**` for one or more segments. Wildcards must occupy whole segments. For example, `/a/*` matches `/a/b`, and `/a/**` also matches `/a/b/c`. Neither matches `/a`. Patterns do not support query strings, fragments, or escaping. Request query strings do not affect matching. An empty list matches any path.
                         ///   - injection: Settings for injecting the secret value into matching outbound HTTPS requests.
                         public init(
                             id: Swift.String,
@@ -105385,8 +104890,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandbox-groups/{sandboxGroupId}/credentials/get(list-sandbox-group-credentials)/responses/429`.
@@ -105489,17 +104993,11 @@ public enum Operations {
     }
     /// Create sandbox group credential
     ///
-    /// Configure a credential for injection into matching outbound HTTPS requests
-    /// from sandboxes in this group. Requires an admin. You assign the credential ID.
+    /// Configure a credential for injection into matching outbound HTTPS requests from sandboxes in this group. Requires an admin. You assign the credential ID.
     ///
-    /// Each group supports up to 25 credentials. Current credential settings and
-    /// secret values have a combined serialized size limit of 200 KiB (204800
-    /// bytes). Render retains the current configuration and three distinct prior
-    /// configurations per credential, with a total storage limit of 1 MiB including
-    /// version metadata.
+    /// Each group supports up to 25 credentials. Current credential settings and secret values have a combined serialized size limit of 200 KiB (204800 bytes). Render retains the current configuration and three distinct prior configurations per credential, with a total storage limit of 1 MiB including version metadata.
     ///
-    /// The response confirms the configuration was saved. It does not confirm that
-    /// credential injection is active for a particular sandbox.
+    /// The response confirms the configuration was saved. It does not confirm that credential injection is active for a particular sandbox.
     ///
     ///
     /// - Remark: HTTP `POST /sandbox-groups/{sandboxGroupId}/credentials`.
@@ -105540,17 +105038,12 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/POST/requestBody/json`.
                 public struct JsonPayload: Codable, Hashable, Sendable {
-                    /// The case-sensitive ID you assign to the credential, unique within its sandbox group.
-                    /// Use only letters, numbers, periods, underscores, tildes, and hyphens. The names
-                    /// `.` and `..` and IDs starting with `rnd-` are reserved.
+                    /// The case-sensitive ID you assign to the credential, unique within its sandbox group. Use only letters, numbers, periods, underscores, tildes, and hyphens. The names `.` and `..` and IDs starting with `rnd-` are reserved.
                     ///
                     ///
                     /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/POST/requestBody/json/id`.
                     public var id: Swift.String
-                    /// The destination hostname to match for credential injection. Must
-                    /// be a public DNS hostname. Render normalizes it to lowercase and matches it
-                    /// exactly. IP addresses, ports, wildcards, and local or internal hostnames are
-                    /// not supported.
+                    /// The destination hostname to match for credential injection. Must be a public DNS hostname. Render normalizes it to lowercase and matches it exactly. IP addresses, ports, wildcards, and local or internal hostnames are not supported.
                     ///
                     ///
                     /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/POST/requestBody/json/domain`.
@@ -105563,21 +105056,12 @@ public enum Operations {
                     ///
                     /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/POST/requestBody/json/enabled`.
                     public var enabled: Swift.Bool?
-                    /// The HTTP methods to match for credential injection.
-                    /// Supported methods are GET, HEAD, POST, PUT, PATCH, DELETE, and OPTIONS,
-                    /// normalized to uppercase.
-                    /// Omit or provide an empty list to match any method.
+                    /// The HTTP methods to match for credential injection. Supported methods are GET, HEAD, POST, PUT, PATCH, DELETE, and OPTIONS, normalized to uppercase. Omit or provide an empty list to match any method.
                     ///
                     ///
                     /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/POST/requestBody/json/methods`.
                     public var methods: [Swift.String]?
-                    /// The request path patterns to match for credential injection. Each
-                    /// pattern must match the entire absolute path. Use `*` for one nonempty path segment or
-                    /// `**` for one or more segments. Wildcards must occupy whole segments. For
-                    /// example, `/a/*` matches `/a/b`, and `/a/**` also matches `/a/b/c`. Neither
-                    /// matches `/a`. Patterns do not support query strings, fragments, or escaping.
-                    /// Request query strings do not affect matching.
-                    /// Omit or provide an empty list to match any path.
+                    /// The request path patterns to match for credential injection. Each pattern must match the entire absolute path. Use `*` for one nonempty path segment or `**` for one or more segments. Wildcards must occupy whole segments. For example, `/a/*` matches `/a/b`, and `/a/**` also matches `/a/b/c`. Neither matches `/a`. Patterns do not support query strings, fragments, or escaping. Request query strings do not affect matching. Omit or provide an empty list to match any path.
                     ///
                     ///
                     /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/POST/requestBody/json/paths`.
@@ -105586,9 +105070,7 @@ public enum Operations {
                     ///
                     /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/POST/requestBody/json/injection`.
                     public struct InjectionPayload: Codable, Hashable, Sendable {
-                        /// How Render adds the credential to a matching request. For `basic`, the value
-                        /// after applying `template` must have the form `username:password`. Do not
-                        /// provide `name`.
+                        /// How Render adds the credential to a matching request. For `basic`, the value after applying `template` must have the form `username:password`. Do not provide `name`.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/POST/requestBody/json/injection/type`.
@@ -105598,23 +105080,17 @@ public enum Operations {
                             case cookie = "cookie"
                             case query = "query"
                         }
-                        /// How Render adds the credential to a matching request. For `basic`, the value
-                        /// after applying `template` must have the form `username:password`. Do not
-                        /// provide `name`.
+                        /// How Render adds the credential to a matching request. For `basic`, the value after applying `template` must have the form `username:password`. Do not provide `name`.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/POST/requestBody/json/injection/type`.
                         public var _type: Operations.CreateSandboxGroupCredential.Input.Body.JsonPayload.InjectionPayload._TypePayload
-                        /// The header, cookie, or query parameter to set. Required for `header`,
-                        /// `cookie`, and `query`. Headers that control routing or connection behavior
-                        /// cannot be used.
+                        /// The header, cookie, or query parameter to set. Required for `header`, `cookie`, and `query`. Headers that control routing or connection behavior cannot be used.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/POST/requestBody/json/injection/name`.
                         public var name: Swift.String?
-                        /// A template containing 1–5 occurrences of `${SECRET}`, such as
-                        /// `Bearer ${SECRET}`. Render replaces each occurrence with the secret value.
-                        /// Omit to use the secret value without a template.
+                        /// A template containing 1–5 occurrences of `${SECRET}`, such as `Bearer ${SECRET}`. Render replaces each occurrence with the secret value. Omit to use the secret value without a template.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/POST/requestBody/json/injection/template`.
@@ -105622,9 +105098,9 @@ public enum Operations {
                         /// Creates a new `InjectionPayload`.
                         ///
                         /// - Parameters:
-                        ///   - _type: How Render adds the credential to a matching request. For `basic`, the value
-                        ///   - name: The header, cookie, or query parameter to set. Required for `header`,
-                        ///   - template: A template containing 1–5 occurrences of `${SECRET}`, such as
+                        ///   - _type: How Render adds the credential to a matching request. For `basic`, the value after applying `template` must have the form `username:password`. Do not provide `name`.
+                        ///   - name: The header, cookie, or query parameter to set. Required for `header`, `cookie`, and `query`. Headers that control routing or connection behavior cannot be used.
+                        ///   - template: A template containing 1–5 occurrences of `${SECRET}`, such as `Bearer ${SECRET}`. Render replaces each occurrence with the secret value. Omit to use the secret value without a template.
                         public init(
                             _type: Operations.CreateSandboxGroupCredential.Input.Body.JsonPayload.InjectionPayload._TypePayload,
                             name: Swift.String? = nil,
@@ -105647,12 +105123,12 @@ public enum Operations {
                     /// Creates a new `JsonPayload`.
                     ///
                     /// - Parameters:
-                    ///   - id: The case-sensitive ID you assign to the credential, unique within its sandbox group.
-                    ///   - domain: The destination hostname to match for credential injection. Must
+                    ///   - id: The case-sensitive ID you assign to the credential, unique within its sandbox group. Use only letters, numbers, periods, underscores, tildes, and hyphens. The names `.` and `..` and IDs starting with `rnd-` are reserved.
+                    ///   - domain: The destination hostname to match for credential injection. Must be a public DNS hostname. Render normalizes it to lowercase and matches it exactly. IP addresses, ports, wildcards, and local or internal hostnames are not supported.
                     ///   - value: The secret value to store, up to 5 KiB (5120 UTF-8 bytes).
                     ///   - enabled: Whether this credential is enabled for injection. Defaults to `true`.
-                    ///   - methods: The HTTP methods to match for credential injection.
-                    ///   - paths: The request path patterns to match for credential injection. Each
+                    ///   - methods: The HTTP methods to match for credential injection. Supported methods are GET, HEAD, POST, PUT, PATCH, DELETE, and OPTIONS, normalized to uppercase. Omit or provide an empty list to match any method.
+                    ///   - paths: The request path patterns to match for credential injection. Each pattern must match the entire absolute path. Use `*` for one nonempty path segment or `**` for one or more segments. Wildcards must occupy whole segments. For example, `/a/*` matches `/a/b`, and `/a/**` also matches `/a/b/c`. Neither matches `/a`. Patterns do not support query strings, fragments, or escaping. Request query strings do not affect matching. Omit or provide an empty list to match any path.
                     ///   - injection: Settings for injecting the secret value into matching outbound HTTPS requests.
                     public init(
                         id: Swift.String,
@@ -105705,28 +105181,19 @@ public enum Operations {
             public struct Created: Sendable, Hashable {
                 /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/POST/responses/201/content`.
                 @frozen public enum Body: Sendable, Hashable {
-                    /// A credential configured for injection into matching outbound HTTPS requests
-                    /// from sandboxes in one sandbox group. Each credential stores its own secret
-                    /// value. These endpoints do not return secret values, including to admins.
+                    /// A credential configured for injection into matching outbound HTTPS requests from sandboxes in one sandbox group. Each credential stores its own secret value. These endpoints do not return secret values, including to admins.
                     ///
-                    /// Credential injection supports HTTPS requests on port 443. Avoid overlapping
-                    /// credential configurations for the same hostname. Multiple matching credentials
-                    /// are not combined.
+                    /// Credential injection supports HTTPS requests on port 443. Avoid overlapping credential configurations for the same hostname. Multiple matching credentials are not combined.
                     ///
                     ///
                     /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/POST/responses/201/content/json`.
                     public struct JsonPayload: Codable, Hashable, Sendable {
-                        /// The case-sensitive ID you assign to the credential, unique within its sandbox group.
-                        /// Use only letters, numbers, periods, underscores, tildes, and hyphens. The names
-                        /// `.` and `..` and IDs starting with `rnd-` are reserved.
+                        /// The case-sensitive ID you assign to the credential, unique within its sandbox group. Use only letters, numbers, periods, underscores, tildes, and hyphens. The names `.` and `..` and IDs starting with `rnd-` are reserved.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/POST/responses/201/content/json/id`.
                         public var id: Swift.String
-                        /// The destination hostname to match for credential injection. Must
-                        /// be a public DNS hostname. Render normalizes it to lowercase and matches it
-                        /// exactly. IP addresses, ports, wildcards, and local or internal hostnames are
-                        /// not supported.
+                        /// The destination hostname to match for credential injection. Must be a public DNS hostname. Render normalizes it to lowercase and matches it exactly. IP addresses, ports, wildcards, and local or internal hostnames are not supported.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/POST/responses/201/content/json/domain`.
@@ -105747,9 +105214,7 @@ public enum Operations {
                             ///
                             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/POST/responses/201/content/json/version/updatedBy`.
                             public var updatedBy: Swift.String
-                            /// A fingerprint of the routing settings, injection settings, and secret value.
-                            /// Matching fingerprints identify equivalent credential configurations within
-                            /// the same sandbox group. Fingerprints cannot be compared across groups.
+                            /// A fingerprint of the routing settings, injection settings, and secret value. Matching fingerprints identify equivalent credential configurations within the same sandbox group. Fingerprints cannot be compared across groups.
                             ///
                             ///
                             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/POST/responses/201/content/json/version/fingerprint`.
@@ -105764,7 +105229,7 @@ public enum Operations {
                             ///   - id: The ID of the credential version. Each new version receives a higher ID, including versions created by a restore.
                             ///   - updatedAt: The timestamp when this credential version was created, in ISO 8601 format.
                             ///   - updatedBy: The ID of the authenticated identity that created this credential version.
-                            ///   - fingerprint: A fingerprint of the routing settings, injection settings, and secret value.
+                            ///   - fingerprint: A fingerprint of the routing settings, injection settings, and secret value. Matching fingerprints identify equivalent credential configurations within the same sandbox group. Fingerprints cannot be compared across groups.
                             ///   - restoredFromVersionId: The ID of the credential version restored to create this version. Omitted for versions created by a create or update request.
                             public init(
                                 id: Swift.Int64,
@@ -105795,21 +105260,12 @@ public enum Operations {
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/POST/responses/201/content/json/enabled`.
                         public var enabled: Swift.Bool
-                        /// The HTTP methods to match for credential injection.
-                        /// Supported methods are GET, HEAD, POST, PUT, PATCH, DELETE, and OPTIONS,
-                        /// normalized to uppercase.
-                        /// An empty list matches any method.
+                        /// The HTTP methods to match for credential injection. Supported methods are GET, HEAD, POST, PUT, PATCH, DELETE, and OPTIONS, normalized to uppercase. An empty list matches any method.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/POST/responses/201/content/json/methods`.
                         public var methods: [Swift.String]
-                        /// The request path patterns to match for credential injection. Each
-                        /// pattern must match the entire absolute path. Use `*` for one nonempty path segment or
-                        /// `**` for one or more segments. Wildcards must occupy whole segments. For
-                        /// example, `/a/*` matches `/a/b`, and `/a/**` also matches `/a/b/c`. Neither
-                        /// matches `/a`. Patterns do not support query strings, fragments, or escaping.
-                        /// Request query strings do not affect matching.
-                        /// An empty list matches any path.
+                        /// The request path patterns to match for credential injection. Each pattern must match the entire absolute path. Use `*` for one nonempty path segment or `**` for one or more segments. Wildcards must occupy whole segments. For example, `/a/*` matches `/a/b`, and `/a/**` also matches `/a/b/c`. Neither matches `/a`. Patterns do not support query strings, fragments, or escaping. Request query strings do not affect matching. An empty list matches any path.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/POST/responses/201/content/json/paths`.
@@ -105818,9 +105274,7 @@ public enum Operations {
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/POST/responses/201/content/json/injection`.
                         public struct InjectionPayload: Codable, Hashable, Sendable {
-                            /// How Render adds the credential to a matching request. For `basic`, the value
-                            /// after applying `template` must have the form `username:password`. Do not
-                            /// provide `name`.
+                            /// How Render adds the credential to a matching request. For `basic`, the value after applying `template` must have the form `username:password`. Do not provide `name`.
                             ///
                             ///
                             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/POST/responses/201/content/json/injection/type`.
@@ -105830,23 +105284,17 @@ public enum Operations {
                                 case cookie = "cookie"
                                 case query = "query"
                             }
-                            /// How Render adds the credential to a matching request. For `basic`, the value
-                            /// after applying `template` must have the form `username:password`. Do not
-                            /// provide `name`.
+                            /// How Render adds the credential to a matching request. For `basic`, the value after applying `template` must have the form `username:password`. Do not provide `name`.
                             ///
                             ///
                             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/POST/responses/201/content/json/injection/type`.
                             public var _type: Operations.CreateSandboxGroupCredential.Output.Created.Body.JsonPayload.InjectionPayload._TypePayload
-                            /// The header, cookie, or query parameter to set. Required for `header`,
-                            /// `cookie`, and `query`. Headers that control routing or connection behavior
-                            /// cannot be used.
+                            /// The header, cookie, or query parameter to set. Required for `header`, `cookie`, and `query`. Headers that control routing or connection behavior cannot be used.
                             ///
                             ///
                             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/POST/responses/201/content/json/injection/name`.
                             public var name: Swift.String?
-                            /// A template containing 1–5 occurrences of `${SECRET}`, such as
-                            /// `Bearer ${SECRET}`. Render replaces each occurrence with the secret value.
-                            /// Omit to use the secret value without a template.
+                            /// A template containing 1–5 occurrences of `${SECRET}`, such as `Bearer ${SECRET}`. Render replaces each occurrence with the secret value. Omit to use the secret value without a template.
                             ///
                             ///
                             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/POST/responses/201/content/json/injection/template`.
@@ -105854,9 +105302,9 @@ public enum Operations {
                             /// Creates a new `InjectionPayload`.
                             ///
                             /// - Parameters:
-                            ///   - _type: How Render adds the credential to a matching request. For `basic`, the value
-                            ///   - name: The header, cookie, or query parameter to set. Required for `header`,
-                            ///   - template: A template containing 1–5 occurrences of `${SECRET}`, such as
+                            ///   - _type: How Render adds the credential to a matching request. For `basic`, the value after applying `template` must have the form `username:password`. Do not provide `name`.
+                            ///   - name: The header, cookie, or query parameter to set. Required for `header`, `cookie`, and `query`. Headers that control routing or connection behavior cannot be used.
+                            ///   - template: A template containing 1–5 occurrences of `${SECRET}`, such as `Bearer ${SECRET}`. Render replaces each occurrence with the secret value. Omit to use the secret value without a template.
                             public init(
                                 _type: Operations.CreateSandboxGroupCredential.Output.Created.Body.JsonPayload.InjectionPayload._TypePayload,
                                 name: Swift.String? = nil,
@@ -105879,12 +105327,12 @@ public enum Operations {
                         /// Creates a new `JsonPayload`.
                         ///
                         /// - Parameters:
-                        ///   - id: The case-sensitive ID you assign to the credential, unique within its sandbox group.
-                        ///   - domain: The destination hostname to match for credential injection. Must
+                        ///   - id: The case-sensitive ID you assign to the credential, unique within its sandbox group. Use only letters, numbers, periods, underscores, tildes, and hyphens. The names `.` and `..` and IDs starting with `rnd-` are reserved.
+                        ///   - domain: The destination hostname to match for credential injection. Must be a public DNS hostname. Render normalizes it to lowercase and matches it exactly. IP addresses, ports, wildcards, and local or internal hostnames are not supported.
                         ///   - version: Metadata for a credential version. These endpoints do not return secret values.
                         ///   - enabled: Whether this credential is enabled for injection.
-                        ///   - methods: The HTTP methods to match for credential injection.
-                        ///   - paths: The request path patterns to match for credential injection. Each
+                        ///   - methods: The HTTP methods to match for credential injection. Supported methods are GET, HEAD, POST, PUT, PATCH, DELETE, and OPTIONS, normalized to uppercase. An empty list matches any method.
+                        ///   - paths: The request path patterns to match for credential injection. Each pattern must match the entire absolute path. Use `*` for one nonempty path segment or `**` for one or more segments. Wildcards must occupy whole segments. For example, `/a/*` matches `/a/b`, and `/a/**` also matches `/a/b/c`. Neither matches `/a`. Patterns do not support query strings, fragments, or escaping. Request query strings do not affect matching. An empty list matches any path.
                         ///   - injection: Settings for injecting the secret value into matching outbound HTTPS requests.
                         public init(
                             id: Swift.String,
@@ -106081,11 +105529,9 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
-            /// Temporary conflicts while applying credential changes can also cause this
-            /// response.
+            /// Temporary conflicts while applying credential changes can also cause this response.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandbox-groups/{sandboxGroupId}/credentials/post(create-sandbox-group-credential)/responses/429`.
@@ -106188,8 +105634,7 @@ public enum Operations {
     }
     /// Retrieve sandbox group credential
     ///
-    /// Retrieve the settings and metadata for a credential in this sandbox group.
-    /// These endpoints do not return secret values, including to admins.
+    /// Retrieve the settings and metadata for a credential in this sandbox group. These endpoints do not return secret values, including to admins.
     ///
     ///
     /// - Remark: HTTP `GET /sandbox-groups/{sandboxGroupId}/credentials/{credentialId}`.
@@ -106250,28 +105695,19 @@ public enum Operations {
             public struct Ok: Sendable, Hashable {
                 /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/GET/responses/200/content`.
                 @frozen public enum Body: Sendable, Hashable {
-                    /// A credential configured for injection into matching outbound HTTPS requests
-                    /// from sandboxes in one sandbox group. Each credential stores its own secret
-                    /// value. These endpoints do not return secret values, including to admins.
+                    /// A credential configured for injection into matching outbound HTTPS requests from sandboxes in one sandbox group. Each credential stores its own secret value. These endpoints do not return secret values, including to admins.
                     ///
-                    /// Credential injection supports HTTPS requests on port 443. Avoid overlapping
-                    /// credential configurations for the same hostname. Multiple matching credentials
-                    /// are not combined.
+                    /// Credential injection supports HTTPS requests on port 443. Avoid overlapping credential configurations for the same hostname. Multiple matching credentials are not combined.
                     ///
                     ///
                     /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/GET/responses/200/content/json`.
                     public struct JsonPayload: Codable, Hashable, Sendable {
-                        /// The case-sensitive ID you assign to the credential, unique within its sandbox group.
-                        /// Use only letters, numbers, periods, underscores, tildes, and hyphens. The names
-                        /// `.` and `..` and IDs starting with `rnd-` are reserved.
+                        /// The case-sensitive ID you assign to the credential, unique within its sandbox group. Use only letters, numbers, periods, underscores, tildes, and hyphens. The names `.` and `..` and IDs starting with `rnd-` are reserved.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/GET/responses/200/content/json/id`.
                         public var id: Swift.String
-                        /// The destination hostname to match for credential injection. Must
-                        /// be a public DNS hostname. Render normalizes it to lowercase and matches it
-                        /// exactly. IP addresses, ports, wildcards, and local or internal hostnames are
-                        /// not supported.
+                        /// The destination hostname to match for credential injection. Must be a public DNS hostname. Render normalizes it to lowercase and matches it exactly. IP addresses, ports, wildcards, and local or internal hostnames are not supported.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/GET/responses/200/content/json/domain`.
@@ -106292,9 +105728,7 @@ public enum Operations {
                             ///
                             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/GET/responses/200/content/json/version/updatedBy`.
                             public var updatedBy: Swift.String
-                            /// A fingerprint of the routing settings, injection settings, and secret value.
-                            /// Matching fingerprints identify equivalent credential configurations within
-                            /// the same sandbox group. Fingerprints cannot be compared across groups.
+                            /// A fingerprint of the routing settings, injection settings, and secret value. Matching fingerprints identify equivalent credential configurations within the same sandbox group. Fingerprints cannot be compared across groups.
                             ///
                             ///
                             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/GET/responses/200/content/json/version/fingerprint`.
@@ -106309,7 +105743,7 @@ public enum Operations {
                             ///   - id: The ID of the credential version. Each new version receives a higher ID, including versions created by a restore.
                             ///   - updatedAt: The timestamp when this credential version was created, in ISO 8601 format.
                             ///   - updatedBy: The ID of the authenticated identity that created this credential version.
-                            ///   - fingerprint: A fingerprint of the routing settings, injection settings, and secret value.
+                            ///   - fingerprint: A fingerprint of the routing settings, injection settings, and secret value. Matching fingerprints identify equivalent credential configurations within the same sandbox group. Fingerprints cannot be compared across groups.
                             ///   - restoredFromVersionId: The ID of the credential version restored to create this version. Omitted for versions created by a create or update request.
                             public init(
                                 id: Swift.Int64,
@@ -106340,21 +105774,12 @@ public enum Operations {
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/GET/responses/200/content/json/enabled`.
                         public var enabled: Swift.Bool
-                        /// The HTTP methods to match for credential injection.
-                        /// Supported methods are GET, HEAD, POST, PUT, PATCH, DELETE, and OPTIONS,
-                        /// normalized to uppercase.
-                        /// An empty list matches any method.
+                        /// The HTTP methods to match for credential injection. Supported methods are GET, HEAD, POST, PUT, PATCH, DELETE, and OPTIONS, normalized to uppercase. An empty list matches any method.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/GET/responses/200/content/json/methods`.
                         public var methods: [Swift.String]
-                        /// The request path patterns to match for credential injection. Each
-                        /// pattern must match the entire absolute path. Use `*` for one nonempty path segment or
-                        /// `**` for one or more segments. Wildcards must occupy whole segments. For
-                        /// example, `/a/*` matches `/a/b`, and `/a/**` also matches `/a/b/c`. Neither
-                        /// matches `/a`. Patterns do not support query strings, fragments, or escaping.
-                        /// Request query strings do not affect matching.
-                        /// An empty list matches any path.
+                        /// The request path patterns to match for credential injection. Each pattern must match the entire absolute path. Use `*` for one nonempty path segment or `**` for one or more segments. Wildcards must occupy whole segments. For example, `/a/*` matches `/a/b`, and `/a/**` also matches `/a/b/c`. Neither matches `/a`. Patterns do not support query strings, fragments, or escaping. Request query strings do not affect matching. An empty list matches any path.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/GET/responses/200/content/json/paths`.
@@ -106363,9 +105788,7 @@ public enum Operations {
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/GET/responses/200/content/json/injection`.
                         public struct InjectionPayload: Codable, Hashable, Sendable {
-                            /// How Render adds the credential to a matching request. For `basic`, the value
-                            /// after applying `template` must have the form `username:password`. Do not
-                            /// provide `name`.
+                            /// How Render adds the credential to a matching request. For `basic`, the value after applying `template` must have the form `username:password`. Do not provide `name`.
                             ///
                             ///
                             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/GET/responses/200/content/json/injection/type`.
@@ -106375,23 +105798,17 @@ public enum Operations {
                                 case cookie = "cookie"
                                 case query = "query"
                             }
-                            /// How Render adds the credential to a matching request. For `basic`, the value
-                            /// after applying `template` must have the form `username:password`. Do not
-                            /// provide `name`.
+                            /// How Render adds the credential to a matching request. For `basic`, the value after applying `template` must have the form `username:password`. Do not provide `name`.
                             ///
                             ///
                             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/GET/responses/200/content/json/injection/type`.
                             public var _type: Operations.RetrieveSandboxGroupCredential.Output.Ok.Body.JsonPayload.InjectionPayload._TypePayload
-                            /// The header, cookie, or query parameter to set. Required for `header`,
-                            /// `cookie`, and `query`. Headers that control routing or connection behavior
-                            /// cannot be used.
+                            /// The header, cookie, or query parameter to set. Required for `header`, `cookie`, and `query`. Headers that control routing or connection behavior cannot be used.
                             ///
                             ///
                             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/GET/responses/200/content/json/injection/name`.
                             public var name: Swift.String?
-                            /// A template containing 1–5 occurrences of `${SECRET}`, such as
-                            /// `Bearer ${SECRET}`. Render replaces each occurrence with the secret value.
-                            /// Omit to use the secret value without a template.
+                            /// A template containing 1–5 occurrences of `${SECRET}`, such as `Bearer ${SECRET}`. Render replaces each occurrence with the secret value. Omit to use the secret value without a template.
                             ///
                             ///
                             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/GET/responses/200/content/json/injection/template`.
@@ -106399,9 +105816,9 @@ public enum Operations {
                             /// Creates a new `InjectionPayload`.
                             ///
                             /// - Parameters:
-                            ///   - _type: How Render adds the credential to a matching request. For `basic`, the value
-                            ///   - name: The header, cookie, or query parameter to set. Required for `header`,
-                            ///   - template: A template containing 1–5 occurrences of `${SECRET}`, such as
+                            ///   - _type: How Render adds the credential to a matching request. For `basic`, the value after applying `template` must have the form `username:password`. Do not provide `name`.
+                            ///   - name: The header, cookie, or query parameter to set. Required for `header`, `cookie`, and `query`. Headers that control routing or connection behavior cannot be used.
+                            ///   - template: A template containing 1–5 occurrences of `${SECRET}`, such as `Bearer ${SECRET}`. Render replaces each occurrence with the secret value. Omit to use the secret value without a template.
                             public init(
                                 _type: Operations.RetrieveSandboxGroupCredential.Output.Ok.Body.JsonPayload.InjectionPayload._TypePayload,
                                 name: Swift.String? = nil,
@@ -106424,12 +105841,12 @@ public enum Operations {
                         /// Creates a new `JsonPayload`.
                         ///
                         /// - Parameters:
-                        ///   - id: The case-sensitive ID you assign to the credential, unique within its sandbox group.
-                        ///   - domain: The destination hostname to match for credential injection. Must
+                        ///   - id: The case-sensitive ID you assign to the credential, unique within its sandbox group. Use only letters, numbers, periods, underscores, tildes, and hyphens. The names `.` and `..` and IDs starting with `rnd-` are reserved.
+                        ///   - domain: The destination hostname to match for credential injection. Must be a public DNS hostname. Render normalizes it to lowercase and matches it exactly. IP addresses, ports, wildcards, and local or internal hostnames are not supported.
                         ///   - version: Metadata for a credential version. These endpoints do not return secret values.
                         ///   - enabled: Whether this credential is enabled for injection.
-                        ///   - methods: The HTTP methods to match for credential injection.
-                        ///   - paths: The request path patterns to match for credential injection. Each
+                        ///   - methods: The HTTP methods to match for credential injection. Supported methods are GET, HEAD, POST, PUT, PATCH, DELETE, and OPTIONS, normalized to uppercase. An empty list matches any method.
+                        ///   - paths: The request path patterns to match for credential injection. Each pattern must match the entire absolute path. Use `*` for one nonempty path segment or `**` for one or more segments. Wildcards must occupy whole segments. For example, `/a/*` matches `/a/b`, and `/a/**` also matches `/a/b/c`. Neither matches `/a`. Patterns do not support query strings, fragments, or escaping. Request query strings do not affect matching. An empty list matches any path.
                         ///   - injection: Settings for injecting the secret value into matching outbound HTTPS requests.
                         public init(
                             id: Swift.String,
@@ -106603,8 +106020,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/get(retrieve-sandbox-group-credential)/responses/429`.
@@ -106707,18 +106123,11 @@ public enum Operations {
     }
     /// Update sandbox group credential
     ///
-    /// Update a credential. Developers can change `injection`, `methods`, `paths`,
-    /// and `enabled`. Changing `domain` or `value` requires an admin.
+    /// Update a credential. Developers can change `injection`, `methods`, `paths`, and `enabled`. Changing `domain` or `value` requires an admin.
     ///
-    /// Omitted top-level fields keep their current values. Providing `injection`
-    /// replaces the entire object. Its `template` defaults to `${SECRET}` when
-    /// omitted. An empty `methods` or `paths` list removes that filter. Providing
-    /// `value` creates a new version.
-    /// The combined serialized size of current credential settings and secret
-    /// values in the group must remain within 200 KiB (204800 bytes).
+    /// Omitted top-level fields keep their current values. Providing `injection` replaces the entire object. Its `template` defaults to `${SECRET}` when omitted. An empty `methods` or `paths` list removes that filter. Providing `value` creates a new version. The combined serialized size of current credential settings and secret values in the group must remain within 200 KiB (204800 bytes).
     ///
-    /// The response confirms the configuration was saved. It does not confirm that
-    /// credential injection is active for a particular sandbox.
+    /// The response confirms the configuration was saved. It does not confirm that credential injection is active for a particular sandbox.
     ///
     ///
     /// - Remark: HTTP `PATCH /sandbox-groups/{sandboxGroupId}/credentials/{credentialId}`.
@@ -106764,15 +106173,9 @@ public enum Operations {
             public var headers: Operations.UpdateSandboxGroupCredential.Input.Headers
             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/PATCH/requestBody`.
             @frozen public enum Body: Sendable, Hashable {
-                /// The credential settings to update. Omitted top-level fields keep their current
-                /// values. Providing `injection` replaces the entire object. Its `template`
-                /// defaults to `${SECRET}` when omitted. Empty `methods` or `paths` lists remove
-                /// those filters. Developers can update `injection`, `methods`, `paths`, and
-                /// `enabled`. Changing `domain` or `value` requires an admin.
+                /// The credential settings to update. Omitted top-level fields keep their current values. Providing `injection` replaces the entire object. Its `template` defaults to `${SECRET}` when omitted. Empty `methods` or `paths` lists remove those filters. Developers can update `injection`, `methods`, `paths`, and `enabled`. Changing `domain` or `value` requires an admin.
                 ///
-                /// Changes to routing, injection, or enabled state create a new version. Setting
-                /// `value` creates a new version even if the secret value is unchanged. The
-                /// credential ID cannot be changed.
+                /// Changes to routing, injection, or enabled state create a new version. Setting `value` creates a new version even if the secret value is unchanged. The credential ID cannot be changed.
                 ///
                 ///
                 /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/PATCH/requestBody/json`.
@@ -106781,10 +106184,7 @@ public enum Operations {
                     ///
                     /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/PATCH/requestBody/json/value`.
                     public var value: Swift.String?
-                    /// The destination hostname to match for credential injection. Must
-                    /// be a public DNS hostname. Render normalizes it to lowercase and matches it
-                    /// exactly. IP addresses, ports, wildcards, and local or internal hostnames are
-                    /// not supported. Omit to preserve the current hostname.
+                    /// The destination hostname to match for credential injection. Must be a public DNS hostname. Render normalizes it to lowercase and matches it exactly. IP addresses, ports, wildcards, and local or internal hostnames are not supported. Omit to preserve the current hostname.
                     ///
                     ///
                     /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/PATCH/requestBody/json/domain`.
@@ -106793,21 +106193,12 @@ public enum Operations {
                     ///
                     /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/PATCH/requestBody/json/enabled`.
                     public var enabled: Swift.Bool?
-                    /// The HTTP methods to match for credential injection.
-                    /// Supported methods are GET, HEAD, POST, PUT, PATCH, DELETE, and OPTIONS,
-                    /// normalized to uppercase.
-                    /// An empty list matches any method. Omit to preserve the current filter.
+                    /// The HTTP methods to match for credential injection. Supported methods are GET, HEAD, POST, PUT, PATCH, DELETE, and OPTIONS, normalized to uppercase. An empty list matches any method. Omit to preserve the current filter.
                     ///
                     ///
                     /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/PATCH/requestBody/json/methods`.
                     public var methods: [Swift.String]?
-                    /// The request path patterns to match for credential injection. Each
-                    /// pattern must match the entire absolute path. Use `*` for one nonempty path segment or
-                    /// `**` for one or more segments. Wildcards must occupy whole segments. For
-                    /// example, `/a/*` matches `/a/b`, and `/a/**` also matches `/a/b/c`. Neither
-                    /// matches `/a`. Patterns do not support query strings, fragments, or escaping.
-                    /// Request query strings do not affect matching.
-                    /// An empty list matches any path. Omit to preserve the current filter.
+                    /// The request path patterns to match for credential injection. Each pattern must match the entire absolute path. Use `*` for one nonempty path segment or `**` for one or more segments. Wildcards must occupy whole segments. For example, `/a/*` matches `/a/b`, and `/a/**` also matches `/a/b/c`. Neither matches `/a`. Patterns do not support query strings, fragments, or escaping. Request query strings do not affect matching. An empty list matches any path. Omit to preserve the current filter.
                     ///
                     ///
                     /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/PATCH/requestBody/json/paths`.
@@ -106816,9 +106207,7 @@ public enum Operations {
                     ///
                     /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/PATCH/requestBody/json/injection`.
                     public struct InjectionPayload: Codable, Hashable, Sendable {
-                        /// How Render adds the credential to a matching request. For `basic`, the value
-                        /// after applying `template` must have the form `username:password`. Do not
-                        /// provide `name`.
+                        /// How Render adds the credential to a matching request. For `basic`, the value after applying `template` must have the form `username:password`. Do not provide `name`.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/PATCH/requestBody/json/injection/type`.
@@ -106828,23 +106217,17 @@ public enum Operations {
                             case cookie = "cookie"
                             case query = "query"
                         }
-                        /// How Render adds the credential to a matching request. For `basic`, the value
-                        /// after applying `template` must have the form `username:password`. Do not
-                        /// provide `name`.
+                        /// How Render adds the credential to a matching request. For `basic`, the value after applying `template` must have the form `username:password`. Do not provide `name`.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/PATCH/requestBody/json/injection/type`.
                         public var _type: Operations.UpdateSandboxGroupCredential.Input.Body.JsonPayload.InjectionPayload._TypePayload
-                        /// The header, cookie, or query parameter to set. Required for `header`,
-                        /// `cookie`, and `query`. Headers that control routing or connection behavior
-                        /// cannot be used.
+                        /// The header, cookie, or query parameter to set. Required for `header`, `cookie`, and `query`. Headers that control routing or connection behavior cannot be used.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/PATCH/requestBody/json/injection/name`.
                         public var name: Swift.String?
-                        /// A template containing 1–5 occurrences of `${SECRET}`, such as
-                        /// `Bearer ${SECRET}`. Render replaces each occurrence with the secret value.
-                        /// Omit to use the secret value without a template.
+                        /// A template containing 1–5 occurrences of `${SECRET}`, such as `Bearer ${SECRET}`. Render replaces each occurrence with the secret value. Omit to use the secret value without a template.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/PATCH/requestBody/json/injection/template`.
@@ -106852,9 +106235,9 @@ public enum Operations {
                         /// Creates a new `InjectionPayload`.
                         ///
                         /// - Parameters:
-                        ///   - _type: How Render adds the credential to a matching request. For `basic`, the value
-                        ///   - name: The header, cookie, or query parameter to set. Required for `header`,
-                        ///   - template: A template containing 1–5 occurrences of `${SECRET}`, such as
+                        ///   - _type: How Render adds the credential to a matching request. For `basic`, the value after applying `template` must have the form `username:password`. Do not provide `name`.
+                        ///   - name: The header, cookie, or query parameter to set. Required for `header`, `cookie`, and `query`. Headers that control routing or connection behavior cannot be used.
+                        ///   - template: A template containing 1–5 occurrences of `${SECRET}`, such as `Bearer ${SECRET}`. Render replaces each occurrence with the secret value. Omit to use the secret value without a template.
                         public init(
                             _type: Operations.UpdateSandboxGroupCredential.Input.Body.JsonPayload.InjectionPayload._TypePayload,
                             name: Swift.String? = nil,
@@ -106878,10 +106261,10 @@ public enum Operations {
                     ///
                     /// - Parameters:
                     ///   - value: The replacement secret value, up to 5 KiB (5120 UTF-8 bytes). Requires an admin. Omit to preserve the current value.
-                    ///   - domain: The destination hostname to match for credential injection. Must
+                    ///   - domain: The destination hostname to match for credential injection. Must be a public DNS hostname. Render normalizes it to lowercase and matches it exactly. IP addresses, ports, wildcards, and local or internal hostnames are not supported. Omit to preserve the current hostname.
                     ///   - enabled: Whether this credential is enabled for injection. Omit to preserve the current setting.
-                    ///   - methods: The HTTP methods to match for credential injection.
-                    ///   - paths: The request path patterns to match for credential injection. Each
+                    ///   - methods: The HTTP methods to match for credential injection. Supported methods are GET, HEAD, POST, PUT, PATCH, DELETE, and OPTIONS, normalized to uppercase. An empty list matches any method. Omit to preserve the current filter.
+                    ///   - paths: The request path patterns to match for credential injection. Each pattern must match the entire absolute path. Use `*` for one nonempty path segment or `**` for one or more segments. Wildcards must occupy whole segments. For example, `/a/*` matches `/a/b`, and `/a/**` also matches `/a/b/c`. Neither matches `/a`. Patterns do not support query strings, fragments, or escaping. Request query strings do not affect matching. An empty list matches any path. Omit to preserve the current filter.
                     ///   - injection: Settings for injecting the secret value into matching outbound HTTPS requests.
                     public init(
                         value: Swift.String? = nil,
@@ -106931,28 +106314,19 @@ public enum Operations {
             public struct Ok: Sendable, Hashable {
                 /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/PATCH/responses/200/content`.
                 @frozen public enum Body: Sendable, Hashable {
-                    /// A credential configured for injection into matching outbound HTTPS requests
-                    /// from sandboxes in one sandbox group. Each credential stores its own secret
-                    /// value. These endpoints do not return secret values, including to admins.
+                    /// A credential configured for injection into matching outbound HTTPS requests from sandboxes in one sandbox group. Each credential stores its own secret value. These endpoints do not return secret values, including to admins.
                     ///
-                    /// Credential injection supports HTTPS requests on port 443. Avoid overlapping
-                    /// credential configurations for the same hostname. Multiple matching credentials
-                    /// are not combined.
+                    /// Credential injection supports HTTPS requests on port 443. Avoid overlapping credential configurations for the same hostname. Multiple matching credentials are not combined.
                     ///
                     ///
                     /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/PATCH/responses/200/content/json`.
                     public struct JsonPayload: Codable, Hashable, Sendable {
-                        /// The case-sensitive ID you assign to the credential, unique within its sandbox group.
-                        /// Use only letters, numbers, periods, underscores, tildes, and hyphens. The names
-                        /// `.` and `..` and IDs starting with `rnd-` are reserved.
+                        /// The case-sensitive ID you assign to the credential, unique within its sandbox group. Use only letters, numbers, periods, underscores, tildes, and hyphens. The names `.` and `..` and IDs starting with `rnd-` are reserved.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/PATCH/responses/200/content/json/id`.
                         public var id: Swift.String
-                        /// The destination hostname to match for credential injection. Must
-                        /// be a public DNS hostname. Render normalizes it to lowercase and matches it
-                        /// exactly. IP addresses, ports, wildcards, and local or internal hostnames are
-                        /// not supported.
+                        /// The destination hostname to match for credential injection. Must be a public DNS hostname. Render normalizes it to lowercase and matches it exactly. IP addresses, ports, wildcards, and local or internal hostnames are not supported.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/PATCH/responses/200/content/json/domain`.
@@ -106973,9 +106347,7 @@ public enum Operations {
                             ///
                             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/PATCH/responses/200/content/json/version/updatedBy`.
                             public var updatedBy: Swift.String
-                            /// A fingerprint of the routing settings, injection settings, and secret value.
-                            /// Matching fingerprints identify equivalent credential configurations within
-                            /// the same sandbox group. Fingerprints cannot be compared across groups.
+                            /// A fingerprint of the routing settings, injection settings, and secret value. Matching fingerprints identify equivalent credential configurations within the same sandbox group. Fingerprints cannot be compared across groups.
                             ///
                             ///
                             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/PATCH/responses/200/content/json/version/fingerprint`.
@@ -106990,7 +106362,7 @@ public enum Operations {
                             ///   - id: The ID of the credential version. Each new version receives a higher ID, including versions created by a restore.
                             ///   - updatedAt: The timestamp when this credential version was created, in ISO 8601 format.
                             ///   - updatedBy: The ID of the authenticated identity that created this credential version.
-                            ///   - fingerprint: A fingerprint of the routing settings, injection settings, and secret value.
+                            ///   - fingerprint: A fingerprint of the routing settings, injection settings, and secret value. Matching fingerprints identify equivalent credential configurations within the same sandbox group. Fingerprints cannot be compared across groups.
                             ///   - restoredFromVersionId: The ID of the credential version restored to create this version. Omitted for versions created by a create or update request.
                             public init(
                                 id: Swift.Int64,
@@ -107021,21 +106393,12 @@ public enum Operations {
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/PATCH/responses/200/content/json/enabled`.
                         public var enabled: Swift.Bool
-                        /// The HTTP methods to match for credential injection.
-                        /// Supported methods are GET, HEAD, POST, PUT, PATCH, DELETE, and OPTIONS,
-                        /// normalized to uppercase.
-                        /// An empty list matches any method.
+                        /// The HTTP methods to match for credential injection. Supported methods are GET, HEAD, POST, PUT, PATCH, DELETE, and OPTIONS, normalized to uppercase. An empty list matches any method.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/PATCH/responses/200/content/json/methods`.
                         public var methods: [Swift.String]
-                        /// The request path patterns to match for credential injection. Each
-                        /// pattern must match the entire absolute path. Use `*` for one nonempty path segment or
-                        /// `**` for one or more segments. Wildcards must occupy whole segments. For
-                        /// example, `/a/*` matches `/a/b`, and `/a/**` also matches `/a/b/c`. Neither
-                        /// matches `/a`. Patterns do not support query strings, fragments, or escaping.
-                        /// Request query strings do not affect matching.
-                        /// An empty list matches any path.
+                        /// The request path patterns to match for credential injection. Each pattern must match the entire absolute path. Use `*` for one nonempty path segment or `**` for one or more segments. Wildcards must occupy whole segments. For example, `/a/*` matches `/a/b`, and `/a/**` also matches `/a/b/c`. Neither matches `/a`. Patterns do not support query strings, fragments, or escaping. Request query strings do not affect matching. An empty list matches any path.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/PATCH/responses/200/content/json/paths`.
@@ -107044,9 +106407,7 @@ public enum Operations {
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/PATCH/responses/200/content/json/injection`.
                         public struct InjectionPayload: Codable, Hashable, Sendable {
-                            /// How Render adds the credential to a matching request. For `basic`, the value
-                            /// after applying `template` must have the form `username:password`. Do not
-                            /// provide `name`.
+                            /// How Render adds the credential to a matching request. For `basic`, the value after applying `template` must have the form `username:password`. Do not provide `name`.
                             ///
                             ///
                             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/PATCH/responses/200/content/json/injection/type`.
@@ -107056,23 +106417,17 @@ public enum Operations {
                                 case cookie = "cookie"
                                 case query = "query"
                             }
-                            /// How Render adds the credential to a matching request. For `basic`, the value
-                            /// after applying `template` must have the form `username:password`. Do not
-                            /// provide `name`.
+                            /// How Render adds the credential to a matching request. For `basic`, the value after applying `template` must have the form `username:password`. Do not provide `name`.
                             ///
                             ///
                             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/PATCH/responses/200/content/json/injection/type`.
                             public var _type: Operations.UpdateSandboxGroupCredential.Output.Ok.Body.JsonPayload.InjectionPayload._TypePayload
-                            /// The header, cookie, or query parameter to set. Required for `header`,
-                            /// `cookie`, and `query`. Headers that control routing or connection behavior
-                            /// cannot be used.
+                            /// The header, cookie, or query parameter to set. Required for `header`, `cookie`, and `query`. Headers that control routing or connection behavior cannot be used.
                             ///
                             ///
                             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/PATCH/responses/200/content/json/injection/name`.
                             public var name: Swift.String?
-                            /// A template containing 1–5 occurrences of `${SECRET}`, such as
-                            /// `Bearer ${SECRET}`. Render replaces each occurrence with the secret value.
-                            /// Omit to use the secret value without a template.
+                            /// A template containing 1–5 occurrences of `${SECRET}`, such as `Bearer ${SECRET}`. Render replaces each occurrence with the secret value. Omit to use the secret value without a template.
                             ///
                             ///
                             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/PATCH/responses/200/content/json/injection/template`.
@@ -107080,9 +106435,9 @@ public enum Operations {
                             /// Creates a new `InjectionPayload`.
                             ///
                             /// - Parameters:
-                            ///   - _type: How Render adds the credential to a matching request. For `basic`, the value
-                            ///   - name: The header, cookie, or query parameter to set. Required for `header`,
-                            ///   - template: A template containing 1–5 occurrences of `${SECRET}`, such as
+                            ///   - _type: How Render adds the credential to a matching request. For `basic`, the value after applying `template` must have the form `username:password`. Do not provide `name`.
+                            ///   - name: The header, cookie, or query parameter to set. Required for `header`, `cookie`, and `query`. Headers that control routing or connection behavior cannot be used.
+                            ///   - template: A template containing 1–5 occurrences of `${SECRET}`, such as `Bearer ${SECRET}`. Render replaces each occurrence with the secret value. Omit to use the secret value without a template.
                             public init(
                                 _type: Operations.UpdateSandboxGroupCredential.Output.Ok.Body.JsonPayload.InjectionPayload._TypePayload,
                                 name: Swift.String? = nil,
@@ -107105,12 +106460,12 @@ public enum Operations {
                         /// Creates a new `JsonPayload`.
                         ///
                         /// - Parameters:
-                        ///   - id: The case-sensitive ID you assign to the credential, unique within its sandbox group.
-                        ///   - domain: The destination hostname to match for credential injection. Must
+                        ///   - id: The case-sensitive ID you assign to the credential, unique within its sandbox group. Use only letters, numbers, periods, underscores, tildes, and hyphens. The names `.` and `..` and IDs starting with `rnd-` are reserved.
+                        ///   - domain: The destination hostname to match for credential injection. Must be a public DNS hostname. Render normalizes it to lowercase and matches it exactly. IP addresses, ports, wildcards, and local or internal hostnames are not supported.
                         ///   - version: Metadata for a credential version. These endpoints do not return secret values.
                         ///   - enabled: Whether this credential is enabled for injection.
-                        ///   - methods: The HTTP methods to match for credential injection.
-                        ///   - paths: The request path patterns to match for credential injection. Each
+                        ///   - methods: The HTTP methods to match for credential injection. Supported methods are GET, HEAD, POST, PUT, PATCH, DELETE, and OPTIONS, normalized to uppercase. An empty list matches any method.
+                        ///   - paths: The request path patterns to match for credential injection. Each pattern must match the entire absolute path. Use `*` for one nonempty path segment or `**` for one or more segments. Wildcards must occupy whole segments. For example, `/a/*` matches `/a/b`, and `/a/**` also matches `/a/b/c`. Neither matches `/a`. Patterns do not support query strings, fragments, or escaping. Request query strings do not affect matching. An empty list matches any path.
                         ///   - injection: Settings for injecting the secret value into matching outbound HTTPS requests.
                         public init(
                             id: Swift.String,
@@ -107338,11 +106693,9 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
-            /// Temporary conflicts while applying credential changes can also cause this
-            /// response.
+            /// Temporary conflicts while applying credential changes can also cause this response.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/patch(update-sandbox-group-credential)/responses/429`.
@@ -107445,8 +106798,7 @@ public enum Operations {
     }
     /// Delete sandbox group credential
     ///
-    /// Delete a credential from the sandbox group. Requires an admin. Repeated
-    /// delete requests are accepted, including if the credential is already absent.
+    /// Delete a credential from the sandbox group. Requires an admin. Repeated delete requests are accepted, including if the credential is already absent.
     ///
     ///
     /// - Remark: HTTP `DELETE /sandbox-groups/{sandboxGroupId}/credentials/{credentialId}`.
@@ -107659,11 +107011,9 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
-            /// Temporary conflicts while applying credential changes can also cause this
-            /// response.
+            /// Temporary conflicts while applying credential changes can also cause this response.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/delete(delete-sandbox-group-credential)/responses/429`.
@@ -107766,13 +107116,9 @@ public enum Operations {
     }
     /// List sandbox credential versions
     ///
-    /// List retained credential versions, newest version ID first. Versions with
-    /// identical settings and secret values share a fingerprint.
+    /// List retained credential versions, newest version ID first. Versions with identical settings and secret values share a fingerprint.
     ///
-    /// Render retains the current configuration and the three distinct prior
-    /// configurations most recently active. When an older configuration is removed,
-    /// all versions that refer to it are also removed. These endpoints do not return
-    /// secret values.
+    /// Render retains the current configuration and the three distinct prior configurations most recently active. When an older configuration is removed, all versions that refer to it are also removed. These endpoints do not return secret values.
     ///
     ///
     /// - Remark: HTTP `GET /sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/versions`.
@@ -107849,9 +107195,7 @@ public enum Operations {
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/versions/GET/responses/200/content/JsonPayload/updatedBy`.
                         public var updatedBy: Swift.String
-                        /// A fingerprint of the routing settings, injection settings, and secret value.
-                        /// Matching fingerprints identify equivalent credential configurations within
-                        /// the same sandbox group. Fingerprints cannot be compared across groups.
+                        /// A fingerprint of the routing settings, injection settings, and secret value. Matching fingerprints identify equivalent credential configurations within the same sandbox group. Fingerprints cannot be compared across groups.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/versions/GET/responses/200/content/JsonPayload/fingerprint`.
@@ -107866,7 +107210,7 @@ public enum Operations {
                         ///   - id: The ID of the credential version. Each new version receives a higher ID, including versions created by a restore.
                         ///   - updatedAt: The timestamp when this credential version was created, in ISO 8601 format.
                         ///   - updatedBy: The ID of the authenticated identity that created this credential version.
-                        ///   - fingerprint: A fingerprint of the routing settings, injection settings, and secret value.
+                        ///   - fingerprint: A fingerprint of the routing settings, injection settings, and secret value. Matching fingerprints identify equivalent credential configurations within the same sandbox group. Fingerprints cannot be compared across groups.
                         ///   - restoredFromVersionId: The ID of the credential version restored to create this version. Omitted for versions created by a create or update request.
                         public init(
                             id: Swift.Int64,
@@ -108056,8 +107400,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/versions/get(list-sandbox-group-credential-versions)/responses/429`.
@@ -108160,18 +107503,11 @@ public enum Operations {
     }
     /// Restore sandbox credential configuration
     ///
-    /// Restore a retained credential version, including its routing settings,
-    /// injection settings, and secret value, as a new current version. Requires
-    /// an admin.
+    /// Restore a retained credential version, including its routing settings, injection settings, and secret value, as a new current version. Requires an admin.
     ///
-    /// The new version has a higher ID, records who restored it and when, and
-    /// identifies the source in `restoredFromVersionId`. Its fingerprint matches
-    /// the source version. Render retains the current configuration and the three
-    /// distinct prior configurations most recently active. Removing an older
-    /// configuration also removes all versions that refer to it.
+    /// The new version has a higher ID, records who restored it and when, and identifies the source in `restoredFromVersionId`. Its fingerprint matches the source version. Render retains the current configuration and the three distinct prior configurations most recently active. Removing an older configuration also removes all versions that refer to it.
     ///
-    /// The response confirms the configuration was saved. It does not confirm that
-    /// credential injection is active for a particular sandbox.
+    /// The response confirms the configuration was saved. It does not confirm that credential injection is active for a particular sandbox.
     ///
     /// These endpoints do not return secret values.
     ///
@@ -108262,28 +107598,19 @@ public enum Operations {
             public struct Ok: Sendable, Hashable {
                 /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/restore/POST/responses/200/content`.
                 @frozen public enum Body: Sendable, Hashable {
-                    /// A credential configured for injection into matching outbound HTTPS requests
-                    /// from sandboxes in one sandbox group. Each credential stores its own secret
-                    /// value. These endpoints do not return secret values, including to admins.
+                    /// A credential configured for injection into matching outbound HTTPS requests from sandboxes in one sandbox group. Each credential stores its own secret value. These endpoints do not return secret values, including to admins.
                     ///
-                    /// Credential injection supports HTTPS requests on port 443. Avoid overlapping
-                    /// credential configurations for the same hostname. Multiple matching credentials
-                    /// are not combined.
+                    /// Credential injection supports HTTPS requests on port 443. Avoid overlapping credential configurations for the same hostname. Multiple matching credentials are not combined.
                     ///
                     ///
                     /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/restore/POST/responses/200/content/json`.
                     public struct JsonPayload: Codable, Hashable, Sendable {
-                        /// The case-sensitive ID you assign to the credential, unique within its sandbox group.
-                        /// Use only letters, numbers, periods, underscores, tildes, and hyphens. The names
-                        /// `.` and `..` and IDs starting with `rnd-` are reserved.
+                        /// The case-sensitive ID you assign to the credential, unique within its sandbox group. Use only letters, numbers, periods, underscores, tildes, and hyphens. The names `.` and `..` and IDs starting with `rnd-` are reserved.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/restore/POST/responses/200/content/json/id`.
                         public var id: Swift.String
-                        /// The destination hostname to match for credential injection. Must
-                        /// be a public DNS hostname. Render normalizes it to lowercase and matches it
-                        /// exactly. IP addresses, ports, wildcards, and local or internal hostnames are
-                        /// not supported.
+                        /// The destination hostname to match for credential injection. Must be a public DNS hostname. Render normalizes it to lowercase and matches it exactly. IP addresses, ports, wildcards, and local or internal hostnames are not supported.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/restore/POST/responses/200/content/json/domain`.
@@ -108304,9 +107631,7 @@ public enum Operations {
                             ///
                             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/restore/POST/responses/200/content/json/version/updatedBy`.
                             public var updatedBy: Swift.String
-                            /// A fingerprint of the routing settings, injection settings, and secret value.
-                            /// Matching fingerprints identify equivalent credential configurations within
-                            /// the same sandbox group. Fingerprints cannot be compared across groups.
+                            /// A fingerprint of the routing settings, injection settings, and secret value. Matching fingerprints identify equivalent credential configurations within the same sandbox group. Fingerprints cannot be compared across groups.
                             ///
                             ///
                             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/restore/POST/responses/200/content/json/version/fingerprint`.
@@ -108321,7 +107646,7 @@ public enum Operations {
                             ///   - id: The ID of the credential version. Each new version receives a higher ID, including versions created by a restore.
                             ///   - updatedAt: The timestamp when this credential version was created, in ISO 8601 format.
                             ///   - updatedBy: The ID of the authenticated identity that created this credential version.
-                            ///   - fingerprint: A fingerprint of the routing settings, injection settings, and secret value.
+                            ///   - fingerprint: A fingerprint of the routing settings, injection settings, and secret value. Matching fingerprints identify equivalent credential configurations within the same sandbox group. Fingerprints cannot be compared across groups.
                             ///   - restoredFromVersionId: The ID of the credential version restored to create this version. Omitted for versions created by a create or update request.
                             public init(
                                 id: Swift.Int64,
@@ -108352,21 +107677,12 @@ public enum Operations {
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/restore/POST/responses/200/content/json/enabled`.
                         public var enabled: Swift.Bool
-                        /// The HTTP methods to match for credential injection.
-                        /// Supported methods are GET, HEAD, POST, PUT, PATCH, DELETE, and OPTIONS,
-                        /// normalized to uppercase.
-                        /// An empty list matches any method.
+                        /// The HTTP methods to match for credential injection. Supported methods are GET, HEAD, POST, PUT, PATCH, DELETE, and OPTIONS, normalized to uppercase. An empty list matches any method.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/restore/POST/responses/200/content/json/methods`.
                         public var methods: [Swift.String]
-                        /// The request path patterns to match for credential injection. Each
-                        /// pattern must match the entire absolute path. Use `*` for one nonempty path segment or
-                        /// `**` for one or more segments. Wildcards must occupy whole segments. For
-                        /// example, `/a/*` matches `/a/b`, and `/a/**` also matches `/a/b/c`. Neither
-                        /// matches `/a`. Patterns do not support query strings, fragments, or escaping.
-                        /// Request query strings do not affect matching.
-                        /// An empty list matches any path.
+                        /// The request path patterns to match for credential injection. Each pattern must match the entire absolute path. Use `*` for one nonempty path segment or `**` for one or more segments. Wildcards must occupy whole segments. For example, `/a/*` matches `/a/b`, and `/a/**` also matches `/a/b/c`. Neither matches `/a`. Patterns do not support query strings, fragments, or escaping. Request query strings do not affect matching. An empty list matches any path.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/restore/POST/responses/200/content/json/paths`.
@@ -108375,9 +107691,7 @@ public enum Operations {
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/restore/POST/responses/200/content/json/injection`.
                         public struct InjectionPayload: Codable, Hashable, Sendable {
-                            /// How Render adds the credential to a matching request. For `basic`, the value
-                            /// after applying `template` must have the form `username:password`. Do not
-                            /// provide `name`.
+                            /// How Render adds the credential to a matching request. For `basic`, the value after applying `template` must have the form `username:password`. Do not provide `name`.
                             ///
                             ///
                             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/restore/POST/responses/200/content/json/injection/type`.
@@ -108387,23 +107701,17 @@ public enum Operations {
                                 case cookie = "cookie"
                                 case query = "query"
                             }
-                            /// How Render adds the credential to a matching request. For `basic`, the value
-                            /// after applying `template` must have the form `username:password`. Do not
-                            /// provide `name`.
+                            /// How Render adds the credential to a matching request. For `basic`, the value after applying `template` must have the form `username:password`. Do not provide `name`.
                             ///
                             ///
                             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/restore/POST/responses/200/content/json/injection/type`.
                             public var _type: Operations.RestoreSandboxGroupCredential.Output.Ok.Body.JsonPayload.InjectionPayload._TypePayload
-                            /// The header, cookie, or query parameter to set. Required for `header`,
-                            /// `cookie`, and `query`. Headers that control routing or connection behavior
-                            /// cannot be used.
+                            /// The header, cookie, or query parameter to set. Required for `header`, `cookie`, and `query`. Headers that control routing or connection behavior cannot be used.
                             ///
                             ///
                             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/restore/POST/responses/200/content/json/injection/name`.
                             public var name: Swift.String?
-                            /// A template containing 1–5 occurrences of `${SECRET}`, such as
-                            /// `Bearer ${SECRET}`. Render replaces each occurrence with the secret value.
-                            /// Omit to use the secret value without a template.
+                            /// A template containing 1–5 occurrences of `${SECRET}`, such as `Bearer ${SECRET}`. Render replaces each occurrence with the secret value. Omit to use the secret value without a template.
                             ///
                             ///
                             /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/restore/POST/responses/200/content/json/injection/template`.
@@ -108411,9 +107719,9 @@ public enum Operations {
                             /// Creates a new `InjectionPayload`.
                             ///
                             /// - Parameters:
-                            ///   - _type: How Render adds the credential to a matching request. For `basic`, the value
-                            ///   - name: The header, cookie, or query parameter to set. Required for `header`,
-                            ///   - template: A template containing 1–5 occurrences of `${SECRET}`, such as
+                            ///   - _type: How Render adds the credential to a matching request. For `basic`, the value after applying `template` must have the form `username:password`. Do not provide `name`.
+                            ///   - name: The header, cookie, or query parameter to set. Required for `header`, `cookie`, and `query`. Headers that control routing or connection behavior cannot be used.
+                            ///   - template: A template containing 1–5 occurrences of `${SECRET}`, such as `Bearer ${SECRET}`. Render replaces each occurrence with the secret value. Omit to use the secret value without a template.
                             public init(
                                 _type: Operations.RestoreSandboxGroupCredential.Output.Ok.Body.JsonPayload.InjectionPayload._TypePayload,
                                 name: Swift.String? = nil,
@@ -108436,12 +107744,12 @@ public enum Operations {
                         /// Creates a new `JsonPayload`.
                         ///
                         /// - Parameters:
-                        ///   - id: The case-sensitive ID you assign to the credential, unique within its sandbox group.
-                        ///   - domain: The destination hostname to match for credential injection. Must
+                        ///   - id: The case-sensitive ID you assign to the credential, unique within its sandbox group. Use only letters, numbers, periods, underscores, tildes, and hyphens. The names `.` and `..` and IDs starting with `rnd-` are reserved.
+                        ///   - domain: The destination hostname to match for credential injection. Must be a public DNS hostname. Render normalizes it to lowercase and matches it exactly. IP addresses, ports, wildcards, and local or internal hostnames are not supported.
                         ///   - version: Metadata for a credential version. These endpoints do not return secret values.
                         ///   - enabled: Whether this credential is enabled for injection.
-                        ///   - methods: The HTTP methods to match for credential injection.
-                        ///   - paths: The request path patterns to match for credential injection. Each
+                        ///   - methods: The HTTP methods to match for credential injection. Supported methods are GET, HEAD, POST, PUT, PATCH, DELETE, and OPTIONS, normalized to uppercase. An empty list matches any method.
+                        ///   - paths: The request path patterns to match for credential injection. Each pattern must match the entire absolute path. Use `*` for one nonempty path segment or `**` for one or more segments. Wildcards must occupy whole segments. For example, `/a/*` matches `/a/b`, and `/a/**` also matches `/a/b/c`. Neither matches `/a`. Patterns do not support query strings, fragments, or escaping. Request query strings do not affect matching. An empty list matches any path.
                         ///   - injection: Settings for injecting the secret value into matching outbound HTTPS requests.
                         public init(
                             id: Swift.String,
@@ -108635,11 +107943,9 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
-            /// Temporary conflicts while applying credential changes can also cause this
-            /// response.
+            /// Temporary conflicts while applying credential changes can also cause this response.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandbox-groups/{sandboxGroupId}/credentials/{credentialId}/restore/post(restore-sandbox-group-credential)/responses/429`.
@@ -109021,8 +108327,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandbox-groups/{sandboxGroupId}/builds/get(list-sandbox-builds)/responses/429`.
@@ -109125,14 +108430,9 @@ public enum Operations {
     }
     /// Create sandbox build
     ///
-    /// Start converting an OCI container image into an image that sandboxes can
-    /// use. New builds run asynchronously. Retrieve the build until its status is
-    /// `succeeded` or `failed`. After it succeeds, provide its ID as `buildId` when
-    /// creating a sandbox.
+    /// Start converting an OCI container image into an image that sandboxes can use. New builds run asynchronously. Retrieve the build until its status is `succeeded` or `failed`. After it succeeds, provide its ID as `buildId` when creating a sandbox.
     ///
-    /// If the group already has a pending, running, or succeeded build for the same
-    /// name and image digest, Render returns that build. Retrying a failed build
-    /// starts a new build.
+    /// If the group already has a pending, running, or succeeded build for the same name and image digest, Render returns that build. Retrying a failed build starts a new build.
     ///
     ///
     /// - Remark: HTTP `POST /sandbox-groups/{sandboxGroupId}/builds`.
@@ -109333,17 +108633,12 @@ public enum Operations {
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/builds/POST/responses/201/content/json/status`.
                         public var status: Operations.CreateSandboxBuild.Output.Created.Body.JsonPayload.StatusPayload
-                        /// A description of why the build failed. Null unless the status is `failed`.
-                        /// May include error text from the image registry. When displaying errors, use
-                        /// `failureCode` to select the main message and show this value as additional
-                        /// detail.
+                        /// A description of why the build failed. Null unless the status is `failed`. May include error text from the image registry. When displaying errors, use `failureCode` to select the main message and show this value as additional detail.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/builds/POST/responses/201/content/json/failureReason`.
                         public var failureReason: Swift.String?
-                        /// A machine-readable reason the build failed. Null unless the status is
-                        /// `failed`. See `sandboxBuildFailureCode` for known codes. Treat unrecognized
-                        /// codes as `internal_error`.
+                        /// A machine-readable reason the build failed. Null unless the status is `failed`. See `sandboxBuildFailureCode` for known codes. Treat unrecognized codes as `internal_error`.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/builds/POST/responses/201/content/json/failureCode`.
@@ -109365,8 +108660,8 @@ public enum Operations {
                         ///   - source: The source container image used for this build.
                         ///   - sourceDigest: The digest of the source image converted by this build.
                         ///   - status: The sandbox build's current status.
-                        ///   - failureReason: A description of why the build failed. Null unless the status is `failed`.
-                        ///   - failureCode: A machine-readable reason the build failed. Null unless the status is
+                        ///   - failureReason: A description of why the build failed. Null unless the status is `failed`. May include error text from the image registry. When displaying errors, use `failureCode` to select the main message and show this value as additional detail.
+                        ///   - failureCode: A machine-readable reason the build failed. Null unless the status is `failed`. See `sandboxBuildFailureCode` for known codes. Treat unrecognized codes as `internal_error`.
                         ///   - createdAt: The timestamp when the sandbox build was created, in ISO 8601 format.
                         ///   - finishedAt: The timestamp when the build succeeded or failed, in ISO 8601 format. Null while the build is pending or running.
                         public init(
@@ -109484,8 +108779,7 @@ public enum Operations {
             /// The request is invalid.
             ///
             /// - `invalid_sandbox_group_id`: The group ID is malformed.
-            /// - The image is invalid or the image registry cannot serve it. The error
-            ///   message explains the problem.
+            /// - The image is invalid or the image registry cannot serve it. The error message explains the problem.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandbox-groups/{sandboxGroupId}/builds/post(create-sandbox-build)/responses/400`.
@@ -109678,11 +108972,9 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
-            /// The group has reached its limit for pending and running builds. The error
-            /// message includes the limit.
+            /// The group has reached its limit for pending and running builds. The error message includes the limit.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandbox-groups/{sandboxGroupId}/builds/post(create-sandbox-build)/responses/429`.
@@ -109919,17 +109211,12 @@ public enum Operations {
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/builds/{buildId}/GET/responses/200/content/json/status`.
                         public var status: Operations.RetrieveSandboxBuild.Output.Ok.Body.JsonPayload.StatusPayload
-                        /// A description of why the build failed. Null unless the status is `failed`.
-                        /// May include error text from the image registry. When displaying errors, use
-                        /// `failureCode` to select the main message and show this value as additional
-                        /// detail.
+                        /// A description of why the build failed. Null unless the status is `failed`. May include error text from the image registry. When displaying errors, use `failureCode` to select the main message and show this value as additional detail.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/builds/{buildId}/GET/responses/200/content/json/failureReason`.
                         public var failureReason: Swift.String?
-                        /// A machine-readable reason the build failed. Null unless the status is
-                        /// `failed`. See `sandboxBuildFailureCode` for known codes. Treat unrecognized
-                        /// codes as `internal_error`.
+                        /// A machine-readable reason the build failed. Null unless the status is `failed`. See `sandboxBuildFailureCode` for known codes. Treat unrecognized codes as `internal_error`.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/builds/{buildId}/GET/responses/200/content/json/failureCode`.
@@ -109951,8 +109238,8 @@ public enum Operations {
                         ///   - source: The source container image used for this build.
                         ///   - sourceDigest: The digest of the source image converted by this build.
                         ///   - status: The sandbox build's current status.
-                        ///   - failureReason: A description of why the build failed. Null unless the status is `failed`.
-                        ///   - failureCode: A machine-readable reason the build failed. Null unless the status is
+                        ///   - failureReason: A description of why the build failed. Null unless the status is `failed`. May include error text from the image registry. When displaying errors, use `failureCode` to select the main message and show this value as additional detail.
+                        ///   - failureCode: A machine-readable reason the build failed. Null unless the status is `failed`. See `sandboxBuildFailureCode` for known codes. Treat unrecognized codes as `internal_error`.
                         ///   - createdAt: The timestamp when the sandbox build was created, in ISO 8601 format.
                         ///   - finishedAt: The timestamp when the build succeeded or failed, in ISO 8601 format. Null while the build is pending or running.
                         public init(
@@ -110114,8 +109401,7 @@ public enum Operations {
             }
             /// The requested resource was not found.
             ///
-            /// - `build_not_found`: The build does not exist or belongs to another sandbox
-            ///   group.
+            /// - `build_not_found`: The build does not exist or belongs to another sandbox group.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandbox-groups/{sandboxGroupId}/builds/{buildId}/get(retrieve-sandbox-build)/responses/404`.
@@ -110141,8 +109427,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandbox-groups/{sandboxGroupId}/builds/{buildId}/get(retrieve-sandbox-build)/responses/429`.
@@ -110245,9 +109530,7 @@ public enum Operations {
     }
     /// Delete sandbox build
     ///
-    /// Delete a build of a sandbox image. The build no longer appears in lists
-    /// and cannot be retrieved or used to create sandboxes, including by image
-    /// name. Repeated requests to delete the build return HTTP 204.
+    /// Delete a build of a sandbox image. The build no longer appears in lists and cannot be retrieved or used to create sandboxes, including by image name. Repeated requests to delete the build return HTTP 204.
     ///
     ///
     /// - Remark: HTTP `DELETE /sandbox-groups/{sandboxGroupId}/builds/{buildId}`.
@@ -110415,8 +109698,7 @@ public enum Operations {
             }
             /// The requested resource was not found.
             ///
-            /// - `build_not_found`: The build does not exist or belongs to another sandbox
-            ///   group.
+            /// - `build_not_found`: The build does not exist or belongs to another sandbox group.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandbox-groups/{sandboxGroupId}/builds/{buildId}/delete(delete-sandbox-build)/responses/404`.
@@ -110470,12 +109752,7 @@ public enum Operations {
             }
             /// The current state of the resource conflicts with this request.
             ///
-            /// - `image_in_use`: Sandboxes that have not terminated or errored, or unexpired
-            ///   snapshots that have not failed, still depend on this build. This includes
-            ///   suspended sandboxes and snapshots of sandboxes restored from earlier
-            ///   snapshots of the build. The error message lists up to 10 dependencies.
-            ///   Terminate the sandboxes and delete the snapshots, or wait for them to
-            ///   expire, before retrying.
+            /// - `image_in_use`: Sandboxes that have not terminated or errored, or unexpired snapshots that have not failed, still depend on this build. This includes suspended sandboxes and snapshots of sandboxes restored from earlier snapshots of the build. The error message lists up to 10 dependencies. Terminate the sandboxes and delete the snapshots, or wait for them to expire, before retrying.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandbox-groups/{sandboxGroupId}/builds/{buildId}/delete(delete-sandbox-build)/responses/409`.
@@ -110501,8 +109778,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandbox-groups/{sandboxGroupId}/builds/{buildId}/delete(delete-sandbox-build)/responses/429`.
@@ -110605,8 +109881,7 @@ public enum Operations {
     }
     /// List sandbox snapshots
     ///
-    /// List snapshots in a sandbox group, newest first. Excludes expired and
-    /// deleted snapshots.
+    /// List snapshots in a sandbox group, newest first. Excludes expired and deleted snapshots.
     ///
     ///
     /// - Remark: HTTP `GET /sandbox-groups/{sandboxGroupId}/snapshots`.
@@ -110635,10 +109910,7 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/snapshots/GET/query/ownerId`.
                 public var ownerId: Swift.String
-                /// Filter for snapshots with exactly this name. Multiple snapshots can share
-                /// a name; results include each version, newest first. When creating a sandbox
-                /// with `snapshotName`, Render uses the most recently created snapshot
-                /// with that name that is `available` and unexpired.
+                /// Filter for snapshots with exactly this name. Multiple snapshots can share a name; results include each version, newest first. When creating a sandbox with `snapshotName`, Render uses the most recently created snapshot with that name that is `available` and unexpired.
                 ///
                 ///
                 /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/snapshots/GET/query/name`.
@@ -110669,7 +109941,7 @@ public enum Operations {
                 ///
                 /// - Parameters:
                 ///   - ownerId: The ID of the workspace whose snapshots to return.
-                ///   - name: Filter for snapshots with exactly this name. Multiple snapshots can share
+                ///   - name: Filter for snapshots with exactly this name. Multiple snapshots can share a name; results include each version, newest first. When creating a sandbox with `snapshotName`, Render uses the most recently created snapshot with that name that is `available` and unexpired.
                 ///   - cursor: The position in the result list to start from when fetching paginated results. For details, see [Pagination](https://api-docs.render.com/reference/pagination).
                 ///   - limit: The maximum number of items to return. For details, see [Pagination](https://api-docs.render.com/reference/pagination).
                 ///   - status: Filter for snapshots with the specified statuses.
@@ -110897,8 +110169,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandbox-groups/{sandboxGroupId}/snapshots/get(list-sandbox-snapshots)/responses/429`.
@@ -111095,18 +110366,12 @@ public enum Operations {
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/snapshots/{snapshotId}/GET/responses/200/content/json/sourceSandboxId`.
                         public var sourceSandboxId: Swift.String
-                        /// A case-sensitive name for snapshots in a sandbox group, up to 64 characters.
-                        /// Must not start with `snp-`. Multiple snapshots can share a name. When creating
-                        /// a sandbox by snapshot name, Render uses the most recently created snapshot
-                        /// with that name that is `available` and unexpired.
+                        /// A case-sensitive name for snapshots in a sandbox group, up to 64 characters. Must not start with `snp-`. Multiple snapshots can share a name. When creating a sandbox by snapshot name, Render uses the most recently created snapshot with that name that is `available` and unexpired.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/snapshots/{snapshotId}/GET/responses/200/content/json/name`.
                         public var name: Swift.String?
-                        /// The state to capture. A `filesystem` snapshot captures the writable
-                        /// filesystem and can be restored to any plan. A `runtime` snapshot also
-                        /// captures memory and CPU state and must be restored to the source sandbox
-                        /// plan.
+                        /// The state to capture. A `filesystem` snapshot captures the writable filesystem and can be restored to any plan. A `runtime` snapshot also captures memory and CPU state and must be restored to the source sandbox plan.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/snapshots/{snapshotId}/GET/responses/200/content/json/kind`.
@@ -111114,10 +110379,7 @@ public enum Operations {
                             case filesystem = "filesystem"
                             case runtime = "runtime"
                         }
-                        /// The state to capture. A `filesystem` snapshot captures the writable
-                        /// filesystem and can be restored to any plan. A `runtime` snapshot also
-                        /// captures memory and CPU state and must be restored to the source sandbox
-                        /// plan.
+                        /// The state to capture. A `filesystem` snapshot captures the writable filesystem and can be restored to any plan. A `runtime` snapshot also captures memory and CPU state and must be restored to the source sandbox plan.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/snapshots/{snapshotId}/GET/responses/200/content/json/kind`.
@@ -111209,18 +110471,12 @@ public enum Operations {
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/snapshots/{snapshotId}/GET/responses/200/content/json/capturedAt`.
                         public var capturedAt: Foundation.Date?
-                        /// The timestamp after which the snapshot can no longer be retrieved or
-                        /// restored, in ISO 8601 format. Each time you create a sandbox from this
-                        /// snapshot, Render resets its expiration to `ttlSeconds` seconds after that
-                        /// use. For snapshots with no expiration (`ttlSeconds: 0`), this is
-                        /// `9999-12-31T23:59:59Z`.
+                        /// The timestamp after which the snapshot can no longer be retrieved or restored, in ISO 8601 format. Each time you create a sandbox from this snapshot, Render resets its expiration to `ttlSeconds` seconds after that use. For snapshots with no expiration (`ttlSeconds: 0`), this is `9999-12-31T23:59:59Z`.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/snapshots/{snapshotId}/GET/responses/200/content/json/expiresAt`.
                         public var expiresAt: Foundation.Date
-                        /// The snapshot's lifetime after its last use, in seconds. A value of 0 means
-                        /// the snapshot does not expire. If omitted, Render's default snapshot
-                        /// lifetime applies.
+                        /// The snapshot's lifetime after its last use, in seconds. A value of 0 means the snapshot does not expire. If omitted, Render's default snapshot lifetime applies.
                         ///
                         ///
                         /// - Remark: Generated from `#/paths/sandbox-groups/{sandboxGroupId}/snapshots/{snapshotId}/GET/responses/200/content/json/ttlSeconds`.
@@ -111239,14 +110495,14 @@ public enum Operations {
                         ///   - id: The ID of the sandbox snapshot.
                         ///   - sandboxGroupId: The ID of the sandbox group.
                         ///   - sourceSandboxId: The ID of the sandbox.
-                        ///   - name: A case-sensitive name for snapshots in a sandbox group, up to 64 characters.
-                        ///   - kind: The state to capture. A `filesystem` snapshot captures the writable
+                        ///   - name: A case-sensitive name for snapshots in a sandbox group, up to 64 characters. Must not start with `snp-`. Multiple snapshots can share a name. When creating a sandbox by snapshot name, Render uses the most recently created snapshot with that name that is `available` and unexpired.
+                        ///   - kind: The state to capture. A `filesystem` snapshot captures the writable filesystem and can be restored to any plan. A `runtime` snapshot also captures memory and CPU state and must be restored to the source sandbox plan.
                         ///   - status: The snapshot's current status.
                         ///   - plan: The source sandbox's compute plan when the snapshot was captured. See `sandboxPlan` for known values.
                         ///   - requestedAt: The timestamp when the snapshot was requested, in ISO 8601 format.
                         ///   - capturedAt: The timestamp when capture completed, in ISO 8601 format. Null until the snapshot is `available`.
-                        ///   - expiresAt: The timestamp after which the snapshot can no longer be retrieved or
-                        ///   - ttlSeconds: The snapshot's lifetime after its last use, in seconds. A value of 0 means
+                        ///   - expiresAt: The timestamp after which the snapshot can no longer be retrieved or restored, in ISO 8601 format. Each time you create a sandbox from this snapshot, Render resets its expiration to `ttlSeconds` seconds after that use. For snapshots with no expiration (`ttlSeconds: 0`), this is `9999-12-31T23:59:59Z`.
+                        ///   - ttlSeconds: The snapshot's lifetime after its last use, in seconds. A value of 0 means the snapshot does not expire. If omitted, Render's default snapshot lifetime applies.
                         ///   - sizeBytes: The size of the snapshot, in bytes. Null until the snapshot is `available`.
                         ///   - error: The reason the snapshot failed. Null unless its status is `failed`.
                         public init(
@@ -111471,8 +110727,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandbox-groups/{sandboxGroupId}/snapshots/{snapshotId}/get(retrieve-sandbox-snapshot)/responses/429`.
@@ -111575,8 +110830,7 @@ public enum Operations {
     }
     /// Delete sandbox snapshot
     ///
-    /// Delete a snapshot. Sandboxes created from it are not affected. Returns
-    /// HTTP 204 if the snapshot is already deleted or expired.
+    /// Delete a snapshot. Sandboxes created from it are not affected. Returns HTTP 204 if the snapshot is already deleted or expired.
     ///
     ///
     /// - Remark: HTTP `DELETE /sandbox-groups/{sandboxGroupId}/snapshots/{snapshotId}`.
@@ -111870,8 +111124,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandbox-groups/{sandboxGroupId}/snapshots/{snapshotId}/delete(delete-sandbox-snapshot)/responses/429`.
@@ -111974,9 +111227,7 @@ public enum Operations {
     }
     /// Create a connect token for a sandbox run
     ///
-    /// Create a short-lived connect token for a command run in this sandbox.
-    /// Send the command to the URL in the response, using the token as the bearer
-    /// token. The token authorizes only the requested operation.
+    /// Create a short-lived connect token for a command run in this sandbox. Send the command to the URL in the response, using the token as the bearer token. The token authorizes only the requested operation.
     ///
     ///
     /// - Remark: HTTP `POST /sandboxes/{sandboxId}/runs/{operation}/token`.
@@ -112060,9 +111311,7 @@ public enum Operations {
             public struct Created: Sendable, Hashable {
                 /// - Remark: Generated from `#/paths/sandboxes/{sandboxId}/runs/{operation}/token/POST/responses/201/content`.
                 @frozen public enum Body: Sendable, Hashable {
-                    /// A short-lived connect token and the URL to use it with. Send the request to
-                    /// `uri` using `method`, with `token` as the bearer token. Include a request
-                    /// body if the operation requires one.
+                    /// A short-lived connect token and the URL to use it with. Send the request to `uri` using `method`, with `token` as the bearer token. Include a request body if the operation requires one.
                     ///
                     ///
                     /// - Remark: Generated from `#/paths/sandboxes/{sandboxId}/runs/{operation}/token/POST/responses/201/content/json`.
@@ -112285,8 +111534,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandboxes/{sandboxId}/runs/{operation}/token/post(connect-sandbox-run)/responses/429`.
@@ -112389,14 +111637,9 @@ public enum Operations {
     }
     /// Mint a connect token for a sandbox file transfer
     ///
-    /// Create a short-lived connect token for a file upload or download. Transfer
-    /// the file directly to or from the URL in the response, using the token as
-    /// the bearer token. The token authorizes only the specified sandbox, operation,
-    /// and path. Its expiration time is returned in `expiresAt`.
+    /// Create a short-lived connect token for a file upload or download. Transfer the file directly to or from the URL in the response, using the token as the bearer token. The token authorizes only the specified sandbox, operation, and path. Its expiration time is returned in `expiresAt`.
     ///
-    /// Use `application/octet-stream` for a single file or `application/x-tar` for
-    /// a directory archive. For gzip compression, also set `Content-Encoding: gzip`.
-    /// Directory downloads return `application/x-tar` with `Content-Encoding: gzip`.
+    /// Use `application/octet-stream` for a single file or `application/x-tar` for a directory archive. For gzip compression, also set `Content-Encoding: gzip`. Directory downloads return `application/x-tar` with `Content-Encoding: gzip`.
     ///
     ///
     /// - Remark: HTTP `POST /sandboxes/{sandboxId}/files/{operation}/token`.
@@ -112439,13 +111682,9 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/sandboxes/{sandboxId}/files/{operation}/token/POST/query/ownerId`.
                 public var ownerId: Swift.String?
-                /// The file or directory path the token authorizes. For archive uploads, this
-                /// is the directory to extract into. For downloads, it is the file or directory
-                /// to retrieve.
+                /// The file or directory path the token authorizes. For archive uploads, this is the directory to extract into. For downloads, it is the file or directory to retrieve.
                 ///
-                /// Relative paths are resolved from the image's `WORKDIR`, or the home directory
-                /// if no `WORKDIR` is set. Use `.` for that working directory. Absolute paths
-                /// are resolved from the sandbox filesystem root.
+                /// Relative paths are resolved from the image's `WORKDIR`, or the home directory if no `WORKDIR` is set. Use `.` for that working directory. Absolute paths are resolved from the sandbox filesystem root.
                 ///
                 ///
                 /// - Remark: Generated from `#/paths/sandboxes/{sandboxId}/files/{operation}/token/POST/query/path`.
@@ -112454,7 +111693,7 @@ public enum Operations {
                 ///
                 /// - Parameters:
                 ///   - ownerId: The ID of the workspace the sandbox belongs to. If provided, it must match the sandbox's workspace. If omitted, Render determines the workspace from the sandbox ID.
-                ///   - path: The file or directory path the token authorizes. For archive uploads, this
+                ///   - path: The file or directory path the token authorizes. For archive uploads, this is the directory to extract into. For downloads, it is the file or directory to retrieve.
                 public init(
                     ownerId: Swift.String? = nil,
                     path: Swift.String
@@ -112496,9 +111735,7 @@ public enum Operations {
             public struct Created: Sendable, Hashable {
                 /// - Remark: Generated from `#/paths/sandboxes/{sandboxId}/files/{operation}/token/POST/responses/201/content`.
                 @frozen public enum Body: Sendable, Hashable {
-                    /// A short-lived connect token and the URL to use it with. Send the request to
-                    /// `uri` using `method`, with `token` as the bearer token. Include a request
-                    /// body if the operation requires one.
+                    /// A short-lived connect token and the URL to use it with. Send the request to `uri` using `method`, with `token` as the bearer token. Include a request body if the operation requires one.
                     ///
                     ///
                     /// - Remark: Generated from `#/paths/sandboxes/{sandboxId}/files/{operation}/token/POST/responses/201/content/json`.
@@ -112721,8 +111958,7 @@ public enum Operations {
             }
             /// Rate limit has been surpassed.
             ///
-            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and
-            /// `RateLimit-Reset` on successful responses so clients can track their remaining quota.
+            /// Rate-limited endpoints also return `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` on successful responses so clients can track their remaining quota.
             ///
             ///
             /// - Remark: Generated from `#/paths//sandboxes/{sandboxId}/files/{operation}/token/post(connect-sandbox-files)/responses/429`.

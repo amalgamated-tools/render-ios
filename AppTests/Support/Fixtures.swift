@@ -354,6 +354,7 @@ enum Fixtures {
         highAvailability: Bool = false,
         diskSizeGB: Int? = 10,
         readReplicaNames: [String] = [],
+        primaryPostgresID: String? = nil,
         expiresAt: String? = nil,
         maintenanceScheduledAt: String? = nil
     ) -> String {
@@ -362,6 +363,7 @@ enum Fixtures {
         }
         let disk = diskSizeGB.map { #","diskSizeGB":\#($0)"# } ?? ""
         let expires = expiresAt.map { #","expiresAt":"\#($0)""# } ?? ""
+        let primary = primaryPostgresID.map { #","primaryPostgresID":"\#($0)""# } ?? ""
         let maintenance = maintenanceScheduledAt.map {
             #","maintenance":{"id":"mrn-1","type":"postgres","scheduledAt":"\#($0)","state":"scheduled"}"#
         } ?? ""
@@ -374,7 +376,7 @@ enum Fixtures {
             "databaseName":"appdb","databaseUser":"appuser","ipAllowList":[],\
             "readReplicas":[\(replicas.joined(separator: ","))],\
             "dashboardUrl":"https://dashboard.render.com/d/\(id)",\
-            "diskAutoscalingEnabled":true,"connectionPool":""\(disk)\(expires)\(maintenance)}
+            "diskAutoscalingEnabled":true,"connectionPool":""\(disk)\(expires)\(primary)\(maintenance)}
             """
     }
 
