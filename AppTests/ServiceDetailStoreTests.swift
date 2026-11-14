@@ -18,6 +18,7 @@ struct ServiceDetailStoreTests {
         private var _started = "[]"
         private var _ended = "[]"
         private var _now = ServiceDetailStoreTests.clock
+        private var _eventsFail = false
 
         var started: String {
             get { lock.withLock { _started } }
@@ -33,11 +34,17 @@ struct ServiceDetailStoreTests {
             get { lock.withLock { _now } }
             set { lock.withLock { _now = newValue } }
         }
+
+        /// When set, both event requests answer 500.
+        var eventsFail: Bool {
+            get { lock.withLock { _eventsFail } }
+            set { lock.withLock { _eventsFail = newValue } }
+        }
     }
 
     /// When the tests' events happen, and a clock a minute later.
     private nonisolated static let startedAt = "2026-11-14T05:26:40Z"
-    private nonisolated static let clock = Date(timeIntervalSince1970: 1_794_633_660) // 05:27:40Z
+    private nonisolated static let clock = Date(timeIntervalSince1970: 1_794_634_060) // 05:27:40Z
 
     private nonisolated static func started(_ runID: String, at timestamp: String = startedAt) -> String {
         Fixtures.eventsPage(withDetails: [
@@ -66,6 +73,8 @@ struct ServiceDetailStoreTests {
                     request.method == .delete
                         ? (204, nil)
                         : (200, #"{"id":"srv-1-new","status":"pending","triggeredBy":"a@b.c"}"#)
+                } else if path.contains("/events"), feed.eventsFail {
+                    (500, #"{"message":"boom"}"#)
                 } else if path.contains("type=cron_job_run_started") {
                     (200, feed.started)
                 } else if path.contains("type=cron_job_run_ended") {
@@ -187,6 +196,49 @@ struct ServiceDetailStoreTests {
         #expect(store.activeCronRun == nil)
     }
 
+    @Test("a triggered run shows, and offers Cancel, even when its events can't be read")
+    func triggeredRunWithEventsFailing() async {
+        let feed = Feed()
+        feed.ended = Self.ended([(id: "srv-1-1", status: "successful", at: "2026-11-14T05:00:00Z")])
+        let (store, _) = store(feed: feed)
+        await store.load()
+        #expect(store.activeCronRun == nil)
+
+        feed.eventsFail = true
+        await store.perform(.runCronJob)
+        defer { store.stopPolling() }
+
+        #expect(store.activeCronRun == ActiveCronRun(id: "srv-1-new", startedAt: nil))
+        #expect(store.availableActions.contains(.cancelCronRun))
+        // The last run it did manage to read stays up.
+        #expect(store.lastCronRun?.id == "srv-1-1")
+    }
+
+    @Test("triggering after cancelling an older run shows the new run, with Cancel")
+    func triggerReplacesCancelingRun() async {
+        let feed = Feed()
+        feed.started = Self.started("srv-1-2")
+        let (store, _) = store(feed: feed)
+        await store.load()
+        defer { store.stopPolling() }
+
+        await store.perform(.cancelCronRun)
+        #expect(store.isCancelingCronRun)
+
+        // Render hasn't recorded the old run's end or the new run's start yet.
+        await store.perform(.runCronJob)
+
+        #expect(store.activeCronRun == ActiveCronRun(id: "srv-1-new", startedAt: nil))
+        #expect(!store.isCancelingCronRun)
+        #expect(store.availableActions.contains(.cancelCronRun))
+
+        // The new run's start arrives: it's the run in progress from then on.
+        feed.started = Self.started("srv-1-new", at: "2026-11-14T05:27:35Z")
+        await store.refresh()
+        #expect(store.activeCronRun?.id == "srv-1-new")
+        #expect(store.activeCronRun?.startedAt != nil)
+    }
+
     @Test("cancel sends DELETE, then shows canceling without a second Cancel until the run ends")
     func cancelWaitsForEndEvent() async {
         let feed = Feed()
@@ -210,6 +262,21 @@ struct ServiceDetailStoreTests {
         #expect(store.activeCronRun == nil)
         #expect(!store.isCancelingCronRun)
         #expect(store.lastCronRun?.statusTitle == "Canceled")
+    }
+
+    @Test("run starts are asked for over the last day, and run ends over all time")
+    func startedEventsHaveADayWindow() async throws {
+        let feed = Feed()
+        let (store, transport) = store(feed: feed)
+
+        await store.load()
+
+        let paths = transport.requests.compactMap(\.path)
+        let startedPath = try #require(paths.first { $0.contains("type=cron_job_run_started") })
+        let endedPath = try #require(paths.first { $0.contains("type=cron_job_run_ended") })
+        // A day before the test clock.
+        #expect(startedPath.removingPercentEncoding?.contains("startTime=2026-11-13T05:27:40.000Z") == true)
+        #expect(!endedPath.contains("startTime="))
     }
 
     @Test("a service that isn't a cron job never asks for run events")

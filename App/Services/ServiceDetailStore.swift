@@ -312,34 +312,53 @@ final class ServiceDetailStore {
     private func reloadCronRuns() async {
         let client = client
         let serviceID = serviceID
+        // The spec says an omitted startTime means the last hour (the live API ignores that today).
+        // Ask for the same day a start counts for, so a run over an hour long keeps its start. Ends
+        // get no window: the last run's outcome should show however long ago it was.
+        let startedSince = now().addingTimeInterval(-Self.startedRunLimit)
         async let startedAttempt = client.api.listEvents(
             path: .init(serviceId: serviceID),
-            query: .init(_type: .cronJobRunStarted, limit: 1)
+            query: .init(_type: .cronJobRunStarted, startTime: startedSince, limit: 1)
         )
         async let endedAttempt = client.api.listEvents(
             path: .init(serviceId: serviceID),
             query: .init(_type: .cronJobRunEnded, limit: 5)
         )
-        guard let started = try? await startedAttempt.ok.body.json.map({ ServiceEvent($0.event) }),
-              let ended = try? await endedAttempt.ok.body.json.map({ ServiceEvent($0.event) })
-        else { return }
+        let startedResult = try? await startedAttempt.ok.body.json.map({ ServiceEvent($0.event) })
+        let endedResult = try? await endedAttempt.ok.body.json.map({ ServiceEvent($0.event) })
+        let now = now()
+        let pendingTrigger = triggeredRun.flatMap {
+            now.timeIntervalSince($0.at) < Self.triggeredRunGrace ? $0 : nil
+        }
+
+        guard let started = startedResult, let ended = endedResult else {
+            // A run we just triggered is known to exist even though its events couldn't be read, so
+            // show it (which also keeps polling) rather than leave the screen on the old state.
+            if let pendingTrigger, activeCronRun?.id != pendingTrigger.id {
+                activeCronRun = ActiveCronRun(id: pendingTrigger.id, startedAt: nil)
+            }
+            return
+        }
 
         let endedIDs = Set(ended.compactMap(\.details.cronRunID))
-        let now = now()
         lastCronRun = ended.first.flatMap { event in
             event.details.cronRunID.map {
                 FinishedCronRun(id: $0, endedAt: event.timestamp, status: event.details.runStatus)
             }
         }
 
-        if let start = started.first, let id = start.details.cronRunID, !endedIDs.contains(id),
-           now.timeIntervalSince(start.timestamp) < Self.startedRunLimit {
-            activeCronRun = ActiveCronRun(id: id, startedAt: start.timestamp)
-            if triggeredRun?.id == id { triggeredRun = nil }
-        } else if let triggered = triggeredRun, !endedIDs.contains(triggered.id),
-                  started.first?.details.cronRunID != triggered.id,
-                  now.timeIntervalSince(triggered.at) < Self.triggeredRunGrace {
-            activeCronRun = ActiveCronRun(id: triggered.id, startedAt: nil)
+        let newestStart = started.first.flatMap { event in
+            event.details.cronRunID.map { (id: $0, at: event.timestamp) }
+        }
+        // A triggered run whose start Render hasn't recorded yet wins over an older unmatched start:
+        // triggering cancels the run before it, so that older run is on its way out.
+        if let pendingTrigger, !endedIDs.contains(pendingTrigger.id),
+           newestStart?.id != pendingTrigger.id {
+            activeCronRun = ActiveCronRun(id: pendingTrigger.id, startedAt: nil)
+        } else if let start = newestStart, !endedIDs.contains(start.id),
+                  now.timeIntervalSince(start.at) < Self.startedRunLimit {
+            activeCronRun = ActiveCronRun(id: start.id, startedAt: start.at)
+            if triggeredRun?.id == start.id { triggeredRun = nil }
         } else {
             activeCronRun = nil
             triggeredRun = nil
