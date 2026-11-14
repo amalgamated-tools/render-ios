@@ -30,7 +30,8 @@ fi
 echo "==> Booting $SIMULATOR ($DEVICE)"
 xcrun simctl boot "$DEVICE" 2>/dev/null || true
 xcrun simctl bootstatus "$DEVICE" -b > /dev/null
-open -a Simulator
+# Xcode 27 ships DeviceHub in place of Simulator.app.
+open -a Simulator 2> /dev/null || open -b com.apple.dt.Devices
 
 if [ "${UNINSTALL:-0}" = "1" ]; then
   # iOS caches the *rendered* launch screen and keys it to the app version, so editing

@@ -11,9 +11,10 @@ struct StatusMappingMiddlewareTests {
     /// Runs one response through the middleware and returns whatever it produced or threw.
     private func map(
         status: Int,
-        headers: HTTPFields = [:]
+        headers: HTTPFields = [:],
+        body: String = "{}"
     ) async -> Result<HTTPResponse, RenderError> {
-        let transport = StubTransport(responses: [(status, headers, "{}")])
+        let transport = StubTransport(responses: [(status, headers, body)])
         let middleware = StatusMappingMiddleware()
         let request = HTTPRequest(method: .get, scheme: "https", authority: "api.render.com", path: "/v1/owners")
         do {
@@ -68,5 +69,42 @@ struct StatusMappingMiddlewareTests {
         // A hostile value can't drive a misleading countdown.
         let hostile = await map(status: 429, headers: [.retryAfter: "99999"])
         #expect(hostile == .failure(.rateLimited(retryAfter: 60)))
+    }
+
+    @Test("a generic 4xx carries Render's message as a sentence")
+    func clientErrorCarriesMessage() async {
+        // The live answer for starting a job on a Free-plan service.
+        let result = await map(
+            status: 400,
+            body: #"{"id":"invalid-input","message":"free tier plans are not supported for jobs"}"#
+        )
+        #expect(result == .failure(.client(statusCode: 400, message: "Free tier plans are not supported for jobs.")))
+    }
+
+    @Test("401, 403 and 404 keep the app's own wording even when Render sends a message", arguments: [401, 403, 404])
+    func namedStatusesIgnoreMessage(status: Int) async {
+        let result = await map(status: status, body: #"{"message":"not found"}"#)
+        #expect(result == .failure(RenderError.from(statusCode: status, message: nil)))
+    }
+
+    @Test("a 5xx never shows Render's text, which can be an internal error string")
+    func serverErrorIgnoresMessage() async {
+        let result = await map(status: 500, body: #"{"message":"pq: connection refused"}"#)
+        #expect(result == .failure(.server(statusCode: 500, message: nil)))
+    }
+
+    @Test(
+        "a body that isn't a usable message falls back to the generic text",
+        arguments: ["", "not json", #"{"message":""}"#, #"{"message":42}"#, #"["message"]"#]
+    )
+    func unusableBodyFallsBack(body: String) async {
+        let result = await map(status: 409, body: body)
+        #expect(result == .failure(.client(statusCode: 409, message: nil)))
+    }
+
+    @Test("a message that already ends a sentence isn't given a second full stop")
+    func keepsExistingPunctuation() async {
+        let result = await map(status: 400, body: #"{"message":"Command is required."}"#)
+        #expect(result == .failure(.client(statusCode: 400, message: "Command is required.")))
     }
 }

@@ -311,6 +311,18 @@ struct ServiceDetailView: View {
             } label: {
                 Label("Events", systemImage: "list.bullet.rectangle")
             }
+            if service.type.supportsJobs {
+                NavigationLink {
+                    JobsListView(
+                        client: client,
+                        serviceID: service.id,
+                        serviceName: service.name,
+                        startUnavailableReason: JobsStore.startUnavailableReason(plan: service.details.plan)
+                    )
+                } label: {
+                    Label("Jobs", systemImage: "terminal")
+                }
+            }
             // Withheld for static sites: they're served from Render's CDN, with no instances of
             // their own and no outbound traffic. See `ServiceConfigCatalog`.
             if ServiceConfigCatalog.hasInstancesAndOutboundIPs(service.type) {

@@ -97,7 +97,7 @@ struct KeyValueDetailStoreTests {
 
         let result = try #require(store.actionResult)
         #expect(result.isFailure)
-        // The middleware doesn't surface response bodies; the status is all the banner gets.
-        #expect(result.message.contains("400"))
+        // A 400 carries Render's own reason, which says more than the status code would.
+        #expect(result.message == "Cannot suspend.")
     }
 }
