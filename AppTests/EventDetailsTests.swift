@@ -149,3 +149,23 @@ struct EventDetailsTests {
         #expect(try parse("{}") == .empty)
     }
 }
+
+@Suite("EventDetails cron runs")
+struct EventDetailsCronRunTests {
+    @Test("cron run events carry their run ID, and an end its status — payloads from a live run")
+    func cronRunID() throws {
+        let start = try JSONDecoder().decode(
+            EventDetails.self,
+            from: Data(#"{"cronJobRunId":"crn-1-1794634000"}"#.utf8)
+        )
+        #expect(start.cronRunID == "crn-1-1794634000")
+
+        let end = try JSONDecoder().decode(
+            EventDetails.self,
+            from: Data(#"{"cronJobRunId":"crn-1-1794634000","status":"canceled","user":{"email":"a@b.c","id":"usr-1"}}"#.utf8)
+        )
+        #expect(end.cronRunID == "crn-1-1794634000")
+        #expect(end.runStatus == "canceled")
+        #expect(end.runFailed == nil)
+    }
+}

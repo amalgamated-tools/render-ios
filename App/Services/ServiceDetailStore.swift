@@ -41,6 +41,30 @@ struct ServiceDetailModel: Identifiable, Hashable, Sendable {
     }
 }
 
+/// A cron run Render has started and not yet reported as ended.
+struct ActiveCronRun: Hashable, Sendable {
+    let id: String
+    /// `nil` between triggering a run and Render recording that it started.
+    let startedAt: Date?
+}
+
+/// The most recent cron run Render has reported as ended.
+struct FinishedCronRun: Hashable, Sendable {
+    let id: String
+    let endedAt: Date
+    /// `successful`, `unsuccessful` or `canceled`, as the `cron_job_run_ended` event reports it.
+    let status: String?
+
+    var statusTitle: String {
+        switch status {
+        case "successful": "Succeeded"
+        case "unsuccessful": "Failed"
+        case "canceled": "Canceled"
+        default: "Ended"
+        }
+    }
+}
+
 /// Backs the service detail screen: the service itself, its current deploy, and the lifecycle
 /// actions.
 ///
@@ -62,6 +86,16 @@ final class ServiceDetailStore {
     private(set) var actionInFlight: ServiceAction?
     /// Outcome banner for the last action — success or failure.
     private(set) var actionResult: ActionResult?
+    /// The cron run in progress, for a cron job. See ``reloadCronRuns()`` for how it's worked out.
+    private(set) var activeCronRun: ActiveCronRun?
+    private(set) var lastCronRun: FinishedCronRun?
+    /// The run a cancel was sent for. Render's 204 doesn't say whether anything stopped, so the run
+    /// shows as canceling, without a second Cancel, until its end event arrives.
+    private(set) var cancelRequestedRunID: String?
+
+    var isCancelingCronRun: Bool {
+        activeCronRun != nil && activeCronRun?.id == cancelRequestedRunID
+    }
 
     struct ActionResult: Identifiable, ActionOutcome {
         let id = UUID()
@@ -75,11 +109,27 @@ final class ServiceDetailStore {
     /// compromise between looking live and burning the rate limit.
     private let pollInterval: Duration
     private var pollTask: Task<Void, Never>?
+    /// The run the trigger call returned, held until Render's events catch up with it.
+    private var triggeredRun: (id: String, at: Date)?
+    private let now: @Sendable () -> Date
 
-    init(client: RenderClient, serviceID: String, pollInterval: Duration = .seconds(6)) {
+    /// How long a triggered run counts as in progress with no event to back it. Render records the
+    /// start within seconds; this only stops a run whose events never arrive from polling forever.
+    static let triggeredRunGrace: TimeInterval = 5 * 60
+    /// Older than this, a start with no end event is treated as a lost event rather than a run still
+    /// going. A guard against polling forever, not a documented Render limit.
+    static let startedRunLimit: TimeInterval = 24 * 60 * 60
+
+    init(
+        client: RenderClient,
+        serviceID: String,
+        pollInterval: Duration = .seconds(6),
+        now: @escaping @Sendable () -> Date = { Date() }
+    ) {
         self.client = client
         self.serviceID = serviceID
         self.pollInterval = pollInterval
+        self.now = now
     }
 
     /// Actions offered for the current service, in menu order. Empty until the service loads, since
@@ -93,6 +143,9 @@ final class ServiceDetailStore {
         }
         if service.type == .cronJob {
             actions.append(.runCronJob)
+            if activeCronRun != nil, !isCancelingCronRun {
+                actions.append(.cancelCronRun)
+            }
         } else {
             let source: ServiceAction.Source = service.details.runtime == .image ? .image : .commit
             actions.append(.deploy(clearCache: false, source: source))
@@ -142,8 +195,13 @@ final class ServiceDetailStore {
         actionResult = nil
         defer { actionInFlight = nil }
 
+        // Taken before the call: by the time it returns, a reload may have moved on to another run.
+        let runToCancel = activeCronRun?.id
         do {
             try await send(action)
+            if case .cancelCronRun = action {
+                cancelRequestedRunID = runToCancel
+            }
             actionResult = ActionResult(message: action.successMessage, isFailure: false)
         } catch {
             let message = RenderError.wrapping(error).errorDescription ?? "Something went wrong."
@@ -194,7 +252,12 @@ final class ServiceDetailStore {
             _ = try await client.api.purgeCache(path: .init(serviceId: serviceID)).accepted
         case .runCronJob:
             // A cron job's service ID *is* its cron job ID; the endpoint just lives under /cron-jobs.
-            _ = try await client.api.runCronJob(path: .init(cronJobId: serviceID)).ok
+            let run = try await client.api.runCronJob(path: .init(cronJobId: serviceID)).ok.body.json
+            triggeredRun = (run.id, now())
+        case .cancelCronRun:
+            // Cancels whatever run is in progress — the endpoint takes no run ID, and answers 204
+            // even when nothing was running.
+            _ = try await client.api.cancelCronJobRun(path: .init(cronJobId: serviceID)).noContent
         }
     }
 
@@ -230,12 +293,67 @@ final class ServiceDetailStore {
             latestDeploy = nil
             deployErrorMessage = RenderError.wrapping(error).errorDescription
         }
+
+        if service?.type == .cronJob {
+            await reloadCronRuns()
+        }
     }
 
-    /// Polls while the newest deploy is still moving, and stops as soon as it settles — so an idle
-    /// service costs no requests at all.
+    /// Works out whether a cron run is in progress.
+    ///
+    /// The API has no list of runs, and cancelling answers 204 whether or not anything was running,
+    /// so the only record is the event feed: a run is in progress when its `cron_job_run_started` has
+    /// no matching `cron_job_run_ended`. Only the newest start matters — triggering a run cancels the
+    /// one before it. Several recent ends are read, not one, because that cancelled run's end can land
+    /// after the new run's start.
+    ///
+    /// A failure leaves the previous state alone: it's a side panel on the screen, and blanking a run
+    /// that's still going would hide the way to cancel it.
+    private func reloadCronRuns() async {
+        let client = client
+        let serviceID = serviceID
+        async let startedAttempt = client.api.listEvents(
+            path: .init(serviceId: serviceID),
+            query: .init(_type: .cronJobRunStarted, limit: 1)
+        )
+        async let endedAttempt = client.api.listEvents(
+            path: .init(serviceId: serviceID),
+            query: .init(_type: .cronJobRunEnded, limit: 5)
+        )
+        guard let started = try? await startedAttempt.ok.body.json.map({ ServiceEvent($0.event) }),
+              let ended = try? await endedAttempt.ok.body.json.map({ ServiceEvent($0.event) })
+        else { return }
+
+        let endedIDs = Set(ended.compactMap(\.details.cronRunID))
+        let now = now()
+        lastCronRun = ended.first.flatMap { event in
+            event.details.cronRunID.map {
+                FinishedCronRun(id: $0, endedAt: event.timestamp, status: event.details.runStatus)
+            }
+        }
+
+        if let start = started.first, let id = start.details.cronRunID, !endedIDs.contains(id),
+           now.timeIntervalSince(start.timestamp) < Self.startedRunLimit {
+            activeCronRun = ActiveCronRun(id: id, startedAt: start.timestamp)
+            if triggeredRun?.id == id { triggeredRun = nil }
+        } else if let triggered = triggeredRun, !endedIDs.contains(triggered.id),
+                  started.first?.details.cronRunID != triggered.id,
+                  now.timeIntervalSince(triggered.at) < Self.triggeredRunGrace {
+            activeCronRun = ActiveCronRun(id: triggered.id, startedAt: nil)
+        } else {
+            activeCronRun = nil
+            triggeredRun = nil
+        }
+    }
+
+    private var needsPolling: Bool {
+        latestDeploy?.isInProgress == true || activeCronRun != nil
+    }
+
+    /// Polls while the newest deploy or a cron run is still moving, and stops as soon as both settle —
+    /// so an idle service costs no requests at all.
     private func startPollingIfNeeded() {
-        guard latestDeploy?.isInProgress == true else {
+        guard needsPolling else {
             stopPolling()
             return
         }
@@ -247,7 +365,7 @@ final class ServiceDetailStore {
                 try? await Task.sleep(for: interval)
                 guard !Task.isCancelled, let self else { return }
                 await self.reload()
-                if self.latestDeploy?.isInProgress != true {
+                if !self.needsPolling {
                     self.pollTask = nil
                     return
                 }

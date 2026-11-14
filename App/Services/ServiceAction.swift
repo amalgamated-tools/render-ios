@@ -37,6 +37,7 @@ enum ServiceAction: Identifiable, Hashable {
     case scale(instances: Int)
     case purgeCache
     case runCronJob
+    case cancelCronRun
 
     var id: String {
         switch self {
@@ -49,6 +50,7 @@ enum ServiceAction: Identifiable, Hashable {
         case .scale(let instances): "scale-\(instances)"
         case .purgeCache: "purge-cache"
         case .runCronJob: "run-cron-job"
+        case .cancelCronRun: "cancel-cron-run"
         }
     }
 
@@ -63,6 +65,7 @@ enum ServiceAction: Identifiable, Hashable {
         case .scale(let instances): "Scale to \(instances)"
         case .purgeCache: "Purge Cache"
         case .runCronJob: "Trigger Run"
+        case .cancelCronRun: "Cancel Run"
         }
     }
 
@@ -77,6 +80,7 @@ enum ServiceAction: Identifiable, Hashable {
         case .scale: "arrow.up.arrow.down"
         case .purgeCache: "trash"
         case .runCronJob: "play.circle"
+        case .cancelCronRun: "stop.circle"
         }
     }
 
@@ -84,7 +88,7 @@ enum ServiceAction: Identifiable, Hashable {
     /// impact* — a suspend takes the service offline — not irreversibility.
     var isDestructive: Bool {
         switch self {
-        case .suspend, .restart, .rollback, .cancelDeploy: true
+        case .suspend, .restart, .rollback, .cancelDeploy, .cancelCronRun: true
         case .deploy, .resume, .scale, .purgeCache, .runCronJob: false
         }
     }
@@ -101,6 +105,7 @@ enum ServiceAction: Identifiable, Hashable {
         case .scale(let instances): "Scale \(serviceName) to \(instances) instance\(instances == 1 ? "" : "s")?"
         case .purgeCache: "Purge the cache for \(serviceName)?"
         case .runCronJob: "Trigger a run of \(serviceName)?"
+        case .cancelCronRun: "Cancel the running \(serviceName) run?"
         }
     }
 
@@ -127,6 +132,8 @@ enum ServiceAction: Identifiable, Hashable {
             "Clears cached responses. The next requests go to your service."
         case .runCronJob:
             "Starts a run now and cancels any run already in progress."
+        case .cancelCronRun:
+            "Stops the run in progress. Anything it has already done stays done."
         }
     }
 
@@ -143,6 +150,8 @@ enum ServiceAction: Identifiable, Hashable {
         case .scale(let instances): "Scaling to \(instances) instance\(instances == 1 ? "" : "s")."
         case .purgeCache: "Cache purge requested."
         case .runCronJob: "Cron run triggered."
+        // Render answers 204 whether or not a run was going, so this can't claim more than a request.
+        case .cancelCronRun: "Cancel requested."
         }
     }
 }

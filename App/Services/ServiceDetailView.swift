@@ -37,6 +37,7 @@ struct ServiceDetailView: View {
                     detailsMismatchWarning
                 }
                 deploySection
+                cronRunSection
                 watchSection
                 configurationSection(for: service)
                 drillDownSection(for: service)
@@ -193,6 +194,32 @@ struct ServiceDetailView: View {
                     Label("Watching for updates…", systemImage: "dot.radiowaves.left.and.right")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+
+    /// For a cron job: the run in progress, or how the last one ended. Hidden when neither is known,
+    /// so a cron job that has never run doesn't get a section with nothing in it.
+    @ViewBuilder
+    private var cronRunSection: some View {
+        if let run = store.activeCronRun {
+            Section("Cron Run") {
+                LabeledContent(store.isCancelingCronRun ? "Canceling…" : "Running") {
+                    if let startedAt = run.startedAt {
+                        Text("since \(startedAt.formatted(date: .omitted, time: .shortened))")
+                    } else {
+                        Text("Starting…")
+                    }
+                }
+                Label("Watching for updates…", systemImage: "dot.radiowaves.left.and.right")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        } else if let last = store.lastCronRun {
+            Section("Cron Run") {
+                LabeledContent("Last Run") {
+                    Text("\(last.statusTitle) \(last.endedAt.formatted(.relative(presentation: .named)))")
                 }
             }
         }
