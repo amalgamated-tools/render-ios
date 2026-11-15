@@ -57,6 +57,11 @@ echo "==> Making event details free-form"
 # decoder silently drops every field. A free-form object keeps them. See the script.
 python3 "$REPO_ROOT/Scripts/freeform-event-details.py" "$SPEC"
 
+echo "==> Making job status free text"
+# A job status the spec doesn't list would fail the whole job list, and JobSummary already maps the
+# raw string itself, treating unknown values as settled. See the script.
+python3 "$REPO_ROOT/Scripts/freeform-job-status.py" "$SPEC"
+
 echo "==> Correcting the metrics endpoints the spec misdescribes"
 # bandwidth-sources returns the ordinary time-series array, not the envelope the spec describes;
 # the filter endpoints reject parameters the spec declares (and require one it deprecates). See

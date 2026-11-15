@@ -16122,16 +16122,10 @@ public enum Components {
                 public var startCommand: Swift.String
                 /// - Remark: Generated from `#/components/schemas/jobWithCursor/job/planId`.
                 public var planId: Swift.String
+                /// pending, running, succeeded, failed or canceled. Free text: see Scripts/freeform-job-status.py.
+                ///
                 /// - Remark: Generated from `#/components/schemas/jobWithCursor/job/status`.
-                @frozen public enum StatusPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                    case pending = "pending"
-                    case running = "running"
-                    case succeeded = "succeeded"
-                    case failed = "failed"
-                    case canceled = "canceled"
-                }
-                /// - Remark: Generated from `#/components/schemas/jobWithCursor/job/status`.
-                public var status: Components.Schemas.JobWithCursor.JobPayload.StatusPayload?
+                public var status: Swift.String?
                 /// - Remark: Generated from `#/components/schemas/jobWithCursor/job/createdAt`.
                 public var createdAt: Foundation.Date
                 /// - Remark: Generated from `#/components/schemas/jobWithCursor/job/startedAt`.
@@ -16145,7 +16139,7 @@ public enum Components {
                 ///   - serviceId:
                 ///   - startCommand:
                 ///   - planId:
-                ///   - status:
+                ///   - status: pending, running, succeeded, failed or canceled. Free text: see Scripts/freeform-job-status.py.
                 ///   - createdAt:
                 ///   - startedAt:
                 ///   - finishedAt:
@@ -16154,7 +16148,7 @@ public enum Components {
                     serviceId: Swift.String,
                     startCommand: Swift.String,
                     planId: Swift.String,
-                    status: Components.Schemas.JobWithCursor.JobPayload.StatusPayload? = nil,
+                    status: Swift.String? = nil,
                     createdAt: Foundation.Date,
                     startedAt: Foundation.Date? = nil,
                     finishedAt: Foundation.Date? = nil
@@ -46261,16 +46255,10 @@ public enum Operations {
                         public var startCommand: Swift.String
                         /// - Remark: Generated from `#/paths/services/{serviceId}/jobs/POST/responses/201/content/json/planId`.
                         public var planId: Swift.String
+                        /// pending, running, succeeded, failed or canceled. Free text: see Scripts/freeform-job-status.py.
+                        ///
                         /// - Remark: Generated from `#/paths/services/{serviceId}/jobs/POST/responses/201/content/json/status`.
-                        @frozen public enum StatusPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                            case pending = "pending"
-                            case running = "running"
-                            case succeeded = "succeeded"
-                            case failed = "failed"
-                            case canceled = "canceled"
-                        }
-                        /// - Remark: Generated from `#/paths/services/{serviceId}/jobs/POST/responses/201/content/json/status`.
-                        public var status: Operations.PostJob.Output.Created.Body.JsonPayload.StatusPayload?
+                        public var status: Swift.String?
                         /// - Remark: Generated from `#/paths/services/{serviceId}/jobs/POST/responses/201/content/json/createdAt`.
                         public var createdAt: Foundation.Date
                         /// - Remark: Generated from `#/paths/services/{serviceId}/jobs/POST/responses/201/content/json/startedAt`.
@@ -46284,7 +46272,7 @@ public enum Operations {
                         ///   - serviceId:
                         ///   - startCommand:
                         ///   - planId:
-                        ///   - status:
+                        ///   - status: pending, running, succeeded, failed or canceled. Free text: see Scripts/freeform-job-status.py.
                         ///   - createdAt:
                         ///   - startedAt:
                         ///   - finishedAt:
@@ -46293,7 +46281,7 @@ public enum Operations {
                             serviceId: Swift.String,
                             startCommand: Swift.String,
                             planId: Swift.String,
-                            status: Operations.PostJob.Output.Created.Body.JsonPayload.StatusPayload? = nil,
+                            status: Swift.String? = nil,
                             createdAt: Foundation.Date,
                             startedAt: Foundation.Date? = nil,
                             finishedAt: Foundation.Date? = nil
@@ -46611,16 +46599,10 @@ public enum Operations {
                         public var startCommand: Swift.String
                         /// - Remark: Generated from `#/paths/services/{serviceId}/jobs/{jobId}/GET/responses/200/content/json/planId`.
                         public var planId: Swift.String
+                        /// pending, running, succeeded, failed or canceled. Free text: see Scripts/freeform-job-status.py.
+                        ///
                         /// - Remark: Generated from `#/paths/services/{serviceId}/jobs/{jobId}/GET/responses/200/content/json/status`.
-                        @frozen public enum StatusPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                            case pending = "pending"
-                            case running = "running"
-                            case succeeded = "succeeded"
-                            case failed = "failed"
-                            case canceled = "canceled"
-                        }
-                        /// - Remark: Generated from `#/paths/services/{serviceId}/jobs/{jobId}/GET/responses/200/content/json/status`.
-                        public var status: Operations.RetrieveJob.Output.Ok.Body.JsonPayload.StatusPayload?
+                        public var status: Swift.String?
                         /// - Remark: Generated from `#/paths/services/{serviceId}/jobs/{jobId}/GET/responses/200/content/json/createdAt`.
                         public var createdAt: Foundation.Date
                         /// - Remark: Generated from `#/paths/services/{serviceId}/jobs/{jobId}/GET/responses/200/content/json/startedAt`.
@@ -46634,7 +46616,7 @@ public enum Operations {
                         ///   - serviceId:
                         ///   - startCommand:
                         ///   - planId:
-                        ///   - status:
+                        ///   - status: pending, running, succeeded, failed or canceled. Free text: see Scripts/freeform-job-status.py.
                         ///   - createdAt:
                         ///   - startedAt:
                         ///   - finishedAt:
@@ -46643,7 +46625,7 @@ public enum Operations {
                             serviceId: Swift.String,
                             startCommand: Swift.String,
                             planId: Swift.String,
-                            status: Operations.RetrieveJob.Output.Ok.Body.JsonPayload.StatusPayload? = nil,
+                            status: Swift.String? = nil,
                             createdAt: Foundation.Date,
                             startedAt: Foundation.Date? = nil,
                             finishedAt: Foundation.Date? = nil
@@ -46961,16 +46943,10 @@ public enum Operations {
                         public var startCommand: Swift.String
                         /// - Remark: Generated from `#/paths/services/{serviceId}/jobs/{jobId}/cancel/POST/responses/200/content/json/planId`.
                         public var planId: Swift.String
+                        /// pending, running, succeeded, failed or canceled. Free text: see Scripts/freeform-job-status.py.
+                        ///
                         /// - Remark: Generated from `#/paths/services/{serviceId}/jobs/{jobId}/cancel/POST/responses/200/content/json/status`.
-                        @frozen public enum StatusPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                            case pending = "pending"
-                            case running = "running"
-                            case succeeded = "succeeded"
-                            case failed = "failed"
-                            case canceled = "canceled"
-                        }
-                        /// - Remark: Generated from `#/paths/services/{serviceId}/jobs/{jobId}/cancel/POST/responses/200/content/json/status`.
-                        public var status: Operations.CancelJob.Output.Ok.Body.JsonPayload.StatusPayload?
+                        public var status: Swift.String?
                         /// - Remark: Generated from `#/paths/services/{serviceId}/jobs/{jobId}/cancel/POST/responses/200/content/json/createdAt`.
                         public var createdAt: Foundation.Date
                         /// - Remark: Generated from `#/paths/services/{serviceId}/jobs/{jobId}/cancel/POST/responses/200/content/json/startedAt`.
@@ -46984,7 +46960,7 @@ public enum Operations {
                         ///   - serviceId:
                         ///   - startCommand:
                         ///   - planId:
-                        ///   - status:
+                        ///   - status: pending, running, succeeded, failed or canceled. Free text: see Scripts/freeform-job-status.py.
                         ///   - createdAt:
                         ///   - startedAt:
                         ///   - finishedAt:
@@ -46993,7 +46969,7 @@ public enum Operations {
                             serviceId: Swift.String,
                             startCommand: Swift.String,
                             planId: Swift.String,
-                            status: Operations.CancelJob.Output.Ok.Body.JsonPayload.StatusPayload? = nil,
+                            status: Swift.String? = nil,
                             createdAt: Foundation.Date,
                             startedAt: Foundation.Date? = nil,
                             finishedAt: Foundation.Date? = nil

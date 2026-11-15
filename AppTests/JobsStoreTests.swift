@@ -1,4 +1,6 @@
 import Foundation
+import HTTPTypes
+import OpenAPIRuntime
 import RenderAPI
 import RenderAPITestSupport
 import Testing
@@ -206,5 +208,136 @@ struct JobsStoreTests {
         #expect(!Components.Schemas.ServiceType.staticSite.supportsJobs)
         #expect(Components.Schemas.ServiceType.webService.supportsJobs)
         #expect(Components.Schemas.ServiceType.cronJob.supportsJobs)
+    }
+
+    // MARK: - Review fixes (PR #58)
+
+    @Test("a page requested before a refresh is thrown away, not appended to the new list")
+    func stalePageIsDiscarded() async {
+        let gate = Gate()
+        let (client, _) = Self.held(gate) { path in
+            path.contains("cursor=")
+                ? (200, page([job(id: "job-old", status: "succeeded")]))
+                : (200, page([job(id: "job-1", status: "succeeded")]))
+        } holding: { $0.contains("cursor=") }
+        let store = JobsStore(client: client, serviceID: "srv-1", pageSize: 1)
+        await store.refresh()
+        #expect(store.hasMore)
+
+        let paging = Task { await store.loadNextPage() }
+        await gate.waitUntilHeld()
+        await store.refresh()
+        await gate.release()
+        await paging.value
+
+        #expect(store.jobs.map(\.id) == ["job-1"])
+        #expect(!store.isLoading)
+    }
+
+    @Test("a running job on a later page starts polling")
+    func laterPageStartsPolling() async throws {
+        let (client, _) = RenderClient.routed { path in
+            if path.hasSuffix("/jobs/job-old") {
+                return (200, job(id: "job-old", status: "succeeded", finishedAt: "2026-11-14T10:02:00Z"))
+            }
+            return path.contains("cursor=")
+                ? (200, page([job(id: "job-old", status: "running")]))
+                : (200, page([job(id: "job-1", status: "succeeded")]))
+        }
+        let store = JobsStore(client: client, serviceID: "srv-1", pageSize: 1, pollInterval: .milliseconds(20))
+        await store.refresh()
+        await store.loadNextPage()
+
+        for _ in 0..<100 where store.job(id: "job-old")?.status != .succeeded {
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        #expect(store.job(id: "job-old")?.status == .succeeded)
+        store.stopPolling()
+    }
+
+    @Test("a read sent before a cancel can't move the canceled job back to running")
+    func staleReadDoesNotRegress() async {
+        let gate = Gate()
+        let (client, _) = Self.held(gate) { path in
+            if path.hasSuffix("/cancel") {
+                return (200, job(id: "job-1", status: "canceled", finishedAt: "2026-11-14T10:02:00Z"))
+            }
+            return path.hasSuffix("/jobs/job-1")
+                ? (200, job(id: "job-1", status: "running"))
+                : (200, page([job(id: "job-1", status: "running")]))
+        } holding: { $0.hasSuffix("/jobs/job-1") }
+        let store = JobsStore(client: client, serviceID: "srv-1", pollInterval: .seconds(60))
+        await store.refresh()
+
+        let reading = Task { await store.reread(jobID: "job-1") }
+        await gate.waitUntilHeld()
+        await store.cancel(jobID: "job-1")
+        await gate.release()
+        await reading.value
+
+        #expect(store.job(id: "job-1")?.status == .canceled)
+        store.stopPolling()
+    }
+
+    @Test("a list holding a status the app doesn't know still loads, and that job counts as settled")
+    func unknownStatusDecodes() async {
+        let (client, transport) = RenderClient.routed { _ in
+            (200, page([job(id: "job-2", status: "something_new"), job(id: "job-1", status: "succeeded")]))
+        }
+        let store = JobsStore(client: client, serviceID: "srv-1", pollInterval: .milliseconds(10))
+
+        await store.refresh()
+
+        #expect(store.errorMessage == nil)
+        #expect(store.jobs.map(\.id) == ["job-2", "job-1"])
+        #expect(store.jobs.first?.status == nil)
+        #expect(transport.requests.count == 1)
+    }
+
+    /// A client that holds the first request matching `holding` until the test releases it.
+    private static func held(
+        _ gate: Gate,
+        route: @escaping @Sendable (String) -> (status: Int, body: String),
+        holding: @escaping @Sendable (String) -> Bool
+    ) -> (RenderClient, StubTransport) {
+        let transport = StubTransport { request, _, _ in
+            let path = request.path ?? ""
+            if holding(path) { await gate.holdIfFirst() }
+            let answer = route(path)
+            var response = HTTPResponse(status: .init(code: answer.status))
+            response.headerFields = [.contentType: "application/json"]
+            return (response, HTTPBody(answer.body))
+        }
+        let client = RenderClient(apiKeyProvider: StaticAPIKeyProvider("test-key"), retryPolicy: .none, transport: transport)
+        return (client, transport)
+    }
+}
+
+/// Holds one request until released, and lets the test wait until it's being held.
+private actor Gate {
+    private var claimed = false
+    private var held: CheckedContinuation<Void, Never>?
+    private var heldWaiter: CheckedContinuation<Void, Never>?
+    private var releaseWaiter: CheckedContinuation<Void, Never>?
+    private var released = false
+
+    func holdIfFirst() async {
+        guard !claimed else { return }
+        claimed = true
+        heldWaiter?.resume()
+        heldWaiter = nil
+        if released { return }
+        await withCheckedContinuation { releaseWaiter = $0 }
+    }
+
+    func waitUntilHeld() async {
+        if claimed { return }
+        await withCheckedContinuation { heldWaiter = $0 }
+    }
+
+    func release() {
+        released = true
+        releaseWaiter?.resume()
+        releaseWaiter = nil
     }
 }

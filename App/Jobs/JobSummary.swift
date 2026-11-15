@@ -17,6 +17,15 @@ struct JobSummary: Identifiable, Hashable, Sendable {
         /// Still able to change: worth polling, and worth offering Cancel.
         var isActive: Bool { self == .pending || self == .running }
 
+        /// How far along a job is. Jobs only move forward, so a lower value arriving later is stale.
+        var progress: Int {
+            switch self {
+            case .pending: 0
+            case .running: 1
+            case .succeeded, .failed, .canceled: 2
+            }
+        }
+
         var displayName: String {
             switch self {
             case .pending: "Pending"
@@ -68,28 +77,28 @@ struct JobSummary: Identifiable, Hashable, Sendable {
 extension JobSummary {
     init(_ job: Components.Schemas.JobWithCursor.JobPayload) {
         self.init(
-            id: job.id, startCommand: job.startCommand, planID: job.planId, status: job.status?.rawValue,
+            id: job.id, startCommand: job.startCommand, planID: job.planId, status: job.status,
             createdAt: job.createdAt, startedAt: job.startedAt, finishedAt: job.finishedAt
         )
     }
 
     init(_ job: Operations.PostJob.Output.Created.Body.JsonPayload) {
         self.init(
-            id: job.id, startCommand: job.startCommand, planID: job.planId, status: job.status?.rawValue,
+            id: job.id, startCommand: job.startCommand, planID: job.planId, status: job.status,
             createdAt: job.createdAt, startedAt: job.startedAt, finishedAt: job.finishedAt
         )
     }
 
     init(_ job: Operations.RetrieveJob.Output.Ok.Body.JsonPayload) {
         self.init(
-            id: job.id, startCommand: job.startCommand, planID: job.planId, status: job.status?.rawValue,
+            id: job.id, startCommand: job.startCommand, planID: job.planId, status: job.status,
             createdAt: job.createdAt, startedAt: job.startedAt, finishedAt: job.finishedAt
         )
     }
 
     init(_ job: Operations.CancelJob.Output.Ok.Body.JsonPayload) {
         self.init(
-            id: job.id, startCommand: job.startCommand, planID: job.planId, status: job.status?.rawValue,
+            id: job.id, startCommand: job.startCommand, planID: job.planId, status: job.status,
             createdAt: job.createdAt, startedAt: job.startedAt, finishedAt: job.finishedAt
         )
     }

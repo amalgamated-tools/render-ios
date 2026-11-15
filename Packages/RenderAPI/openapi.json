@@ -6007,13 +6007,7 @@
                     },
                     "status": {
                       "type": "string",
-                      "enum": [
-                        "pending",
-                        "running",
-                        "succeeded",
-                        "failed",
-                        "canceled"
-                      ]
+                      "description": "pending, running, succeeded, failed or canceled. Free text: see Scripts/freeform-job-status.py."
                     },
                     "createdAt": {
                       "type": "string",
@@ -6114,13 +6108,7 @@
                     },
                     "status": {
                       "type": "string",
-                      "enum": [
-                        "pending",
-                        "running",
-                        "succeeded",
-                        "failed",
-                        "canceled"
-                      ]
+                      "description": "pending, running, succeeded, failed or canceled. Free text: see Scripts/freeform-job-status.py."
                     },
                     "createdAt": {
                       "type": "string",
@@ -6221,13 +6209,7 @@
                     },
                     "status": {
                       "type": "string",
-                      "enum": [
-                        "pending",
-                        "running",
-                        "succeeded",
-                        "failed",
-                        "canceled"
-                      ]
+                      "description": "pending, running, succeeded, failed or canceled. Free text: see Scripts/freeform-job-status.py."
                     },
                     "createdAt": {
                       "type": "string",
@@ -31066,13 +31048,7 @@
               },
               "status": {
                 "type": "string",
-                "enum": [
-                  "pending",
-                  "running",
-                  "succeeded",
-                  "failed",
-                  "canceled"
-                ]
+                "description": "pending, running, succeeded, failed or canceled. Free text: see Scripts/freeform-job-status.py."
               },
               "createdAt": {
                 "type": "string",

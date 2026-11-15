@@ -31,6 +31,12 @@ final class JobsStore {
     private let pollInterval: Duration
     private var nextCursor: String?
     private var pollTask: Task<Void, Never>?
+    /// Bumped by each refresh, so a page requested before it is thrown away rather than appended to
+    /// the new list.
+    private var listGeneration = 0
+    /// The generation whose page is loading, if any. A refresh can start its own load while an older
+    /// one is still out.
+    private var loadingGeneration: Int?
 
     init(client: RenderClient, serviceID: String, pageSize: Int = 20, pollInterval: Duration = .seconds(4)) {
         self.client = client
@@ -48,30 +54,42 @@ final class JobsStore {
     // MARK: - Reading
 
     func refresh() async {
+        listGeneration += 1
         jobs = []
         nextCursor = nil
         hasMore = true
         errorMessage = nil
         await loadNextPage()
-        startPollingIfNeeded()
     }
 
     func loadNextPage() async {
-        guard hasMore, !isLoading else { return }
+        let generation = listGeneration
+        guard hasMore, loadingGeneration != generation else { return }
+        loadingGeneration = generation
         isLoading = true
-        defer { isLoading = false }
+        defer {
+            // An older load finishing late mustn't clear the flag for the refresh's own load.
+            if loadingGeneration == generation {
+                loadingGeneration = nil
+                isLoading = false
+            }
+        }
 
         do {
             let page = try await makePaginator().firstPage(after: nextCursor)
+            guard generation == listGeneration else { return }
             // A job started while the first page was loading is already at the top; don't list it twice.
             let known = Set(jobs.map(\.id))
             jobs.append(contentsOf: page.elements.filter { !known.contains($0.id) })
             nextCursor = page.nextCursor
             hasMore = page.nextCursor != nil
         } catch {
+            guard generation == listGeneration else { return }
             errorMessage = RenderError.wrapping(error).errorDescription
             hasMore = false
         }
+        // A later page can hold an older job that's still running.
+        startPollingIfNeeded()
     }
 
     func stopPolling() {
@@ -127,22 +145,16 @@ final class JobsStore {
         } catch {
             actionResult = .failure(error)
             // The job may have finished between the tap and the request; show where it actually is.
-            await reread(jobID: jobID)
+            await fetch(jobID: jobID)
         }
         startPollingIfNeeded()
     }
 
-    /// Re-reads one job. Used by the detail screen, which opens on the list's copy.
+    /// Re-reads one job. Used by the detail screen, which opens on the list's copy, so it also starts
+    /// polling if that job turns out to be still going.
     func reread(jobID: String) async {
-        do {
-            let job = try await client.api.retrieveJob(
-                path: .init(serviceId: serviceID, jobId: jobID)
-            ).ok.body.json
-            replace(JobSummary(job))
-        } catch {
-            // Polling and the detail refresh both land here. A missed read leaves the last known
-            // state on screen, and the next tick tries again.
-        }
+        await fetch(jobID: jobID)
+        startPollingIfNeeded()
     }
 
     func job(id: String) -> JobSummary? {
@@ -151,8 +163,20 @@ final class JobsStore {
 
     // MARK: - Internals
 
+    /// Polling and the detail refresh both read here. A missed read leaves the last known state on
+    /// screen, and the next tick tries again.
+    private func fetch(jobID: String) async {
+        guard let job = try? await client.api.retrieveJob(
+            path: .init(serviceId: serviceID, jobId: jobID)
+        ).ok.body.json else { return }
+        replace(JobSummary(job))
+    }
+
     private func replace(_ job: JobSummary) {
         if let index = jobs.firstIndex(where: { $0.id == job.id }) {
+            // A job only moves forward. Reads overlap (polling, the detail screen, a cancel's reply),
+            // so a reply that was sent earlier can land later; don't let it move a job back.
+            if let new = job.status?.progress, let old = jobs[index].status?.progress, new < old { return }
             jobs[index] = job
         } else {
             jobs.insert(job, at: 0)
@@ -172,7 +196,7 @@ final class JobsStore {
                 try? await Task.sleep(for: interval)
                 guard !Task.isCancelled, let self else { return }
                 for id in self.jobs.filter(\.isActive).map(\.id) {
-                    await self.reread(jobID: id)
+                    await self.fetch(jobID: id)
                 }
                 if !self.jobs.contains(where: \.isActive) {
                     self.pollTask = nil
