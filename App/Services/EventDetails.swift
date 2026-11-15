@@ -37,11 +37,13 @@ struct EventDetails: Decodable, Hashable, Sendable {
     var reasonText: String?
     /// Render's own explanation, for event types that give one instead of a `reason`.
     var message: String?
+    /// Which cron run a `cron_job_run_started` or `cron_job_run_ended` event is about.
+    var cronRunID: String?
 
     static let empty = EventDetails()
 
     private enum CodingKeys: String, CodingKey {
-        case deployId, deployStatus, buildId, buildStatus, instanceID, status, reason, message
+        case deployId, deployStatus, buildId, buildStatus, instanceID, status, reason, message, cronJobRunId
     }
 
     private enum ReasonKeys: String, CodingKey {
@@ -62,7 +64,8 @@ struct EventDetails: Decodable, Hashable, Sendable {
         failure: EventFailure? = nil,
         failedBuildID: String? = nil,
         reasonText: String? = nil,
-        message: String? = nil
+        message: String? = nil,
+        cronRunID: String? = nil
     ) {
         self.deployID = deployID
         self.deployStatus = deployStatus
@@ -74,6 +77,7 @@ struct EventDetails: Decodable, Hashable, Sendable {
         self.failedBuildID = failedBuildID
         self.reasonText = reasonText
         self.message = message
+        self.cronRunID = cronRunID
     }
 
     init(from decoder: any Decoder) throws {
@@ -87,6 +91,7 @@ struct EventDetails: Decodable, Hashable, Sendable {
         instanceID = try? container.decodeIfPresent(String.self, forKey: .instanceID)
         runStatus = try? container.decodeIfPresent(String.self, forKey: .status)
         message = try? container.decodeIfPresent(String.self, forKey: .message)
+        cronRunID = try? container.decodeIfPresent(String.self, forKey: .cronJobRunId)
 
         if let text = try? container.decodeIfPresent(String.self, forKey: .reason) {
             reasonText = text
