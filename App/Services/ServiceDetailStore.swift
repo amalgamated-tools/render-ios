@@ -334,8 +334,16 @@ final class ServiceDetailStore {
         guard let started = startedResult, let ended = endedResult else {
             // A run we just triggered is known to exist even though its events couldn't be read, so
             // show it (which also keeps polling) rather than leave the screen on the old state.
-            if let pendingTrigger, activeCronRun?.id != pendingTrigger.id {
-                activeCronRun = ActiveCronRun(id: pendingTrigger.id, startedAt: nil)
+            if let pendingTrigger {
+                if activeCronRun?.id != pendingTrigger.id {
+                    activeCronRun = ActiveCronRun(id: pendingTrigger.id, startedAt: nil)
+                }
+            } else if let active = activeCronRun, active.startedAt == nil {
+                // Only a trigger shows a run with no start event. Past its grace period, with nothing
+                // from Render to confirm it, stop showing it (and polling for it). A run backed by a
+                // start event stays until the events can be read again.
+                activeCronRun = nil
+                triggeredRun = nil
             }
             return
         }

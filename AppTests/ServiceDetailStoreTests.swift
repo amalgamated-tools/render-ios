@@ -214,6 +214,37 @@ struct ServiceDetailStoreTests {
         #expect(store.lastCronRun?.id == "srv-1-1")
     }
 
+    @Test("a triggered run Render never confirms expires even while its events can't be read")
+    func unconfirmedRunExpiresWithEventsFailing() async {
+        let feed = Feed()
+        let (store, _) = store(feed: feed)
+        await store.load()
+        feed.eventsFail = true
+        await store.perform(.runCronJob)
+        defer { store.stopPolling() }
+        #expect(store.activeCronRun?.id == "srv-1-new")
+
+        feed.now = Self.clock.addingTimeInterval(ServiceDetailStore.triggeredRunGrace + 1)
+        await store.refresh()
+        #expect(store.activeCronRun == nil)
+        #expect(!store.availableActions.contains(.cancelCronRun))
+    }
+
+    @Test("a run backed by a start event stays while the events can't be read")
+    func confirmedRunSurvivesEventsFailing() async {
+        let feed = Feed()
+        feed.started = Self.started("srv-1-2")
+        let (store, _) = store(feed: feed)
+        await store.load()
+        defer { store.stopPolling() }
+        #expect(store.activeCronRun?.startedAt != nil)
+
+        feed.eventsFail = true
+        feed.now = Self.clock.addingTimeInterval(ServiceDetailStore.triggeredRunGrace + 1)
+        await store.refresh()
+        #expect(store.activeCronRun?.id == "srv-1-2")
+    }
+
     @Test("triggering after cancelling an older run shows the new run, with Cancel")
     func triggerReplacesCancelingRun() async {
         let feed = Feed()
