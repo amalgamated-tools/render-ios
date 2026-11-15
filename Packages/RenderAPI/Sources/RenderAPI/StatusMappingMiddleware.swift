@@ -38,8 +38,33 @@ public struct StatusMappingMiddleware: ClientMiddleware {
                 .flatMap { TimeInterval($0.trimmingCharacters(in: .whitespaces)) }
                 .map { min(max($0, 0), 60) }
             throw RenderError.rateLimited(retryAfter: retryAfter)
+        case 401, 403, 404:
+            // These have their own wording, which says what to do next. Render's text for them
+            // ("unauthorized", "not found") would replace it with less.
+            throw RenderError.from(statusCode: response.status.code, message: nil)
+        case 400...499:
+            // The other 4xx are about this particular request, and Render's sentence is usually the
+            // only useful thing to show: "free tier plans are not supported for jobs" says exactly
+            // what "Request failed (400)" doesn't.
+            let message = await Self.message(in: responseBody)
+            throw RenderError.from(statusCode: response.status.code, message: message)
         default:
             throw RenderError.from(statusCode: response.status.code, message: nil)
         }
+    }
+
+    /// Render's error body is `{"id": …, "message": …}`. Returns the message as a sentence, or `nil`
+    /// for anything else, including a body too long to be one.
+    static func message(in body: HTTPBody?) async -> String? {
+        guard let body,
+              let data = try? await Data(collecting: body, upTo: 16 * 1024),
+              let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let raw = object["message"] as? String
+        else { return nil }
+
+        let message = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !message.isEmpty, message.count <= 300 else { return nil }
+        let capitalised = message.prefix(1).uppercased() + message.dropFirst()
+        return capitalised.last.map { ".!?".contains($0) } == true ? capitalised : capitalised + "."
     }
 }

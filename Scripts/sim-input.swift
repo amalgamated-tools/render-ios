@@ -53,7 +53,8 @@ func attribute(_ element: AXUIElement, _ name: String) -> CFTypeRef? {
 
 /// Depth-first search for the device screen inside the Simulator's window.
 func findDeviceScreen(_ element: AXUIElement, depth: Int = 0) -> CGRect? {
-    guard depth < 6 else { return nil }
+    // DeviceHub (Xcode 27) nests the screen seven levels down; Simulator.app nested it shallower.
+    guard depth < 10 else { return nil }
     if attribute(element, kAXSubroleAttribute) as? String == "iOSContentGroup" {
         var origin = CGPoint.zero
         var size = CGSize.zero
@@ -96,8 +97,10 @@ guard !AXIsProcessTrusted() == false else {
     fail("no Accessibility permission — grant it to this terminal in System Settings → Privacy & Security → Accessibility")
 }
 
+// Xcode 27 replaced Simulator.app with DeviceHub (com.apple.dt.Devices), which shows the same
+// device window under the same "<device> – <runtime>" title.
 guard let simulator = NSWorkspace.shared.runningApplications
-    .first(where: { $0.localizedName == "Simulator" })
+    .first(where: { $0.bundleIdentifier == "com.apple.iphonesimulator" || $0.bundleIdentifier == "com.apple.dt.Devices" })
 else { fail("Simulator isn't running — try `make run`") }
 
 let axApp = AXUIElementCreateApplication(simulator.processIdentifier)
