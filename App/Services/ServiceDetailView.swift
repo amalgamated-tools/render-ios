@@ -652,8 +652,7 @@ private struct AutoscalingSheet: View {
                         Stepper(
                             "Target: \(settings.cpuPercent)%",
                             value: $settings.cpuPercent,
-                            in: AutoscalingSettings.targetRange,
-                            step: 5
+                            in: AutoscalingSettings.targetRange
                         )
                     }
                     Toggle("Memory", isOn: $settings.isMemoryTargetEnabled)
@@ -661,8 +660,7 @@ private struct AutoscalingSheet: View {
                         Stepper(
                             "Target: \(settings.memoryPercent)%",
                             value: $settings.memoryPercent,
-                            in: AutoscalingSettings.targetRange,
-                            step: 5
+                            in: AutoscalingSettings.targetRange
                         )
                     }
                 } header: {
