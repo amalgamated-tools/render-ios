@@ -9,6 +9,7 @@ struct ServiceDetailView: View {
     /// The action awaiting confirmation. Non-nil drives the confirmation dialog.
     @State private var pendingAction: ServiceAction?
     @State private var isShowingScaleSheet = false
+    @State private var isShowingAutoscalingSheet = false
     @State private var watchDenialMessage: String?
     @Environment(FailureWatchCoordinator.self) private var coordinator
     @Environment(NotificationRouter.self) private var router
@@ -86,6 +87,17 @@ struct ServiceDetailView: View {
                     isAutoscalingEnabled: service.details.autoscaling?.isEnabled ?? false
                 ) { instances in
                     Task { await store.perform(.scale(instances: instances)) }
+                }
+            }
+        }
+        .sheet(isPresented: $isShowingAutoscalingSheet) {
+            if let service = store.service {
+                AutoscalingSheet(
+                    serviceName: service.name,
+                    saved: service.details.autoscaling,
+                    currentInstances: service.details.numInstances ?? 1
+                ) { action in
+                    Task { await store.perform(action) }
                 }
             }
         }
@@ -481,6 +493,9 @@ struct ServiceDetailView: View {
                     Button("Scale…", systemImage: "arrow.up.arrow.down") {
                         isShowingScaleSheet = true
                     }
+                    Button("Autoscaling…", systemImage: "gauge.with.dots.needle.67percent") {
+                        isShowingAutoscalingSheet = true
+                    }
                 }
             } label: {
                 if store.actionInFlight != nil {
@@ -581,6 +596,120 @@ private struct ScaleSheet: View {
                     }
                     .disabled(instances == currentInstances)
                 }
+            }
+        }
+    }
+}
+
+/// Edits a service's autoscaling settings, or removes them. Like `ScaleSheet`, Save submits directly:
+/// the sheet already shows exactly what will be sent, and a dialog presented as a sheet dismisses
+/// gets dropped. Remove confirms inside the sheet, because it deletes settings the user can't get
+/// back without retyping them.
+private struct AutoscalingSheet: View {
+    let serviceName: String
+    let saved: ServiceDetails.Autoscaling?
+    let onSubmit: @MainActor (ServiceAction) -> Void
+
+    @State private var settings: AutoscalingSettings
+    @State private var isConfirmingRemove = false
+    @Environment(\.dismiss) private var dismiss
+
+    private let original: AutoscalingSettings
+
+    init(
+        serviceName: String,
+        saved: ServiceDetails.Autoscaling?,
+        currentInstances: Int,
+        onSubmit: @escaping @MainActor (ServiceAction) -> Void
+    ) {
+        self.serviceName = serviceName
+        self.saved = saved
+        self.onSubmit = onSubmit
+        let initial = AutoscalingSettings(saved, currentInstances: currentInstances)
+        original = initial
+        _settings = State(initialValue: initial)
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    Toggle("Autoscaling", isOn: $settings.isEnabled)
+                } footer: {
+                    if !settings.isEnabled {
+                        Text("Render keeps these settings but runs a fixed instance count.")
+                    }
+                }
+
+                Section("Instances") {
+                    Stepper("Minimum: \(settings.min)", value: $settings.min, in: AutoscalingSettings.instanceRange)
+                    Stepper("Maximum: \(settings.max)", value: $settings.max, in: AutoscalingSettings.instanceRange)
+                }
+
+                Section {
+                    Toggle("CPU", isOn: $settings.isCPUTargetEnabled)
+                    if settings.isCPUTargetEnabled {
+                        Stepper(
+                            "Target: \(settings.cpuPercent)%",
+                            value: $settings.cpuPercent,
+                            in: AutoscalingSettings.targetRange,
+                            step: 5
+                        )
+                    }
+                    Toggle("Memory", isOn: $settings.isMemoryTargetEnabled)
+                    if settings.isMemoryTargetEnabled {
+                        Stepper(
+                            "Target: \(settings.memoryPercent)%",
+                            value: $settings.memoryPercent,
+                            in: AutoscalingSettings.targetRange,
+                            step: 5
+                        )
+                    }
+                } header: {
+                    Text("Targets")
+                } footer: {
+                    if let message = settings.validationMessage {
+                        Text(message).foregroundStyle(.red)
+                    } else {
+                        Text("Render adds instances when average use goes above a target and removes them when it falls below.")
+                    }
+                }
+
+                if saved != nil {
+                    Section {
+                        Button("Remove Autoscaling", role: .destructive) {
+                            isConfirmingRemove = true
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Autoscaling")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        dismiss()
+                        onSubmit(.setAutoscaling(settings))
+                    }
+                    // A service with no settings yet can save the defaults as they are.
+                    .disabled(settings.validationMessage != nil || (saved != nil && settings == original))
+                }
+            }
+            .confirmationDialog(
+                ServiceAction.removeAutoscaling.confirmationTitle(serviceName: serviceName),
+                isPresented: $isConfirmingRemove,
+                titleVisibility: .visible
+            ) {
+                Button(ServiceAction.removeAutoscaling.title, role: .destructive) {
+                    dismiss()
+                    onSubmit(.removeAutoscaling)
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text(ServiceAction.removeAutoscaling.confirmationMessage)
             }
         }
     }

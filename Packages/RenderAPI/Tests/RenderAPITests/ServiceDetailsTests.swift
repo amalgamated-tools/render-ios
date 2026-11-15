@@ -99,7 +99,7 @@ struct ServiceDetailsTests {
         #expect(details.plan == .standard)
         #expect(details.openPorts == [10000])
         #expect(details.disk?.mountPath == "/data")
-        #expect(details.autoscaling == .init(isEnabled: true, min: 2, max: 8))
+        #expect(details.autoscaling == .init(isEnabled: true, min: 2, max: 8, cpuTarget: 70, memoryTarget: nil))
         #expect(details.isMaintenanceModeEnabled == false)
         #expect(details.sshAddress == "srv-abc@ssh.oregon.render.com")
         #expect(details.commands?.isDocker == false)

@@ -248,6 +248,13 @@ final class ServiceDetailStore {
                 path: .init(serviceId: serviceID),
                 body: .json(.init(numInstances: instances))
             ).accepted
+        case .setAutoscaling(let settings):
+            _ = try await client.api.autoscaleService(
+                path: .init(serviceId: serviceID),
+                body: .json(settings.requestBody)
+            ).ok
+        case .removeAutoscaling:
+            _ = try await client.api.deleteAutoscalingConfig(path: .init(serviceId: serviceID)).noContent
         case .purgeCache:
             _ = try await client.api.purgeCache(path: .init(serviceId: serviceID)).accepted
         case .runCronJob:
