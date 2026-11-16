@@ -39,6 +39,18 @@ public struct ServiceDetails: Sendable, Hashable {
         public let isEnabled: Bool
         public let min: Int
         public let max: Int
+        /// Target average CPU use, in percent, or `nil` when CPU doesn't drive scaling.
+        public let cpuTarget: Int?
+        /// Target average memory use, in percent, or `nil` when memory doesn't drive scaling.
+        public let memoryTarget: Int?
+
+        public init(isEnabled: Bool, min: Int, max: Int, cpuTarget: Int? = nil, memoryTarget: Int? = nil) {
+            self.isEnabled = isEnabled
+            self.min = min
+            self.max = max
+            self.cpuTarget = cpuTarget
+            self.memoryTarget = memoryTarget
+        }
     }
 
     /// Build/start commands, flattened out of the nested `envSpecificDetails` union.
@@ -133,7 +145,11 @@ public struct ServiceDetails: Sendable, Hashable {
                 Disk(id: $0.id, name: $0.name, sizeGB: $0.sizeGB, mountPath: $0.mountPath)
             }
             self.autoscaling = details.autoscaling.map {
-                Autoscaling(isEnabled: $0.enabled, min: $0.min, max: $0.max)
+                Autoscaling(
+                    isEnabled: $0.enabled, min: $0.min, max: $0.max,
+                    cpuTarget: $0.criteria.cpu.enabled ? $0.criteria.cpu.percentage : nil,
+                    memoryTarget: $0.criteria.memory.enabled ? $0.criteria.memory.percentage : nil
+                )
             }
             self.isMaintenanceModeEnabled = details.maintenanceMode?.enabled ?? false
             self.commands = Commands(details.envSpecificDetails)
@@ -156,7 +172,11 @@ public struct ServiceDetails: Sendable, Hashable {
                 Disk(id: $0.id, name: $0.name, sizeGB: $0.sizeGB, mountPath: $0.mountPath)
             }
             self.autoscaling = details.autoscaling.map {
-                Autoscaling(isEnabled: $0.enabled, min: $0.min, max: $0.max)
+                Autoscaling(
+                    isEnabled: $0.enabled, min: $0.min, max: $0.max,
+                    cpuTarget: $0.criteria.cpu.enabled ? $0.criteria.cpu.percentage : nil,
+                    memoryTarget: $0.criteria.memory.enabled ? $0.criteria.memory.percentage : nil
+                )
             }
             self.isMaintenanceModeEnabled = false
             self.commands = Commands(details.envSpecificDetails)
@@ -179,7 +199,11 @@ public struct ServiceDetails: Sendable, Hashable {
                 Disk(id: $0.id, name: $0.name, sizeGB: $0.sizeGB, mountPath: $0.mountPath)
             }
             self.autoscaling = details.autoscaling.map {
-                Autoscaling(isEnabled: $0.enabled, min: $0.min, max: $0.max)
+                Autoscaling(
+                    isEnabled: $0.enabled, min: $0.min, max: $0.max,
+                    cpuTarget: $0.criteria.cpu.enabled ? $0.criteria.cpu.percentage : nil,
+                    memoryTarget: $0.criteria.memory.enabled ? $0.criteria.memory.percentage : nil
+                )
             }
             self.isMaintenanceModeEnabled = false
             self.commands = Commands(details.envSpecificDetails)

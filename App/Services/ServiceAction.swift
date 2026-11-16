@@ -35,6 +35,8 @@ enum ServiceAction: Identifiable, Hashable {
     case suspend
     case resume
     case scale(instances: Int)
+    case setAutoscaling(AutoscalingSettings)
+    case removeAutoscaling
     case purgeCache
     case runCronJob
     case cancelCronRun
@@ -48,6 +50,8 @@ enum ServiceAction: Identifiable, Hashable {
         case .suspend: "suspend"
         case .resume: "resume"
         case .scale(let instances): "scale-\(instances)"
+        case .setAutoscaling(let settings): "autoscaling-\(settings.hashValue)"
+        case .removeAutoscaling: "remove-autoscaling"
         case .purgeCache: "purge-cache"
         case .runCronJob: "run-cron-job"
         case .cancelCronRun: "cancel-cron-run"
@@ -63,6 +67,8 @@ enum ServiceAction: Identifiable, Hashable {
         case .suspend: "Suspend"
         case .resume: "Resume"
         case .scale(let instances): "Scale to \(instances)"
+        case .setAutoscaling: "Save Autoscaling"
+        case .removeAutoscaling: "Remove Autoscaling"
         case .purgeCache: "Purge Cache"
         case .runCronJob: "Trigger Run"
         case .cancelCronRun: "Cancel Run"
@@ -78,6 +84,8 @@ enum ServiceAction: Identifiable, Hashable {
         case .suspend: "pause.circle"
         case .resume: "play.circle"
         case .scale: "arrow.up.arrow.down"
+        case .setAutoscaling: "gauge.with.dots.needle.67percent"
+        case .removeAutoscaling: "trash"
         case .purgeCache: "trash"
         case .runCronJob: "play.circle"
         case .cancelCronRun: "stop.circle"
@@ -88,8 +96,8 @@ enum ServiceAction: Identifiable, Hashable {
     /// impact* — a suspend takes the service offline — not irreversibility.
     var isDestructive: Bool {
         switch self {
-        case .suspend, .restart, .rollback, .cancelDeploy, .cancelCronRun: true
-        case .deploy, .resume, .scale, .purgeCache, .runCronJob: false
+        case .suspend, .restart, .rollback, .cancelDeploy, .cancelCronRun, .removeAutoscaling: true
+        case .deploy, .resume, .scale, .setAutoscaling, .purgeCache, .runCronJob: false
         }
     }
 
@@ -103,6 +111,8 @@ enum ServiceAction: Identifiable, Hashable {
         case .suspend: "Suspend \(serviceName)?"
         case .resume: "Resume \(serviceName)?"
         case .scale(let instances): "Scale \(serviceName) to \(instances) instance\(instances == 1 ? "" : "s")?"
+        case .setAutoscaling: "Update autoscaling for \(serviceName)?"
+        case .removeAutoscaling: "Remove autoscaling from \(serviceName)?"
         case .purgeCache: "Purge the cache for \(serviceName)?"
         case .runCronJob: "Trigger a run of \(serviceName)?"
         case .cancelCronRun: "Cancel the running \(serviceName) run?"
@@ -128,6 +138,10 @@ enum ServiceAction: Identifiable, Hashable {
             "Brings the service back online."
         case .scale:
             "Render ignores this while autoscaling is enabled for the service."
+        case .setAutoscaling(let settings):
+            settings.summary
+        case .removeAutoscaling:
+            "Deletes the autoscaling settings. The service keeps its current instance count until you scale it."
         case .purgeCache:
             "Clears cached responses. The next requests go to your service."
         case .runCronJob:
@@ -148,6 +162,8 @@ enum ServiceAction: Identifiable, Hashable {
         case .suspend: "Service suspended."
         case .resume: "Resume requested."
         case .scale(let instances): "Scaling to \(instances) instance\(instances == 1 ? "" : "s")."
+        case .setAutoscaling(let settings): settings.isEnabled ? "Autoscaling updated." : "Autoscaling turned off."
+        case .removeAutoscaling: "Autoscaling removed."
         case .purgeCache: "Cache purge requested."
         case .runCronJob: "Cron run triggered."
         // Render answers 204 whether or not a run was going, so this can't claim more than a request.
