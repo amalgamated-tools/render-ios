@@ -247,6 +247,16 @@ struct ServiceDetailView: View {
             Toggle(isOn: watchBinding) {
                 Label("Notify Me About Failures", systemImage: "bell")
             }
+            NavigationLink {
+                ServiceNotificationOverridesView(
+                    client: client,
+                    ownerID: ownerID,
+                    serviceID: serviceID,
+                    serviceName: store.service?.name ?? serviceName
+                )
+            } label: {
+                Label("Render Notifications", systemImage: "envelope.badge")
+            }
         } footer: {
             if let watchDenialMessage {
                 Text(watchDenialMessage)

@@ -44,12 +44,72 @@ final class NotificationSettingsStore {
     private(set) var isSaving = false
     private(set) var errorMessage: String?
 
+    /// A service whose Render notifications differ from the workspace's.
+    struct OverriddenService: Identifiable, Equatable, Sendable {
+        let id: String
+        /// `nil` when the service couldn't be read, such as one deleted since it was overridden.
+        let name: String?
+        let overrides: ServiceNotificationOverrides
+    }
+
+    /// Services with their own Render notification settings, sorted by name. `nil` until loaded.
+    private(set) var overriddenServices: [OverriddenService]?
+    private(set) var overridesErrorMessage: String?
+
     private let client: RenderClient
     private let ownerID: String
 
     init(client: RenderClient, ownerID: String) {
         self.client = client
         self.ownerID = ownerID
+    }
+
+    /// Loads `GET /notification-settings/overrides` for this workspace, then each service's name.
+    /// The override list carries only service IDs, and the services list can't be filtered by ID.
+    func loadOverrides() async {
+        let client = client
+        let ownerID = ownerID
+        do {
+            let paginator = CursorPaginator(pageSize: 100) { cursor, limit in
+                try await client.api
+                    .listNotificationOverrides(query: .init(ownerId: [ownerID], cursor: cursor, limit: limit))
+                    .ok.body.json
+            } unwrap: { envelope in
+                (
+                    (
+                        id: envelope.override.serviceId,
+                        overrides: ServiceNotificationOverrides(
+                            notificationsToSend: .init(raw: envelope.override.notificationsToSend.rawValue),
+                            previewNotifications: .init(raw: envelope.override.previewNotificationsEnabled.rawValue)
+                        )
+                    ),
+                    envelope.cursor
+                )
+            }
+            // Render keeps a service listed only while one of its fields isn't "default".
+            let listed = try await paginator.collect(limit: 200).filter(\.overrides.isOverridden)
+
+            let names = await withTaskGroup(of: (String, String?).self) { group in
+                for entry in listed {
+                    group.addTask {
+                        let name = try? await client.api
+                            .retrieveService(path: .init(serviceId: entry.id))
+                            .ok.body.json.name
+                        return (entry.id, name)
+                    }
+                }
+                var names: [String: String?] = [:]
+                for await (id, name) in group { names[id] = name }
+                return names
+            }
+
+            overriddenServices = listed
+                .map { OverriddenService(id: $0.id, name: names[$0.id] ?? nil, overrides: $0.overrides) }
+                .sorted { ($0.name ?? $0.id).localizedStandardCompare($1.name ?? $1.id) == .orderedAscending }
+            overridesErrorMessage = nil
+        } catch {
+            overridesErrorMessage = RenderError.wrapping(error).errorDescription
+        }
     }
 
     func load() async {
