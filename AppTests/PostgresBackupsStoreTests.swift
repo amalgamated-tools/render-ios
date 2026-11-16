@@ -19,7 +19,20 @@ struct PostgresBackupsStoreTests {
         private var _createExport: (Int, String) = (202, "")
         private var _recover: (Int, String) = (200, Fixtures.postgresJSON(id: "dpg-new", name: "db-restore", status: "creating"))
         private var _recoverBody: Data?
+        private var _exportsGate: Gate?
         private var _now = PostgresBackupsStoreTests.clock
+
+        /// Holds the next exports read, after it has taken its answer, until the gate opens. One use.
+        func holdNextExportsRead(at gate: Gate) {
+            lock.withLock { _exportsGate = gate }
+        }
+
+        func takeExportsGate() -> Gate? {
+            lock.withLock {
+                defer { _exportsGate = nil }
+                return _exportsGate
+            }
+        }
 
         var recovery: (Int, String) {
             get { lock.withLock { _recovery } }
@@ -52,6 +65,33 @@ struct PostgresBackupsStoreTests {
         }
     }
 
+    /// Lets a test hold a request in flight and know when it got there.
+    private actor Gate {
+        private var entered = false
+        private var isOpen = false
+        private var enteredWaiters: [CheckedContinuation<Void, Never>] = []
+        private var openWaiter: CheckedContinuation<Void, Never>?
+
+        func hold() async {
+            entered = true
+            enteredWaiters.forEach { $0.resume() }
+            enteredWaiters = []
+            guard !isOpen else { return }
+            await withCheckedContinuation { openWaiter = $0 }
+        }
+
+        func waitUntilEntered() async {
+            guard !entered else { return }
+            await withCheckedContinuation { enteredWaiters.append($0) }
+        }
+
+        func open() {
+            isOpen = true
+            openWaiter?.resume()
+            openWaiter = nil
+        }
+    }
+
     /// 05:00Z on the day of the recovery window above, which opens at 04:00Z.
     private nonisolated static let clock = Date(timeIntervalSince1970: 1_794_632_400)
 
@@ -72,7 +112,10 @@ struct PostgresBackupsStoreTests {
             case (.post, let p) where p.hasSuffix("/recovery"):
                 if let body { backend.recoverBody = try await Data(collecting: body, upTo: 64 * 1024) }
                 answer = backend.recover
-            case (.get, let p) where p.hasSuffix("/export"): answer = backend.exports
+            case (.get, let p) where p.hasSuffix("/export"):
+                // Taken before any hold, so a held read answers with the list as it was when sent.
+                answer = backend.exports
+                if let gate = backend.takeExportsGate() { await gate.hold() }
             case (.post, let p) where p.hasSuffix("/export"): answer = backend.createExport
             default: answer = (404, #"{"message":"not found"}"#)
             }
@@ -188,6 +231,49 @@ struct PostgresBackupsStoreTests {
         await store.refresh()
         #expect(!store.isWatchingForExport)
         #expect(store.exports.first?.id == "exp-new")
+    }
+
+    @Test("a new export listed before its download link is ready stays watched until the link arrives")
+    func exportWatchedUntilDownloadable() async {
+        let backend = Backend()
+        let (store, _) = store(backend)
+        await store.load()
+        await store.requestExport()
+        defer { store.stopPolling() }
+
+        backend.exports = (200, Self.exportsJSON([(id: "exp-new", at: "2026-11-14T05:01:00Z", url: nil)]))
+        await store.refresh()
+        #expect(store.isWatchingForExport, "listed but still being written")
+        #expect(store.exports.first?.url == nil)
+
+        backend.exports = (200, Self.exportsJSON([(id: "exp-new", at: "2026-11-14T05:01:00Z", url: "https://exports.example/new")]))
+        await store.refresh()
+        #expect(!store.isWatchingForExport)
+        #expect(store.exports.first?.url != nil)
+    }
+
+    @Test("an older reload that answers last doesn't replace a newer one's exports")
+    func olderReloadIgnored() async {
+        let backend = Backend()
+        let (store, _) = store(backend)
+        await store.load()
+        await store.requestExport()
+        defer { store.stopPolling() }
+
+        // The older read leaves with an empty list and is held until the newer one has finished.
+        let gate = Gate()
+        backend.holdNextExportsRead(at: gate)
+        let older = Task { await store.refresh() }
+        await gate.waitUntilEntered()
+
+        backend.exports = (200, Self.exportsJSON([(id: "exp-new", at: "2026-11-14T05:01:00Z", url: "https://exports.example/new")]))
+        await store.refresh()
+        #expect(!store.isWatchingForExport)
+
+        await gate.open()
+        await older.value
+        #expect(store.exports.map(\.id) == ["exp-new"], "the older, empty list must not win")
+        #expect(!store.isWatchingForExport)
     }
 
     @Test("an export that never appears stops being watched after the limit")

@@ -77,7 +77,7 @@ final class PostgresBackupsStore {
     private(set) var hasLoaded = false
     private(set) var isRequestingExport = false
     private(set) var isRestoring = false
-    /// Set from a successful export request until a new export appears in the list.
+    /// Set from a successful export request until a new export with a download link appears in the list.
     private(set) var exportRequestedAt: Date?
     /// The database a successful restore created, so the screen can offer to open it.
     private(set) var restoredDatabase: PostgresDetailModel?
@@ -101,6 +101,8 @@ final class PostgresBackupsStore {
     /// Export IDs already listed when the export was requested. A new ID is how the store knows the
     /// request finished. Comparing timestamps instead would depend on Render's clock matching ours.
     private var exportIDsAtRequest: Set<String> = []
+    /// Counts reloads, so a reply can tell whether a newer reload started after it.
+    private var reloadGeneration = 0
 
     init(
         client: RenderClient,
@@ -203,22 +205,40 @@ final class PostgresBackupsStore {
             }
         }()
 
-        do {
-            let listed = try await client.api
-                .listPostgresExport(path: .init(postgresId: postgresID))
-                .ok.body.json
+        async let exportsAttempt: Result<[PostgresExport], any Error> = {
+            do {
+                let listed = try await client.api
+                    .listPostgresExport(path: .init(postgresId: postgresID))
+                    .ok.body.json
+                return .success(listed
+                    .map { PostgresExport(id: $0.id, createdAt: $0.createdAt, url: $0.url.flatMap(URL.init(string:))) }
+                    .sorted { $0.createdAt > $1.createdAt })
+            } catch {
+                return .failure(error)
+            }
+        }()
+
+        // Polling and pull-to-refresh can overlap. Only the most recent reload applies its replies,
+        // so an older list arriving late can't hide an export a newer one found after the watch ended.
+        reloadGeneration += 1
+        let generation = reloadGeneration
+        let (exportsResult, recoveryResult) = await (exportsAttempt, recoveryAttempt)
+        guard generation == reloadGeneration else { return }
+
+        switch exportsResult {
+        case .success(let listed):
             exports = listed
-                .map { PostgresExport(id: $0.id, createdAt: $0.createdAt, url: $0.url.flatMap(URL.init(string:))) }
-                .sorted { $0.createdAt > $1.createdAt }
             exportsErrorMessage = nil
-            if isWatchingForExport, exports.contains(where: { !exportIDsAtRequest.contains($0.id) }) {
+            // Render can list a new export before its download link is ready, so keep watching
+            // until one has a link.
+            if isWatchingForExport, listed.contains(where: { !exportIDsAtRequest.contains($0.id) && $0.url != nil }) {
                 exportRequestedAt = nil
             }
-        } catch {
+        case .failure(let error):
             exportsErrorMessage = Self.message(for: error)
         }
 
-        switch await recoveryAttempt {
+        switch recoveryResult {
         case .success(let recovery):
             self.recovery = recovery
             recoveryErrorMessage = nil
