@@ -62,6 +62,11 @@ echo "==> Making job status free text"
 # raw string itself, treating unknown values as settled. See the script.
 python3 "$REPO_ROOT/Scripts/freeform-job-status.py" "$SPEC"
 
+echo "==> Making Postgres recovery status free text"
+# Same failure as job status: a value the spec doesn't list would fail the whole response, and
+# PostgresRecovery maps the raw string itself, treating unknown values as unavailable. See the script.
+python3 "$REPO_ROOT/Scripts/freeform-recovery-status.py" "$SPEC"
+
 echo "==> Correcting the metrics endpoints the spec misdescribes"
 # bandwidth-sources returns the ordinary time-series array, not the envelope the spec describes;
 # the filter endpoints reject parameters the spec declares (and require one it deprecates). See

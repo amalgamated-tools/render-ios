@@ -192,6 +192,11 @@ struct PostgresDetailView: View {
             } label: {
                 Label("Query Insights", systemImage: "magnifyingglass")
             }
+            NavigationLink {
+                PostgresBackupsView(client: client, ownerID: ownerID, postgresID: database.id, databaseName: database.name)
+            } label: {
+                Label("Backups", systemImage: "externaldrive.badge.timemachine")
+            }
         }
     }
 

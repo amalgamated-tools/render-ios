@@ -66143,27 +66143,19 @@ public enum Operations {
                 @frozen public enum Body: Sendable, Hashable {
                     /// - Remark: Generated from `#/paths/postgres/{postgresId}/recovery/GET/responses/200/content/json`.
                     public struct JsonPayload: Codable, Hashable, Sendable {
-                        /// Availability of point-in-time recovery.
+                        /// AVAILABLE, BACKUP_NOT_READY or NOT_AVAILABLE. Free text: see Scripts/freeform-recovery-status.py.
                         ///
                         /// - Remark: Generated from `#/paths/postgres/{postgresId}/recovery/GET/responses/200/content/json/recoveryStatus`.
-                        @frozen public enum RecoveryStatusPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                            case available = "AVAILABLE"
-                            case backupNotReady = "BACKUP_NOT_READY"
-                            case notAvailable = "NOT_AVAILABLE"
-                        }
-                        /// Availability of point-in-time recovery.
-                        ///
-                        /// - Remark: Generated from `#/paths/postgres/{postgresId}/recovery/GET/responses/200/content/json/recoveryStatus`.
-                        public var recoveryStatus: Operations.RetrievePostgresRecoveryInfo.Output.Ok.Body.JsonPayload.RecoveryStatusPayload
+                        public var recoveryStatus: Swift.String
                         /// - Remark: Generated from `#/paths/postgres/{postgresId}/recovery/GET/responses/200/content/json/startsAt`.
                         public var startsAt: Foundation.Date?
                         /// Creates a new `JsonPayload`.
                         ///
                         /// - Parameters:
-                        ///   - recoveryStatus: Availability of point-in-time recovery.
+                        ///   - recoveryStatus: AVAILABLE, BACKUP_NOT_READY or NOT_AVAILABLE. Free text: see Scripts/freeform-recovery-status.py.
                         ///   - startsAt:
                         public init(
-                            recoveryStatus: Operations.RetrievePostgresRecoveryInfo.Output.Ok.Body.JsonPayload.RecoveryStatusPayload,
+                            recoveryStatus: Swift.String,
                             startsAt: Foundation.Date? = nil
                         ) {
                             self.recoveryStatus = recoveryStatus
