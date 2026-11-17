@@ -24,6 +24,19 @@ struct ServiceNotificationOverridesTests {
         /// Answers a list request that carries this cursor, for a second page.
         private var _nextPage: (cursor: String, answer: (Int, String))?
         private var _overrideGate: Gate?
+        private var _patchGate: Gate?
+
+        /// Holds the next PATCH, before Render applies it, until the gate opens.
+        func holdNextPatch(at gate: Gate) {
+            lock.withLock { _patchGate = gate }
+        }
+
+        func takePatchGate() -> Gate? {
+            lock.withLock {
+                defer { _patchGate = nil }
+                return _patchGate
+            }
+        }
 
         var nextPage: (cursor: String, answer: (Int, String))? {
             get { lock.withLock { _nextPage } }
@@ -84,6 +97,7 @@ struct ServiceNotificationOverridesTests {
                 if let body { data = try await Data(collecting: body, upTo: 4096) }
                 let sent = (try? JSONSerialization.jsonObject(with: data) as? [String: String]) ?? [:]
                 backend.patchBodies.append(sent)
+                if let gate = backend.takePatchGate() { await gate.hold() }
                 if let fixed = backend.patch {
                     answer = fixed
                 } else {
@@ -268,6 +282,53 @@ struct ServiceNotificationOverridesTests {
         await gate.open()
         await refresh.value
         #expect(store.overrides?.notificationsToSend == .level(.all), "the older read must not win")
+    }
+
+    @Test("a read that started while a save was in flight can't replace what the save stored")
+    func readStartedDuringSaveIgnored() async {
+        let backend = Backend()
+        let (store, _) = store(backend)
+        await store.load()
+
+        // The save is held before Render applies it.
+        let patchGate = Gate()
+        backend.holdNextPatch(at: patchGate)
+        let save = Task { await store.update { $0.notificationsToSend = .level(.all) } }
+        await patchGate.waitUntilEntered()
+
+        // A refresh starts mid-save, reads the old settings, and is held until after the save.
+        let readGate = Gate()
+        backend.holdNextOverrideRead(at: readGate)
+        let refresh = Task { await store.load() }
+        await readGate.waitUntilEntered()
+
+        await patchGate.open()
+        await save.value
+        #expect(store.overrides?.notificationsToSend == .level(.all))
+
+        await readGate.open()
+        await refresh.value
+        #expect(store.overrides?.notificationsToSend == .level(.all), "the read that started mid-save must not win")
+    }
+
+    @Test("a stale read doesn't clear Render's refusal of a later save")
+    func staleReadKeepsSaveError() async {
+        let backend = Backend()
+        backend.patch = (400, #"{"message":"invalid notification override (bogus)"}"#)
+        let (store, _) = store(backend)
+        await store.load()
+
+        let gate = Gate()
+        backend.holdNextOverrideRead(at: gate)
+        let refresh = Task { await store.load() }
+        await gate.waitUntilEntered()
+
+        await store.update { $0.notificationsToSend = .level(.none) }
+        #expect(store.errorMessage == "Invalid notification override (bogus).")
+
+        await gate.open()
+        await refresh.value
+        #expect(store.errorMessage == "Invalid notification override (bogus).", "the older, successful read must not clear it")
     }
 
     // MARK: - Workspace list

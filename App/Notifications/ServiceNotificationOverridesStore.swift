@@ -104,24 +104,35 @@ final class ServiceNotificationOverridesStore {
         defer { isLoading = false }
         let client = client
         let ownerID = ownerID
+        // A save in flight when this read starts, or one that starts while it's out, will answer
+        // with the settings as they now are, so this read's answer, and its error, would be stale.
         let generationAtStart = writeGeneration
+        let startedDuringSave = isSaving
         async let workspaceAttempt = try? client.api
             .retrieveOwnerNotificationSettings(path: .init(ownerId: ownerID))
             .ok.body.json
 
+        let result: Result<ServiceNotificationOverrides, any Error>
         do {
             let payload = try await client.api
                 .retrieveServiceNotificationOverrides(path: .init(serviceId: serviceID))
                 .ok.body.json
-            // A save that started while this read was out knows better: Render answered it with
-            // the settings as they now are.
-            if generationAtStart == writeGeneration { overrides = ServiceNotificationOverrides(
+            result = .success(ServiceNotificationOverrides(
                 notificationsToSend: .init(raw: payload.notificationsToSend.rawValue),
                 previewNotifications: .init(raw: payload.previewNotificationsEnabled.rawValue)
-            ) }
-            errorMessage = nil
+            ))
         } catch {
-            errorMessage = RenderError.wrapping(error).errorDescription
+            result = .failure(error)
+        }
+
+        if !startedDuringSave, generationAtStart == writeGeneration {
+            switch result {
+            case .success(let loaded):
+                overrides = loaded
+                errorMessage = nil
+            case .failure(let error):
+                errorMessage = RenderError.wrapping(error).errorDescription
+            }
         }
 
         if let payload = await workspaceAttempt {
