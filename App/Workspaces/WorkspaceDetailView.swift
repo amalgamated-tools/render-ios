@@ -10,12 +10,13 @@ struct WorkspaceDetailView: View {
     @Environment(\.dismiss) private var dismiss
 
     private let client: RenderClient
-    /// The signed-in user. Their own row offers no actions.
-    private let currentUserID: String?
+    /// Who's signed in. Their own row offers no actions, and nobody can be managed until it's known.
+    private let accountStore: AccountStore
+    private var currentUserID: String? { accountStore.user?.id }
 
-    init(client: RenderClient, ownerID: String, currentUserID: String?) {
+    init(client: RenderClient, ownerID: String, accountStore: AccountStore) {
         self.client = client
-        self.currentUserID = currentUserID
+        self.accountStore = accountStore
         _store = State(initialValue: WorkspaceMembersStore(client: client, ownerID: ownerID))
     }
 
@@ -43,8 +44,18 @@ struct WorkspaceDetailView: View {
                     Button("Done") { dismiss() }
                 }
             }
-            .task { await store.load() }
-            .refreshable { await store.load() }
+            .task {
+                // The account loads once at launch and gives up quietly; try again here, or member
+                // actions would stay off for the rest of the session.
+                async let account: Void = accountStore.user == nil ? accountStore.load() : ()
+                await store.load()
+                await account
+            }
+            .refreshable {
+                async let account: Void = accountStore.user == nil ? accountStore.load() : ()
+                await store.load()
+                await account
+            }
             .safeAreaInset(edge: .bottom) { actionBanner }
             .actionOutcomeFeedback(store.actionResult)
             .confirmationDialog(
@@ -258,8 +269,10 @@ private struct AuditLogRow: View {
             HStack(spacing: 8) {
                 Text(entry.title)
                     .lineLimit(1)
-                if !entry.succeeded {
-                    MiniBadge(title: "Failed")
+                switch entry.outcome {
+                case .succeeded: EmptyView()
+                case .failed: MiniBadge(title: "Failed")
+                case .other: MiniBadge(title: entry.outcome.title)
                 }
             }
             Text("\(entry.actorDescription) · \(entry.timestamp.formatted(.relative(presentation: .named)))")
@@ -278,7 +291,7 @@ private struct AuditLogEntryView: View {
         List {
             Section {
                 LabeledContent("Action", value: entry.title)
-                LabeledContent("Result", value: entry.succeeded ? "Succeeded" : "Failed")
+                LabeledContent("Result", value: entry.outcome.title)
                 LabeledContent("When", value: entry.timestamp.formatted(date: .abbreviated, time: .standard))
                 LabeledContent("By", value: entry.actorDescription)
             }

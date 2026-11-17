@@ -271,6 +271,8 @@ struct WorkspaceMembersTests {
         #expect(AuditLogEntry.displayName("ChangeOrg2FAEnforcementEvent") == "Change org 2FA enforcement")
         #expect(AuditLogEntry.displayName("SomethingBrandNewEvent") == "Something brand new")
         #expect(AuditLogEntry.displayName("Event") == "Event")
+        #expect(AuditLogEntry.displayName("GrantOAuthAccessEvent") == "Grant OAuth access")
+        #expect(AuditLogEntry.displayName("RevokeOAuthAccessEvent") == "Revoke OAuth access")
     }
 
     @Test("the audit log decodes an unknown event, a failure and an API key actor, a page at a time")
@@ -289,7 +291,8 @@ struct WorkspaceMembersTests {
         #expect(log.entries.map(\.title) == ["Delete server", "Something brand new"])
         #expect(log.entries[0].actorDescription == "a@example.com")
         #expect(log.entries[0].metadata.map(\.key) == ["service", "source_ip", "user_agent"])
-        #expect(!log.entries[1].succeeded)
+        #expect(log.entries[0].outcome == .succeeded)
+        #expect(log.entries[1].outcome == .failed)
         #expect(log.entries[1].actorDescription == "API key")
         #expect(log.hasMore)
 
@@ -297,5 +300,26 @@ struct WorkspaceMembersTests {
         #expect(log.entries.map(\.id) == ["aud-1", "aud-2", "aud-3"])
         #expect(log.entries[2].actorDescription == "Render")
         #expect(!log.hasMore)
+    }
+
+    @Test("an API key or Render shows as such even when Render sends an email for it")
+    func nonUserActorKeepsLabel() {
+        func entry(type: String, email: String?) -> AuditLogEntry {
+            AuditLogEntry(id: "aud-1", timestamp: .now, event: "CreateServerEvent", outcome: .succeeded,
+                          actorType: type, actorEmail: email, actorID: nil, metadata: [])
+        }
+        #expect(entry(type: "rest_api", email: "owner@example.com").actorDescription == "API key")
+        #expect(entry(type: "system", email: "ops@example.com").actorDescription == "Render")
+        #expect(entry(type: "user", email: "a@example.com").actorDescription == "a@example.com")
+        #expect(entry(type: "user", email: nil).actorDescription == "User")
+    }
+
+    @Test("a status Render hasn't used before is shown as sent, not as success or failure")
+    func unknownStatus() {
+        #expect(AuditLogEntry.Outcome(raw: "success") == .succeeded)
+        #expect(AuditLogEntry.Outcome(raw: "ERROR") == .failed)
+        let pending = AuditLogEntry.Outcome(raw: "pending")
+        #expect(pending == .other("pending"))
+        #expect(pending.title == "Pending")
     }
 }

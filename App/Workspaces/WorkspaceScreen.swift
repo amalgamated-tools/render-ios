@@ -91,7 +91,7 @@ struct WorkspaceScreen: View {
             WebhooksView(client: client, ownerID: ownerID)
         }
         .sheet(isPresented: $isShowingWorkspace) {
-            WorkspaceDetailView(client: client, ownerID: ownerID, currentUserID: accountStore.user?.id)
+            WorkspaceDetailView(client: client, ownerID: ownerID, accountStore: accountStore)
         }
     }
 

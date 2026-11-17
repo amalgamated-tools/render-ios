@@ -8,13 +8,37 @@ struct AuditLogEntry: Identifiable, Hashable, Sendable {
     let timestamp: Date
     /// As Render sent it, such as `CreateServerEvent`. May be one this build doesn't know.
     let event: String
-    let succeeded: Bool
+    let outcome: Outcome
     /// `user`, `rest_api` or `system`, as Render sent it.
     let actorType: String
     let actorEmail: String?
     let actorID: String?
     /// Extra context, such as the service ID, source IP and user agent, sorted by key.
     let metadata: [(key: String, value: String)]
+
+    /// The entry's `status`. Render sends `success` or `error`; anything else is kept as sent rather
+    /// than counted as either.
+    enum Outcome: Hashable, Sendable {
+        case succeeded
+        case failed
+        case other(String)
+
+        init(raw: String) {
+            switch raw.lowercased() {
+            case "success": self = .succeeded
+            case "error": self = .failed
+            default: self = .other(raw)
+            }
+        }
+
+        var title: String {
+            switch self {
+            case .succeeded: "Succeeded"
+            case .failed: "Failed"
+            case .other(let raw): raw.isEmpty ? "Unknown" : raw.capitalized
+            }
+        }
+    }
 
     static func == (lhs: AuditLogEntry, rhs: AuditLogEntry) -> Bool { lhs.id == rhs.id }
     func hash(into hasher: inout Hasher) { hasher.combine(id) }
@@ -45,6 +69,16 @@ struct AuditLogEntry: Identifiable, Hashable, Sendable {
             current.append(char)
         }
         if !current.isEmpty { words.append(current) }
+        // Mixed-case names the rules above split: "OAuth" comes out as "O", "Auth".
+        for term in ["OAuth"] {
+            var index = 0
+            while index + 1 < words.count {
+                if words[index] + words[index + 1] == term {
+                    words.replaceSubrange(index...index + 1, with: [term])
+                }
+                index += 1
+            }
+        }
         return words.enumerated().map { index, word in
             // Leave acronyms such as "2FA" or "IP" as they are.
             let isAcronym = word.count > 1 && word.dropFirst().contains(where: \.isUppercase)
@@ -53,9 +87,10 @@ struct AuditLogEntry: Identifiable, Hashable, Sendable {
         }.joined(separator: " ")
     }
 
-    /// Who did it: the email for a person, otherwise the kind of actor.
+    /// Who did it: the email for a person, otherwise the kind of actor. An API key or Render can
+    /// carry an email too; it's the key's or account's, so the kind of actor is the useful part.
     var actorDescription: String {
-        if let actorEmail, !actorEmail.isEmpty { return actorEmail }
+        if actorType == "user" || actorType.isEmpty, let actorEmail, !actorEmail.isEmpty { return actorEmail }
         switch actorType {
         case "rest_api": return "API key"
         case "system": return "Render"
@@ -72,7 +107,7 @@ extension AuditLogEntry {
             id: log.id,
             timestamp: log.timestamp,
             event: log.event,
-            succeeded: log.status.lowercased() != "error",
+            outcome: Outcome(raw: log.status),
             actorType: log.actor._type,
             actorEmail: log.actor.email,
             actorID: log.actor.id,
