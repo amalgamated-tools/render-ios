@@ -75,8 +75,11 @@ jobs:
 
       # Unlike a build, running tests needs a concrete simulator; Scripts/test-destination.sh picks
       # one that exists on the runner rather than pinning a device GitHub may drop.
+      # Own DerivedData, started clean whenever the generated API client changes. See the script.
       - name: Test
-        run: make test-app XCODEBUILD_FLAGS='-clonedSourcePackagesDirPath .spm-cache'
+        run: |
+          DD=$(Scripts/ci-derived-data.sh test)
+          make test-app XCODEBUILD_FLAGS="-clonedSourcePackagesDirPath .spm-cache -derivedDataPath $DD"
 
   build:
     name: Build app
@@ -98,7 +101,7 @@ jobs:
       # specific device to exist on the runner, so CI does not break when GitHub rotates
       # the installed simulator set.
       - name: Build
-        run: >-
-          make build
-          DESTINATION='generic/platform=iOS Simulator'
-          XCODEBUILD_FLAGS='-clonedSourcePackagesDirPath .spm-cache'
+        run: |
+          DD=$(Scripts/ci-derived-data.sh build)
+          make build DESTINATION='generic/platform=iOS Simulator' \
+            XCODEBUILD_FLAGS="-clonedSourcePackagesDirPath .spm-cache -derivedDataPath $DD"
