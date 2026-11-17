@@ -72,6 +72,11 @@ echo "==> Making webhook responses decode what Render sends"
 # adds to. Either would fail the whole webhook list or delivery history. See the script.
 python3 "$REPO_ROOT/Scripts/webhook-quirks.py" "$SPEC"
 
+echo "==> Making member and audit log enums free text"
+# Audit events, member roles and their statuses are lists Render grows; one new value would fail the
+# whole audit log or member list. See the script.
+python3 "$REPO_ROOT/Scripts/workspace-quirks.py" "$SPEC"
+
 echo "==> Correcting the metrics endpoints the spec misdescribes"
 # bandwidth-sources returns the ordinary time-series array, not the envelope the spec describes;
 # the filter endpoints reject parameters the spec declares (and require one it deprecates). See

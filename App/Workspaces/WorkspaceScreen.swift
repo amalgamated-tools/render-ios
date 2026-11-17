@@ -25,6 +25,7 @@ struct WorkspaceScreen: View {
     @State private var selectedTab: WorkspaceTab = .services
     @State private var isShowingNotificationSettings = false
     @State private var isShowingWebhooks = false
+    @State private var isShowingWorkspace = false
     @Environment(NotificationRouter.self) private var router
 
     private enum WorkspaceTab: Hashable {
@@ -89,6 +90,9 @@ struct WorkspaceScreen: View {
         .sheet(isPresented: $isShowingWebhooks) {
             WebhooksView(client: client, ownerID: ownerID)
         }
+        .sheet(isPresented: $isShowingWorkspace) {
+            WorkspaceDetailView(client: client, ownerID: ownerID, currentUserID: accountStore.user?.id)
+        }
     }
 
     /// Navigates to whatever a tapped notification asked for.
@@ -146,6 +150,9 @@ struct WorkspaceScreen: View {
                 Section(user.name) {
                     Text(user.email)
                 }
+            }
+            Button("Workspace", systemImage: "person.3") {
+                isShowingWorkspace = true
             }
             Button("Notifications", systemImage: "bell") {
                 isShowingNotificationSettings = true

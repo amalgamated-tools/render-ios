@@ -24832,106 +24832,13 @@
           },
           "event": {
             "type": "string",
-            "description": "The type of event that occurred",
-            "example": "CreateServerEvent",
-            "enum": [
-              "AcceptOrgInviteEvent",
-              "AcceptTeamInviteEvent",
-              "AddOrgMemberEvent",
-              "ApplyBlueprintEvent",
-              "ChangeEnvironmentProtectionEvent",
-              "ChangeOrg2FAEnforcementEvent",
-              "ChangeOrgAllowedLoginMethodsEvent",
-              "ChangeOrgNameEvent",
-              "ChangeOrgRoleEvent",
-              "ChangeTeam2FAEnforcementEvent",
-              "ChangeTeamAllowedLoginMethodsEvent",
-              "ChangeTeamMemberRoleEvent",
-              "ChangeWorkspaceDeployHandlingEvent",
-              "ChangeWorkspacePrivacyEvent",
-              "CreateBuildSourceEvent",
-              "DeleteBuildSourceEvent",
-              "UpdateBuildSourceEvent",
-              "CreateCronJobEvent",
-              "CreateEnvVarsEvent",
-              "CreateEnvironmentEvent",
-              "CreateOrgDomainEvent",
-              "CreateOtelIntegrationEvent",
-              "CreatePostgresEvent",
-              "CreatePrivateLinkEvent",
-              "CreateProjectEvent",
-              "CreateRedisEvent",
-              "CreateSSOConnectionEvent",
-              "CreateSavedSearchEvent",
-              "CreateServerDiskEvent",
-              "CreateServerEvent",
-              "CreateWebhookEvent",
-              "CreateWorkspaceEvent",
-              "DeleteCronJobEvent",
-              "DeleteEnvGroupEvent",
-              "DeleteEnvVarsEvent",
-              "DeleteEnvironmentEvent",
-              "DeleteOrgDomainEvent",
-              "DeleteOtelIntegrationEvent",
-              "DeletePostgresEvent",
-              "DeletePrivateLinkEvent",
-              "DeleteProjectEvent",
-              "DeleteRedisEvent",
-              "DeleteSSOConnectionEvent",
-              "DeleteSavedSearchEvent",
-              "DeleteServerDiskEvent",
-              "DeleteServerEvent",
-              "DeleteWebhookEvent",
-              "DeleteWorkspaceEvent",
-              "DocumentDownloadEvent",
-              "DownloadDatabaseBackupEvent",
-              "EnableRedisInternalAuthEvent",
-              "InviteToOrgEvent",
-              "InviteToTeamEvent",
-              "JoinTeamEvent",
-              "LinkBuildSourceEnvGroupEvent",
-              "LoginEvent",
-              "LogoutEvent",
-              "MaintenanceModeEnabledEvent",
-              "MaintenanceModeURIUpdatedEvent",
-              "MoveEnvironmentResourceEvent",
-              "ProvisionOrganizationSCIMToken",
-              "RemoveOrgMemberEvent",
-              "RemoveUserFromTeamEvent",
-              "RestoreDiskSnapshotEvent",
-              "ResumePostgresEvent",
-              "ResumeServiceEvent",
-              "RevokeOrganizationSCIMToken",
-              "SignNDAEvent",
-              "EndShellEvent",
-              "StartShellEvent",
-              "SuspendPostgresEvent",
-              "SuspendServiceEvent",
-              "UnlinkBuildSourceEnvGroupEvent",
-              "UpdateEnvVarsEvent",
-              "UpdateIPAllowListEvent",
-              "UpdateOrgPaymentMethodEvent",
-              "UpdateOtelIntegrationEvent",
-              "UpdateSSOConnectionEvent",
-              "UpdateServiceBuildSourceEvent",
-              "UpdateServiceNameEvent",
-              "UpdateWebhookEvent",
-              "UpdateWorkspacePaymentMethodEvent",
-              "VerifyOrgDomainEvent",
-              "ViewConnectionInfoEvent",
-              "ViewEnvVarValuesEvent",
-              "GrantOAuthAccessEvent",
-              "RevokeOAuthAccessEvent"
-            ]
+            "description": "The type of event, such as CreateServerEvent. Free text: see Scripts/workspace-quirks.py.",
+            "example": "CreateServerEvent"
           },
           "status": {
             "type": "string",
-            "description": "The status of the event",
-            "example": "success",
-            "enum": [
-              "success",
-              "error"
-            ]
+            "description": "success or error. Free text: see Scripts/workspace-quirks.py.",
+            "example": "success"
           },
           "actor": {
             "$ref": "#/components/schemas/auditLogActor"
@@ -24957,13 +24864,8 @@
         "properties": {
           "type": {
             "type": "string",
-            "description": "The type of actor that performed the action",
-            "example": "user",
-            "enum": [
-              "user",
-              "rest_api",
-              "system"
-            ]
+            "description": "user, rest_api or system. Free text: see Scripts/workspace-quirks.py.",
+            "example": "user"
           },
           "email": {
             "type": "string",
@@ -27414,13 +27316,11 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "active",
-              "inactive"
-            ]
+            "description": "active or inactive. Free text: see Scripts/workspace-quirks.py."
           },
           "role": {
-            "$ref": "#/components/schemas/teamMemberRole"
+            "type": "string",
+            "description": "ADMIN, DEVELOPER, WORKSPACE_CONTRIBUTOR, WORKSPACE_BILLING or WORKSPACE_VIEWER. Free text: see Scripts/workspace-quirks.py."
           },
           "mfaEnabled": {
             "type": "boolean"
