@@ -21,6 +21,26 @@ struct ServiceNotificationOverridesTests {
         private var _list: (Int, String) = (200, "[]")
         /// Service names by ID. A missing ID answers 404, as for a deleted service.
         private var _names: [String: String] = [:]
+        /// Answers a list request that carries this cursor, for a second page.
+        private var _nextPage: (cursor: String, answer: (Int, String))?
+        private var _overrideGate: Gate?
+
+        var nextPage: (cursor: String, answer: (Int, String))? {
+            get { lock.withLock { _nextPage } }
+            set { lock.withLock { _nextPage = newValue } }
+        }
+
+        /// Holds the next override read, after it has taken its answer, until the gate opens.
+        func holdNextOverrideRead(at gate: Gate) {
+            lock.withLock { _overrideGate = gate }
+        }
+
+        func takeOverrideGate() -> Gate? {
+            lock.withLock {
+                defer { _overrideGate = nil }
+                return _overrideGate
+            }
+        }
 
         nonisolated static func overrideJSON(id: String = "srv-1", send: String, preview: String) -> String {
             #"{"serviceId":"\#(id)","notificationsToSend":"\#(send)","previewNotificationsEnabled":"\#(preview)"}"#
@@ -77,8 +97,13 @@ struct ServiceNotificationOverridesTests {
                 }
             } else if path.hasPrefix("/notification-settings/overrides/services/") {
                 answer = backend.override
+                if let gate = backend.takeOverrideGate() { await gate.hold() }
             } else if path.hasPrefix("/notification-settings/overrides") {
-                answer = backend.list
+                if let next = backend.nextPage, path.contains("cursor=\(next.cursor)") {
+                    answer = next.answer
+                } else {
+                    answer = backend.list
+                }
             } else if path.hasPrefix("/services/") {
                 let id = String(path.dropFirst("/services/".count))
                 answer = backend.names[id].map {
@@ -94,6 +119,33 @@ struct ServiceNotificationOverridesTests {
         }
         let client = RenderClient(apiKeyProvider: StaticAPIKeyProvider("test-key"), retryPolicy: .none, transport: transport)
         return (client, transport)
+    }
+
+    /// Lets a test hold a request in flight and know when it got there.
+    private actor Gate {
+        private var entered = false
+        private var isOpen = false
+        private var enteredWaiters: [CheckedContinuation<Void, Never>] = []
+        private var openWaiter: CheckedContinuation<Void, Never>?
+
+        func hold() async {
+            entered = true
+            enteredWaiters.forEach { $0.resume() }
+            enteredWaiters = []
+            guard !isOpen else { return }
+            await withCheckedContinuation { openWaiter = $0 }
+        }
+
+        func waitUntilEntered() async {
+            guard !entered else { return }
+            await withCheckedContinuation { enteredWaiters.append($0) }
+        }
+
+        func open() {
+            isOpen = true
+            openWaiter?.resume()
+            openWaiter = nil
+        }
     }
 
     private func store(_ backend: Backend) -> (ServiceNotificationOverridesStore, StubTransport) {
@@ -198,6 +250,26 @@ struct ServiceNotificationOverridesTests {
         #expect(store.overrides?.isOverridden == false)
     }
 
+    @Test("a read that started before a save can't replace what the save stored")
+    func staleReadIgnoredAfterSave() async {
+        let backend = Backend()
+        let (store, _) = store(backend)
+        await store.load()
+
+        // The read leaves while the service still follows the workspace, and is held there.
+        let gate = Gate()
+        backend.holdNextOverrideRead(at: gate)
+        let refresh = Task { await store.load() }
+        await gate.waitUntilEntered()
+
+        await store.update { $0.notificationsToSend = .level(.all) }
+        #expect(store.overrides?.notificationsToSend == .level(.all))
+
+        await gate.open()
+        await refresh.value
+        #expect(store.overrides?.notificationsToSend == .level(.all), "the older read must not win")
+    }
+
     // MARK: - Workspace list
 
     @Test("the workspace list names each overridden service, sorted, and keeps one that can't be read")
@@ -222,6 +294,45 @@ struct ServiceNotificationOverridesTests {
         #expect(services[0].overrides.previewNotifications == .off)
         let listQuery = try #require(transport.requests.compactMap(\.path).first { $0.hasPrefix("/notification-settings/overrides?") })
         #expect(listQuery.contains("ownerId=tea-1"))
+    }
+
+    @Test("the list loads a page at a time, and Show More appends the next page")
+    func workspaceListPages() async throws {
+        let backend = Backend()
+        backend.list = (200, """
+            [{"cursor":"c1","override":\(Backend.overrideJSON(id: "srv-a", send: "all", preview: "default"))},
+             {"cursor":"c2","override":\(Backend.overrideJSON(id: "srv-b", send: "none", preview: "default"))}]
+            """)
+        backend.nextPage = (cursor: "c2", answer: (200, """
+            [{"cursor":"c3","override":\(Backend.overrideJSON(id: "srv-c", send: "failure", preview: "default"))}]
+            """))
+        backend.names = ["srv-a": "api", "srv-b": "billing", "srv-c": "cron"]
+        let (client, _) = client(backend)
+        let store = NotificationSettingsStore(client: client, ownerID: "tea-1", overridesPageSize: 2)
+
+        await store.loadOverrides()
+        #expect(store.overriddenServices?.map(\.id) == ["srv-a", "srv-b"])
+        #expect(store.hasMoreOverrides)
+
+        await store.loadMoreOverrides()
+        #expect(store.overriddenServices?.map(\.id) == ["srv-a", "srv-b", "srv-c"])
+        #expect(!store.hasMoreOverrides, "a short page is the last")
+    }
+
+    @Test("a failed refresh keeps the earlier list and reports the error with it")
+    func workspaceRefreshFailureKeepsList() async {
+        let backend = Backend()
+        backend.list = (200, #"[{"cursor":"c1","override":\#(Backend.overrideJSON(id: "srv-a", send: "all", preview: "default"))}]"#)
+        backend.names = ["srv-a": "api"]
+        let (client, _) = client(backend)
+        let store = NotificationSettingsStore(client: client, ownerID: "tea-1")
+        await store.loadOverrides()
+
+        backend.list = (500, #"{"message":"boom"}"#)
+        await store.loadOverrides()
+
+        #expect(store.overriddenServices?.map(\.id) == ["srv-a"])
+        #expect(store.overridesErrorMessage != nil)
     }
 
     @Test("a list failure is reported without a list")

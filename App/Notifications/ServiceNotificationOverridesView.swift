@@ -50,16 +50,21 @@ struct ServiceNotificationOverridesView: View {
 
     private func settingsSection(_ overrides: ServiceNotificationOverrides) -> some View {
         Section {
-            Picker("Send Notifications", selection: levelBinding(overrides)) {
-                ForEach(ServiceNotificationOverrides.Level.allCases, id: \.self) { level in
-                    Text(title(for: level)).tag(level)
+            // One save at a time: the store ignores an edit made while another is in flight, so
+            // the pickers wait rather than appear to accept a change that's never sent.
+            Group {
+                Picker("Send Notifications", selection: levelBinding(overrides)) {
+                    ForEach(ServiceNotificationOverrides.Level.allCases, id: \.self) { level in
+                        Text(title(for: level)).tag(level)
+                    }
+                }
+                Picker("Preview Environments", selection: previewBinding(overrides)) {
+                    ForEach(ServiceNotificationOverrides.Preview.allCases, id: \.self) { preview in
+                        Text(title(for: preview)).tag(preview)
+                    }
                 }
             }
-            Picker("Preview Environments", selection: previewBinding(overrides)) {
-                ForEach(ServiceNotificationOverrides.Preview.allCases, id: \.self) { preview in
-                    Text(title(for: preview)).tag(preview)
-                }
-            }
+            .disabled(store.isSaving)
         } header: {
             HStack {
                 Text(serviceName)

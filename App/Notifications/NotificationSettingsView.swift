@@ -138,8 +138,15 @@ struct NotificationSettingsView: View {
     @ViewBuilder
     private var overridesSection: some View {
         Section {
+            // Shown with any list loaded earlier, so a failed refresh doesn't pass the old list off
+            // as current.
+            if let message = store.overridesErrorMessage {
+                Label(message, systemImage: "exclamationmark.triangle")
+                    .font(.subheadline)
+                    .foregroundStyle(.orange)
+            }
             if let services = store.overriddenServices {
-                if services.isEmpty {
+                if services.isEmpty, !store.hasMoreOverrides {
                     Text("Every service follows the workspace settings.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -161,11 +168,11 @@ struct NotificationSettingsView: View {
                         }
                     }
                 }
-            } else if let message = store.overridesErrorMessage {
-                Label(message, systemImage: "exclamationmark.triangle")
-                    .font(.subheadline)
-                    .foregroundStyle(.orange)
-            } else {
+                if store.hasMoreOverrides {
+                    Button("Show More") { Task { await store.loadMoreOverrides() } }
+                        .disabled(store.isLoadingOverrides)
+                }
+            } else if store.overridesErrorMessage == nil {
                 ProgressView().frame(maxWidth: .infinity)
             }
         } header: {

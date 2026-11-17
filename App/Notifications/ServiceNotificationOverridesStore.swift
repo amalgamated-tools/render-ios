@@ -90,6 +90,8 @@ final class ServiceNotificationOverridesStore {
     private let client: RenderClient
     private let ownerID: String
     let serviceID: String
+    /// Bumped by every write, so a read that started before one can't replace what it saved.
+    private var writeGeneration = 0
 
     init(client: RenderClient, ownerID: String, serviceID: String) {
         self.client = client
@@ -102,6 +104,7 @@ final class ServiceNotificationOverridesStore {
         defer { isLoading = false }
         let client = client
         let ownerID = ownerID
+        let generationAtStart = writeGeneration
         async let workspaceAttempt = try? client.api
             .retrieveOwnerNotificationSettings(path: .init(ownerId: ownerID))
             .ok.body.json
@@ -110,10 +113,12 @@ final class ServiceNotificationOverridesStore {
             let payload = try await client.api
                 .retrieveServiceNotificationOverrides(path: .init(serviceId: serviceID))
                 .ok.body.json
-            overrides = ServiceNotificationOverrides(
+            // A save that started while this read was out knows better: Render answered it with
+            // the settings as they now are.
+            if generationAtStart == writeGeneration { overrides = ServiceNotificationOverrides(
                 notificationsToSend: .init(raw: payload.notificationsToSend.rawValue),
                 previewNotifications: .init(raw: payload.previewNotificationsEnabled.rawValue)
-            )
+            ) }
             errorMessage = nil
         } catch {
             errorMessage = RenderError.wrapping(error).errorDescription
@@ -136,6 +141,7 @@ final class ServiceNotificationOverridesStore {
         let previous = edited
         transform(&edited)
         guard edited != previous else { return }
+        writeGeneration += 1
         overrides = edited
 
         isSaving = true
