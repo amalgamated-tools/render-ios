@@ -312,4 +312,64 @@ struct PostgresUsersStoreTests {
         #expect(store.defaultUser?.username == "app_v2", "the refresh that started mid-add must not win")
         #expect(store.users.count == 2)
     }
+
+    // MARK: - Delete confirmation
+
+    @Test("the delete confirmation dates its connection count instead of calling it current")
+    func deleteMessageDatesCount() async throws {
+        let backend = Backend()
+        backend.list = (200, Self.listJSON([
+            ("app_v2", true, "2026-11-17T02:00:00Z", 0),
+            ("app_user", false, "2026-11-17T01:47:24.91181Z", 1),
+        ]))
+        let clock = Clock(Date(timeIntervalSince1970: 1_795_000_000))
+        let transportStore = store(backend)
+        let client = RenderClient(apiKeyProvider: StaticAPIKeyProvider("test-key"), retryPolicy: .none, transport: transportStore.1)
+        let store = PostgresUsersStore(client: client, postgresID: "dpg-1", now: { clock.now })
+        await store.load()
+        let old = try #require(store.users.first { $0.username == "app_user" })
+
+        let fresh = store.deleteConfirmationMessage(for: old)
+        #expect(fresh == "Anything connecting as app_user loses access. When the list loaded just now, it had 1 open connection. Pull to refresh for a current count.")
+        #expect(!fresh.contains("right now"))
+
+        clock.now = clock.now.addingTimeInterval(5 * 60)
+        #expect(store.deleteConfirmationMessage(for: old).contains("When the list loaded 5 minutes ago, it had 1 open connection."))
+    }
+
+    @Test("a load that's thrown away doesn't move the time its count is dated by")
+    func discardedLoadKeepsLoadedAt() async throws {
+        let backend = Backend()
+        backend.list = (200, Self.listJSON([
+            ("app_v2", true, "2026-11-17T02:00:00Z", 0),
+            ("app_user", false, "2026-11-17T01:47:24.91181Z", 0),
+        ]))
+        let clock = Clock(Date(timeIntervalSince1970: 1_795_000_000))
+        let transportStore = store(backend)
+        let client = RenderClient(apiKeyProvider: StaticAPIKeyProvider("test-key"), retryPolicy: .none, transport: transportStore.1)
+        let store = PostgresUsersStore(client: client, postgresID: "dpg-1", now: { clock.now })
+        await store.load()
+        let firstLoad = try #require(store.loadedAt)
+
+        let gate = Gate()
+        backend.holdNextList(at: gate)
+        let refresh = Task { await store.load() }
+        await gate.waitUntilEntered()
+        clock.now = clock.now.addingTimeInterval(60)
+        await store.delete(try #require(store.users.first { $0.username == "app_user" }))
+
+        await gate.open()
+        await refresh.value
+        #expect(store.loadedAt == firstLoad)
+    }
+
+    private final class Clock: @unchecked Sendable {
+        private let lock = NSLock()
+        private var _now: Date
+        init(_ now: Date) { _now = now }
+        var now: Date {
+            get { lock.withLock { _now } }
+            set { lock.withLock { _now = newValue } }
+        }
+    }
 }

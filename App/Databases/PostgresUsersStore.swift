@@ -45,6 +45,8 @@ final class PostgresUsersStore {
     /// Default user first, then newest first.
     private(set) var users: [PostgresUser] = []
     private(set) var hasLoaded = false
+    /// When the list on screen was read. Connection counts are as of this moment, not live.
+    private(set) var loadedAt: Date?
     private(set) var errorMessage: String?
     /// The username being added or deleted, while that request is in flight.
     private(set) var writeInFlight: String?
@@ -65,10 +67,28 @@ final class PostgresUsersStore {
     /// result only while its generation is still current, so a refresh that overlaps an add or delete
     /// can't bring back a deleted row or an old default.
     private var listGeneration = 0
+    private let now: @Sendable () -> Date
 
-    init(client: RenderClient, postgresID: String) {
+    init(client: RenderClient, postgresID: String, now: @escaping @Sendable () -> Date = { Date() }) {
         self.client = client
         self.postgresID = postgresID
+        self.now = now
+    }
+
+    /// The delete confirmation's message. The connection count comes from the last list read, so it
+    /// says when that was rather than claiming the count is current.
+    func deleteConfirmationMessage(for user: PostgresUser) -> String {
+        let connections = user.openConnections == 1 ? "1 open connection" : "\(user.openConnections) open connections"
+        let loss = "Anything connecting as \(user.username) loses access."
+        guard let loadedAt else { return loss }
+        let current = now()
+        let formatter = RelativeDateTimeFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.unitsStyle = .full
+        // Under a minute reads as "just now" rather than the formatter's "in 0 seconds".
+        let when = current.timeIntervalSince(loadedAt) < 60
+            ? "just now" : formatter.localizedString(for: loadedAt, relativeTo: current)
+        return "\(loss) When the list loaded \(when), it had \(connections). Pull to refresh for a current count."
     }
 
     var defaultUser: PostgresUser? { users.first(where: \.isDefault) }
@@ -92,6 +112,7 @@ final class PostgresUsersStore {
                 .listPostgresUsers(path: .init(postgresId: postgresID))
                 .ok.body.json
             guard generation == listGeneration else { return }
+            loadedAt = now()
             users = listed
                 .compactMap { user in
                     user.username.map {

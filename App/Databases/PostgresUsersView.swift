@@ -59,13 +59,8 @@ struct PostgresUsersView: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: { user in
-            Text(deleteMessage(for: user))
+            Text(store.deleteConfirmationMessage(for: user))
         }
-    }
-
-    private func deleteMessage(for user: PostgresUser) -> String {
-        let connections = user.openConnections == 1 ? "1 open connection" : "\(user.openConnections) open connections"
-        return "Anything connecting as \(user.username) loses access. It has \(connections) right now."
     }
 
     // MARK: - Sections
