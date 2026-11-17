@@ -248,6 +248,41 @@ struct WebhooksStoreTests {
         #expect(store.webhooks.first?.isEnabled == false)
     }
 
+    @Test("an unnamed webhook can still be switched on and off")
+    func toggleUnnamedWebhook() async throws {
+        let backend = Backend()
+        // Render accepts an empty name; one came back that way live.
+        backend.list = (200, Self.listJSON([Self.webhookJSON(name: "")]))
+        let (store, _, _) = store(backend)
+        await store.load()
+        let original = try #require(store.webhooks.first)
+
+        var draft = WebhookDraft(original)
+        draft.isEnabled = false
+        let saved = await store.update(original, to: draft)
+
+        #expect(saved)
+        let body = try #require(backend.bodies.last?.body)
+        #expect(body.keys.sorted() == ["enabled"])
+        #expect(store.webhooks.first?.isEnabled == false)
+    }
+
+    @Test("renaming an unnamed webhook still needs a valid draft")
+    func editUnnamedNeedsRules() async throws {
+        let backend = Backend()
+        backend.list = (200, Self.listJSON([Self.webhookJSON(name: "")]))
+        let (store, _, _) = store(backend)
+        await store.load()
+        let original = try #require(store.webhooks.first)
+
+        var draft = WebhookDraft(original)
+        draft.url = "http://insecure.example.com"
+        let saved = await store.update(original, to: draft)
+
+        #expect(!saved)
+        #expect(backend.bodies.isEmpty)
+    }
+
     @Test("an update that clears a filter is never sent")
     func clearingFilterNotSent() async throws {
         let backend = Backend()

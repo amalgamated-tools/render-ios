@@ -224,7 +224,12 @@ final class WebhooksStore {
     /// Sends only the fields that differ from `original`. Returns whether Render accepted it.
     @discardableResult
     func update(_ original: Webhook, to draft: WebhookDraft) async -> Bool {
-        guard !isSaving, draft.validationMessage(editing: original) == nil else { return false }
+        guard !isSaving else { return false }
+        // Switching a webhook on or off changes nothing the sheet's rules check, so it skips them:
+        // Render allows an empty name, and a webhook with one must still be switchable.
+        var unchanged = WebhookDraft(original)
+        unchanged.isEnabled = draft.isEnabled
+        guard draft == unchanged || draft.validationMessage(editing: original) == nil else { return false }
         let name = draft.trimmedName == original.name ? nil : draft.trimmedName
         let url = draft.trimmedURL == original.url ? nil : draft.trimmedURL
         let enabled = draft.isEnabled == original.isEnabled ? nil : draft.isEnabled
