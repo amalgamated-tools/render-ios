@@ -15,9 +15,11 @@ struct NotificationSettingsView: View {
     @Environment(\.openURL) private var openURL
     @Environment(\.scenePhase) private var scenePhase
 
+    private let client: RenderClient
     private let ownerID: String
 
     init(client: RenderClient, ownerID: String) {
+        self.client = client
         self.ownerID = ownerID
         _store = State(initialValue: NotificationSettingsStore(client: client, ownerID: ownerID))
     }
@@ -27,7 +29,10 @@ struct NotificationSettingsView: View {
             List {
                 deviceSection
                 renderSection
+                overridesSection
             }
+            // Also on returning from a service's override screen, which may have changed the list.
+            .onAppear { Task { await store.loadOverrides() } }
             .navigationTitle("Notifications")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -126,6 +131,67 @@ struct NotificationSettingsView: View {
         } footer: {
             Text("These apply to everyone in this workspace, not just this device. Slack is connected from the Render dashboard.")
         }
+    }
+
+    // MARK: - Per-service overrides
+
+    @ViewBuilder
+    private var overridesSection: some View {
+        Section {
+            // Shown with any list loaded earlier, so a failed refresh doesn't pass the old list off
+            // as current.
+            if let message = store.overridesErrorMessage {
+                Label(message, systemImage: "exclamationmark.triangle")
+                    .font(.subheadline)
+                    .foregroundStyle(.orange)
+            }
+            if let services = store.overriddenServices {
+                if services.isEmpty, !store.hasMoreOverrides {
+                    Text("Every service follows the workspace settings.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                ForEach(services) { service in
+                    NavigationLink {
+                        ServiceNotificationOverridesView(
+                            client: client,
+                            ownerID: ownerID,
+                            serviceID: service.id,
+                            serviceName: service.name ?? service.id
+                        )
+                    } label: {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(service.name ?? service.id)
+                            Text(summary(of: service.overrides))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                if store.hasMoreOverrides {
+                    Button("Show More") { Task { await store.loadMoreOverrides() } }
+                        .disabled(store.isLoadingOverrides)
+                }
+            } else if store.overridesErrorMessage == nil {
+                ProgressView().frame(maxWidth: .infinity)
+            }
+        } header: {
+            Text("Services With Their Own Settings")
+        } footer: {
+            Text("Change these from a service's Render Notifications screen.")
+        }
+    }
+
+    /// Only the fields the service overrides, e.g. "Every event · Previews off".
+    private func summary(of overrides: ServiceNotificationOverrides) -> String {
+        var parts: [String] = []
+        if case .level(let level) = overrides.notificationsToSend { parts.append(level.displayName) }
+        switch overrides.previewNotifications {
+        case .on: parts.append("Previews on")
+        case .off: parts.append("Previews off")
+        case .workspaceDefault: break
+        }
+        return parts.joined(separator: " · ")
     }
 
     // MARK: - Bindings
