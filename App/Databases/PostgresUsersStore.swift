@@ -61,6 +61,10 @@ final class PostgresUsersStore {
 
     private let client: RenderClient
     let postgresID: String
+    /// Bumped by every load and by every write, when it starts and when it ends. A load applies its
+    /// result only while its generation is still current, so a refresh that overlaps an add or delete
+    /// can't bring back a deleted row or an old default.
+    private var listGeneration = 0
 
     init(client: RenderClient, postgresID: String) {
         self.client = client
@@ -81,10 +85,13 @@ final class PostgresUsersStore {
     }
 
     func load() async {
+        listGeneration += 1
+        let generation = listGeneration
         do {
             let listed = try await client.api
                 .listPostgresUsers(path: .init(postgresId: postgresID))
                 .ok.body.json
+            guard generation == listGeneration else { return }
             users = listed
                 .compactMap { user in
                     user.username.map {
@@ -102,6 +109,7 @@ final class PostgresUsersStore {
                 }
             errorMessage = nil
         } catch {
+            guard generation == listGeneration else { return }
             errorMessage = Self.message(for: error)
         }
         hasLoaded = true
@@ -113,6 +121,7 @@ final class PostgresUsersStore {
         guard writeInFlight == nil, validationMessage(forNewUsername: username) == nil else { return false }
         writeInFlight = username
         actionResult = nil
+        listGeneration += 1
         defer { writeInFlight = nil }
 
         do {
@@ -120,6 +129,7 @@ final class PostgresUsersStore {
                 path: .init(postgresId: postgresID),
                 body: .json(.init(username: username))
             ).expectSuccess()
+            listGeneration += 1
             actionResult = ActionResult(
                 message: "Added \(username). It's now the default user, and the connection details use it.",
                 isFailure: false
@@ -127,6 +137,7 @@ final class PostgresUsersStore {
             await load()
             return true
         } catch {
+            listGeneration += 1
             actionResult = ActionResult(message: Self.message(for: error), isFailure: true)
             return false
         }
@@ -137,12 +148,14 @@ final class PostgresUsersStore {
         guard writeInFlight == nil, !user.isDefault else { return }
         writeInFlight = user.username
         actionResult = nil
+        listGeneration += 1
         defer { writeInFlight = nil }
 
         do {
             try await client.api.deletePostgresUser(
                 path: .init(postgresId: postgresID, username: user.username)
             ).expectSuccess()
+            listGeneration += 1
             users.removeAll { $0.username == user.username }
             actionResult = ActionResult(message: "Deleted \(user.username).", isFailure: false)
         } catch {

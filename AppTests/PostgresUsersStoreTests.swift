@@ -21,6 +21,16 @@ struct PostgresUsersStoreTests {
         private var _create: (Int, String) = (201, "{}")
         private var _delete: (Int, String) = (204, "")
         private var _createBodies: [[String: String]] = []
+        private var _listGate: Gate?
+        private var _createGate: Gate?
+
+        /// Holds the next list read, after it has taken its answer, until the gate opens.
+        func holdNextList(at gate: Gate) { lock.withLock { _listGate = gate } }
+        func takeListGate() -> Gate? { lock.withLock { defer { _listGate = nil }; return _listGate } }
+
+        /// Holds the next create, before it's answered, until the gate opens.
+        func holdNextCreate(at gate: Gate) { lock.withLock { _createGate = gate } }
+        func takeCreateGate() -> Gate? { lock.withLock { defer { _createGate = nil }; return _createGate } }
 
         var list: (Int, String) {
             get { lock.withLock { _list } }
@@ -43,6 +53,33 @@ struct PostgresUsersStoreTests {
         }
     }
 
+    /// Lets a test hold a request in flight and know when it got there.
+    private actor Gate {
+        private var entered = false
+        private var isOpen = false
+        private var enteredWaiters: [CheckedContinuation<Void, Never>] = []
+        private var openWaiter: CheckedContinuation<Void, Never>?
+
+        func hold() async {
+            entered = true
+            enteredWaiters.forEach { $0.resume() }
+            enteredWaiters = []
+            guard !isOpen else { return }
+            await withCheckedContinuation { openWaiter = $0 }
+        }
+
+        func waitUntilEntered() async {
+            guard !entered else { return }
+            await withCheckedContinuation { enteredWaiters.append($0) }
+        }
+
+        func open() {
+            isOpen = true
+            openWaiter?.resume()
+            openWaiter = nil
+        }
+    }
+
     private nonisolated static func listJSON(_ users: [(String, Bool, String, Int)]) -> String {
         "[" + users.map {
             #"{"username":"\#($0.0)","default":\#($0.1),"createdAt":"\#($0.2)","openConnections":\#($0.3)}"#
@@ -58,11 +95,13 @@ struct PostgresUsersStoreTests {
                 var data = Data()
                 if let body { data = try await Data(collecting: body, upTo: 4096) }
                 backend.createBodies.append((try? JSONSerialization.jsonObject(with: data) as? [String: String]) ?? [:])
+                if let gate = backend.takeCreateGate() { await gate.hold() }
                 answer = backend.create
             case .delete:
                 answer = backend.delete
             default:
                 answer = backend.list
+                if let gate = backend.takeListGate() { await gate.hold() }
             }
             var response = HTTPResponse(status: .init(code: answer.0))
             response.headerFields = [.contentType: "application/json"]
@@ -213,5 +252,64 @@ struct PostgresUsersStoreTests {
 
         #expect(store.users.map(\.username) == ["app_v2", "app_user"])
         #expect(store.actionResult?.message == "Cannot delete unmanaged credential.")
+    }
+
+    // MARK: - Overlapping refreshes
+
+    @Test("a refresh that started before a delete can't bring the deleted row back")
+    func staleRefreshAfterDelete() async throws {
+        let backend = Backend()
+        backend.list = (200, Self.listJSON([
+            ("app_v2", true, "2026-11-17T02:00:00Z", 0),
+            ("app_user", false, "2026-11-17T01:47:24.91181Z", 0),
+        ]))
+        let (store, _) = store(backend)
+        await store.load()
+        let old = try #require(store.users.first { $0.username == "app_user" })
+
+        // The refresh reads the list with app_user still in it, and is held.
+        let gate = Gate()
+        backend.holdNextList(at: gate)
+        let refresh = Task { await store.load() }
+        await gate.waitUntilEntered()
+
+        await store.delete(old)
+        #expect(store.users.map(\.username) == ["app_v2"])
+
+        await gate.open()
+        await refresh.value
+        #expect(store.users.map(\.username) == ["app_v2"], "the older list must not win")
+    }
+
+    @Test("a refresh that started during an add can't replace the new default")
+    func refreshDuringAdd() async {
+        let backend = Backend()
+        let (store, _) = store(backend)
+        await store.load()
+
+        // The create is held before Render answers it.
+        let createGate = Gate()
+        backend.holdNextCreate(at: createGate)
+        let add = Task { await store.add(username: "app_v2") }
+        await createGate.waitUntilEntered()
+
+        // A refresh starts mid-add, reads the list from before it, and is held.
+        let listGate = Gate()
+        backend.holdNextList(at: listGate)
+        let refresh = Task { await store.load() }
+        await listGate.waitUntilEntered()
+
+        backend.list = (200, Self.listJSON([
+            ("app_v2", true, "2026-11-17T02:00:00Z", 0),
+            ("app_user", false, "2026-11-17T01:47:24.91181Z", 2),
+        ]))
+        await createGate.open()
+        _ = await add.value
+        #expect(store.defaultUser?.username == "app_v2")
+
+        await listGate.open()
+        await refresh.value
+        #expect(store.defaultUser?.username == "app_v2", "the refresh that started mid-add must not win")
+        #expect(store.users.count == 2)
     }
 }
