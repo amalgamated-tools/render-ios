@@ -67,6 +67,11 @@ echo "==> Making Postgres recovery status free text"
 # PostgresRecovery maps the raw string itself, treating unknown values as unavailable. See the script.
 python3 "$REPO_ROOT/Scripts/freeform-recovery-status.py" "$SPEC"
 
+echo "==> Making webhook responses decode what Render sends"
+# A webhook with no filter comes back as `eventFilter: null`, and event types are an open set Render
+# adds to. Either would fail the whole webhook list or delivery history. See the script.
+python3 "$REPO_ROOT/Scripts/webhook-quirks.py" "$SPEC"
+
 echo "==> Correcting the metrics endpoints the spec misdescribes"
 # bandwidth-sources returns the ordinary time-series array, not the envelope the spec describes;
 # the filter endpoints reject parameters the spec declares (and require one it deprecates). See

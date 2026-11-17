@@ -24,6 +24,7 @@ struct WorkspaceScreen: View {
     @State private var servicesPath = NavigationPath()
     @State private var selectedTab: WorkspaceTab = .services
     @State private var isShowingNotificationSettings = false
+    @State private var isShowingWebhooks = false
     @Environment(NotificationRouter.self) private var router
 
     private enum WorkspaceTab: Hashable {
@@ -85,6 +86,9 @@ struct WorkspaceScreen: View {
         .sheet(isPresented: $isShowingNotificationSettings) {
             NotificationSettingsView(client: client, ownerID: ownerID)
         }
+        .sheet(isPresented: $isShowingWebhooks) {
+            WebhooksView(client: client, ownerID: ownerID)
+        }
     }
 
     /// Navigates to whatever a tapped notification asked for.
@@ -145,6 +149,9 @@ struct WorkspaceScreen: View {
             }
             Button("Notifications", systemImage: "bell") {
                 isShowingNotificationSettings = true
+            }
+            Button("Webhooks", systemImage: "point.3.connected.trianglepath.dotted") {
+                isShowingWebhooks = true
             }
             // Clearing the watchlist is `AuthStore`'s job, via `onSessionEnded` — doing it here
             // would only cover the sessions that end because someone tapped this.

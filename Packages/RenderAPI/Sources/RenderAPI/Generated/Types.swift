@@ -16239,85 +16239,10 @@ public enum Components {
                 public var secret: Swift.String
                 /// - Remark: Generated from `#/components/schemas/webhookWithCursor/webhook/enabled`.
                 public var enabled: Swift.Bool
-                /// - Remark: Generated from `#/components/schemas/webhookWithCursor/webhook/EventFilterPayload`.
-                @frozen public enum EventFilterPayloadPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                    case artifactFetchFailed = "artifact_fetch_failed"
-                    case artifactSourceChanged = "artifact_source_changed"
-                    case autoscalingConfigChanged = "autoscaling_config_changed"
-                    case autoscalingEnded = "autoscaling_ended"
-                    case autoscalingStarted = "autoscaling_started"
-                    case branchDeleted = "branch_deleted"
-                    case buildEnded = "build_ended"
-                    case buildStarted = "build_started"
-                    case commitIgnored = "commit_ignored"
-                    case cronJobRunEnded = "cron_job_run_ended"
-                    case cronJobRunStarted = "cron_job_run_started"
-                    case deployEnded = "deploy_ended"
-                    case deployStarted = "deploy_started"
-                    case diskCreated = "disk_created"
-                    case diskUpdated = "disk_updated"
-                    case diskDeleted = "disk_deleted"
-                    case diskSnapshotRestored = "disk_snapshot_restored"
-                    case imagePullFailed = "image_pull_failed"
-                    case instanceCountChanged = "instance_count_changed"
-                    case jobRunEnded = "job_run_ended"
-                    case maintenanceModeEnabled = "maintenance_mode_enabled"
-                    case maintenanceModeUriUpdated = "maintenance_mode_uri_updated"
-                    case maintenanceEnded = "maintenance_ended"
-                    case maintenanceStarted = "maintenance_started"
-                    case pipelineMinutesExhausted = "pipeline_minutes_exhausted"
-                    case planChanged = "plan_changed"
-                    case preDeployEnded = "pre_deploy_ended"
-                    case preDeployStarted = "pre_deploy_started"
-                    case serverAvailable = "server_available"
-                    case serverFailed = "server_failed"
-                    case serverHardwareFailure = "server_hardware_failure"
-                    case serverRestarted = "server_restarted"
-                    case serviceResumed = "service_resumed"
-                    case serviceSuspended = "service_suspended"
-                    case zeroDowntimeRedeployEnded = "zero_downtime_redeploy_ended"
-                    case zeroDowntimeRedeployStarted = "zero_downtime_redeploy_started"
-                    case edgeCacheEnabled = "edge_cache_enabled"
-                    case edgeCacheDisabled = "edge_cache_disabled"
-                    case edgeCachePurged = "edge_cache_purged"
-                    case autoDeployDisabled = "auto_deploy_disabled"
-                    case autoDeployEnabled = "auto_deploy_enabled"
-                    case postgresAvailable = "postgres_available"
-                    case postgresBackupCompleted = "postgres_backup_completed"
-                    case postgresBackupFailed = "postgres_backup_failed"
-                    case postgresBackupStarted = "postgres_backup_started"
-                    case postgresClusterLeaderChanged = "postgres_cluster_leader_changed"
-                    case postgresConnectionPoolChanged = "postgres_connection_pool_changed"
-                    case postgresConnectionPoolEnabledChanged = "postgres_connection_pool_enabled_changed"
-                    case postgresCreated = "postgres_created"
-                    case postgresDiskSizeChanged = "postgres_disk_size_changed"
-                    case postgresDiskAutoscalingEnabledChanged = "postgres_disk_autoscaling_enabled_changed"
-                    case postgresHaStatusChanged = "postgres_ha_status_changed"
-                    case postgresRestarted = "postgres_restarted"
-                    case postgresUnavailable = "postgres_unavailable"
-                    case postgresUpgradeFailed = "postgres_upgrade_failed"
-                    case postgresUpgradeStarted = "postgres_upgrade_started"
-                    case postgresUpgradeSucceeded = "postgres_upgrade_succeeded"
-                    case postgresRestoreFailed = "postgres_restore_failed"
-                    case postgresRestoreSucceeded = "postgres_restore_succeeded"
-                    case postgresReadReplicasChanged = "postgres_read_replicas_changed"
-                    case postgresPitrCheckpointStarted = "postgres_pitr_checkpoint_started"
-                    case postgresPitrCheckpointFailed = "postgres_pitr_checkpoint_failed"
-                    case postgresPitrCheckpointCompleted = "postgres_pitr_checkpoint_completed"
-                    case postgresReadReplicaStale = "postgres_read_replica_stale"
-                    case postgresWalArchiveFailed = "postgres_wal_archive_failed"
-                    case keyValueAvailable = "key_value_available"
-                    case keyValueConfigRestart = "key_value_config_restart"
-                    case keyValueUnhealthy = "key_value_unhealthy"
-                }
                 /// The event types that will trigger the webhook. An empty list means all event types will trigger the webhook.
                 ///
                 /// - Remark: Generated from `#/components/schemas/webhookWithCursor/webhook/eventFilter`.
-                public typealias EventFilterPayload = [Components.Schemas.WebhookWithCursor.WebhookPayload.EventFilterPayloadPayload]
-                /// The event types that will trigger the webhook. An empty list means all event types will trigger the webhook.
-                ///
-                /// - Remark: Generated from `#/components/schemas/webhookWithCursor/webhook/eventFilter`.
-                public var eventFilter: Components.Schemas.WebhookWithCursor.WebhookPayload.EventFilterPayload
+                public var eventFilter: [Swift.String]?
                 /// Creates a new `WebhookPayload`.
                 ///
                 /// - Parameters:
@@ -16333,7 +16258,7 @@ public enum Components {
                     name: Swift.String,
                     secret: Swift.String,
                     enabled: Swift.Bool,
-                    eventFilter: Components.Schemas.WebhookWithCursor.WebhookPayload.EventFilterPayload
+                    eventFilter: [Swift.String]? = nil
                 ) {
                     self.id = id
                     self.url = url
@@ -16384,79 +16309,10 @@ public enum Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/webhookEventWithCursor/webhookEvent/eventId`.
                 public var eventId: Swift.String
+                /// The type of the event delivered. Free text: see Scripts/webhook-quirks.py.
+                ///
                 /// - Remark: Generated from `#/components/schemas/webhookEventWithCursor/webhookEvent/eventType`.
-                @frozen public enum EventTypePayload: String, Codable, Hashable, Sendable, CaseIterable {
-                    case artifactFetchFailed = "artifact_fetch_failed"
-                    case artifactSourceChanged = "artifact_source_changed"
-                    case autoscalingConfigChanged = "autoscaling_config_changed"
-                    case autoscalingEnded = "autoscaling_ended"
-                    case autoscalingStarted = "autoscaling_started"
-                    case branchDeleted = "branch_deleted"
-                    case buildEnded = "build_ended"
-                    case buildStarted = "build_started"
-                    case commitIgnored = "commit_ignored"
-                    case cronJobRunEnded = "cron_job_run_ended"
-                    case cronJobRunStarted = "cron_job_run_started"
-                    case deployEnded = "deploy_ended"
-                    case deployStarted = "deploy_started"
-                    case diskCreated = "disk_created"
-                    case diskUpdated = "disk_updated"
-                    case diskDeleted = "disk_deleted"
-                    case diskSnapshotRestored = "disk_snapshot_restored"
-                    case imagePullFailed = "image_pull_failed"
-                    case instanceCountChanged = "instance_count_changed"
-                    case jobRunEnded = "job_run_ended"
-                    case maintenanceModeEnabled = "maintenance_mode_enabled"
-                    case maintenanceModeUriUpdated = "maintenance_mode_uri_updated"
-                    case maintenanceEnded = "maintenance_ended"
-                    case maintenanceStarted = "maintenance_started"
-                    case pipelineMinutesExhausted = "pipeline_minutes_exhausted"
-                    case planChanged = "plan_changed"
-                    case preDeployEnded = "pre_deploy_ended"
-                    case preDeployStarted = "pre_deploy_started"
-                    case serverAvailable = "server_available"
-                    case serverFailed = "server_failed"
-                    case serverHardwareFailure = "server_hardware_failure"
-                    case serverRestarted = "server_restarted"
-                    case serviceResumed = "service_resumed"
-                    case serviceSuspended = "service_suspended"
-                    case zeroDowntimeRedeployEnded = "zero_downtime_redeploy_ended"
-                    case zeroDowntimeRedeployStarted = "zero_downtime_redeploy_started"
-                    case edgeCacheEnabled = "edge_cache_enabled"
-                    case edgeCacheDisabled = "edge_cache_disabled"
-                    case edgeCachePurged = "edge_cache_purged"
-                    case autoDeployDisabled = "auto_deploy_disabled"
-                    case autoDeployEnabled = "auto_deploy_enabled"
-                    case postgresAvailable = "postgres_available"
-                    case postgresBackupCompleted = "postgres_backup_completed"
-                    case postgresBackupFailed = "postgres_backup_failed"
-                    case postgresBackupStarted = "postgres_backup_started"
-                    case postgresClusterLeaderChanged = "postgres_cluster_leader_changed"
-                    case postgresConnectionPoolChanged = "postgres_connection_pool_changed"
-                    case postgresConnectionPoolEnabledChanged = "postgres_connection_pool_enabled_changed"
-                    case postgresCreated = "postgres_created"
-                    case postgresDiskSizeChanged = "postgres_disk_size_changed"
-                    case postgresDiskAutoscalingEnabledChanged = "postgres_disk_autoscaling_enabled_changed"
-                    case postgresHaStatusChanged = "postgres_ha_status_changed"
-                    case postgresRestarted = "postgres_restarted"
-                    case postgresUnavailable = "postgres_unavailable"
-                    case postgresUpgradeFailed = "postgres_upgrade_failed"
-                    case postgresUpgradeStarted = "postgres_upgrade_started"
-                    case postgresUpgradeSucceeded = "postgres_upgrade_succeeded"
-                    case postgresRestoreFailed = "postgres_restore_failed"
-                    case postgresRestoreSucceeded = "postgres_restore_succeeded"
-                    case postgresReadReplicasChanged = "postgres_read_replicas_changed"
-                    case postgresPitrCheckpointStarted = "postgres_pitr_checkpoint_started"
-                    case postgresPitrCheckpointFailed = "postgres_pitr_checkpoint_failed"
-                    case postgresPitrCheckpointCompleted = "postgres_pitr_checkpoint_completed"
-                    case postgresReadReplicaStale = "postgres_read_replica_stale"
-                    case postgresWalArchiveFailed = "postgres_wal_archive_failed"
-                    case keyValueAvailable = "key_value_available"
-                    case keyValueConfigRestart = "key_value_config_restart"
-                    case keyValueUnhealthy = "key_value_unhealthy"
-                }
-                /// - Remark: Generated from `#/components/schemas/webhookEventWithCursor/webhookEvent/eventType`.
-                public var eventType: Components.Schemas.WebhookEventWithCursor.WebhookEventPayload.EventTypePayload
+                public var eventType: Swift.String
                 /// - Remark: Generated from `#/components/schemas/webhookEventWithCursor/webhookEvent/sentAt`.
                 public var sentAt: Foundation.Date
                 /// - Remark: Generated from `#/components/schemas/webhookEventWithCursor/webhookEvent/statusCode`.
@@ -16472,7 +16328,7 @@ public enum Components {
                 /// - Parameters:
                 ///   - id: the id of the webhook event
                 ///   - eventId: the id of the event that triggered the webhook
-                ///   - eventType:
+                ///   - eventType: The type of the event delivered. Free text: see Scripts/webhook-quirks.py.
                 ///   - sentAt:
                 ///   - statusCode:
                 ///   - responseBody:
@@ -16480,7 +16336,7 @@ public enum Components {
                 public init(
                     id: Swift.String,
                     eventId: Swift.String,
-                    eventType: Components.Schemas.WebhookEventWithCursor.WebhookEventPayload.EventTypePayload,
+                    eventType: Swift.String,
                     sentAt: Foundation.Date,
                     statusCode: Swift.Int? = nil,
                     responseBody: Swift.String? = nil,
@@ -88480,85 +88336,10 @@ public enum Operations {
                         public var secret: Swift.String
                         /// - Remark: Generated from `#/paths/webhooks/POST/responses/201/content/json/enabled`.
                         public var enabled: Swift.Bool
-                        /// - Remark: Generated from `#/paths/webhooks/POST/responses/201/content/json/EventFilterPayload`.
-                        @frozen public enum EventFilterPayloadPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                            case artifactFetchFailed = "artifact_fetch_failed"
-                            case artifactSourceChanged = "artifact_source_changed"
-                            case autoscalingConfigChanged = "autoscaling_config_changed"
-                            case autoscalingEnded = "autoscaling_ended"
-                            case autoscalingStarted = "autoscaling_started"
-                            case branchDeleted = "branch_deleted"
-                            case buildEnded = "build_ended"
-                            case buildStarted = "build_started"
-                            case commitIgnored = "commit_ignored"
-                            case cronJobRunEnded = "cron_job_run_ended"
-                            case cronJobRunStarted = "cron_job_run_started"
-                            case deployEnded = "deploy_ended"
-                            case deployStarted = "deploy_started"
-                            case diskCreated = "disk_created"
-                            case diskUpdated = "disk_updated"
-                            case diskDeleted = "disk_deleted"
-                            case diskSnapshotRestored = "disk_snapshot_restored"
-                            case imagePullFailed = "image_pull_failed"
-                            case instanceCountChanged = "instance_count_changed"
-                            case jobRunEnded = "job_run_ended"
-                            case maintenanceModeEnabled = "maintenance_mode_enabled"
-                            case maintenanceModeUriUpdated = "maintenance_mode_uri_updated"
-                            case maintenanceEnded = "maintenance_ended"
-                            case maintenanceStarted = "maintenance_started"
-                            case pipelineMinutesExhausted = "pipeline_minutes_exhausted"
-                            case planChanged = "plan_changed"
-                            case preDeployEnded = "pre_deploy_ended"
-                            case preDeployStarted = "pre_deploy_started"
-                            case serverAvailable = "server_available"
-                            case serverFailed = "server_failed"
-                            case serverHardwareFailure = "server_hardware_failure"
-                            case serverRestarted = "server_restarted"
-                            case serviceResumed = "service_resumed"
-                            case serviceSuspended = "service_suspended"
-                            case zeroDowntimeRedeployEnded = "zero_downtime_redeploy_ended"
-                            case zeroDowntimeRedeployStarted = "zero_downtime_redeploy_started"
-                            case edgeCacheEnabled = "edge_cache_enabled"
-                            case edgeCacheDisabled = "edge_cache_disabled"
-                            case edgeCachePurged = "edge_cache_purged"
-                            case autoDeployDisabled = "auto_deploy_disabled"
-                            case autoDeployEnabled = "auto_deploy_enabled"
-                            case postgresAvailable = "postgres_available"
-                            case postgresBackupCompleted = "postgres_backup_completed"
-                            case postgresBackupFailed = "postgres_backup_failed"
-                            case postgresBackupStarted = "postgres_backup_started"
-                            case postgresClusterLeaderChanged = "postgres_cluster_leader_changed"
-                            case postgresConnectionPoolChanged = "postgres_connection_pool_changed"
-                            case postgresConnectionPoolEnabledChanged = "postgres_connection_pool_enabled_changed"
-                            case postgresCreated = "postgres_created"
-                            case postgresDiskSizeChanged = "postgres_disk_size_changed"
-                            case postgresDiskAutoscalingEnabledChanged = "postgres_disk_autoscaling_enabled_changed"
-                            case postgresHaStatusChanged = "postgres_ha_status_changed"
-                            case postgresRestarted = "postgres_restarted"
-                            case postgresUnavailable = "postgres_unavailable"
-                            case postgresUpgradeFailed = "postgres_upgrade_failed"
-                            case postgresUpgradeStarted = "postgres_upgrade_started"
-                            case postgresUpgradeSucceeded = "postgres_upgrade_succeeded"
-                            case postgresRestoreFailed = "postgres_restore_failed"
-                            case postgresRestoreSucceeded = "postgres_restore_succeeded"
-                            case postgresReadReplicasChanged = "postgres_read_replicas_changed"
-                            case postgresPitrCheckpointStarted = "postgres_pitr_checkpoint_started"
-                            case postgresPitrCheckpointFailed = "postgres_pitr_checkpoint_failed"
-                            case postgresPitrCheckpointCompleted = "postgres_pitr_checkpoint_completed"
-                            case postgresReadReplicaStale = "postgres_read_replica_stale"
-                            case postgresWalArchiveFailed = "postgres_wal_archive_failed"
-                            case keyValueAvailable = "key_value_available"
-                            case keyValueConfigRestart = "key_value_config_restart"
-                            case keyValueUnhealthy = "key_value_unhealthy"
-                        }
                         /// The event types that will trigger the webhook. An empty list means all event types will trigger the webhook.
                         ///
                         /// - Remark: Generated from `#/paths/webhooks/POST/responses/201/content/json/eventFilter`.
-                        public typealias EventFilterPayload = [Operations.CreateWebhook.Output.Created.Body.JsonPayload.EventFilterPayloadPayload]
-                        /// The event types that will trigger the webhook. An empty list means all event types will trigger the webhook.
-                        ///
-                        /// - Remark: Generated from `#/paths/webhooks/POST/responses/201/content/json/eventFilter`.
-                        public var eventFilter: Operations.CreateWebhook.Output.Created.Body.JsonPayload.EventFilterPayload
+                        public var eventFilter: [Swift.String]?
                         /// Creates a new `JsonPayload`.
                         ///
                         /// - Parameters:
@@ -88574,7 +88355,7 @@ public enum Operations {
                             name: Swift.String,
                             secret: Swift.String,
                             enabled: Swift.Bool,
-                            eventFilter: Operations.CreateWebhook.Output.Created.Body.JsonPayload.EventFilterPayload
+                            eventFilter: [Swift.String]? = nil
                         ) {
                             self.id = id
                             self.url = url
@@ -88877,85 +88658,10 @@ public enum Operations {
                         public var secret: Swift.String
                         /// - Remark: Generated from `#/paths/webhooks/{webhookId}/GET/responses/200/content/json/enabled`.
                         public var enabled: Swift.Bool
-                        /// - Remark: Generated from `#/paths/webhooks/{webhookId}/GET/responses/200/content/json/EventFilterPayload`.
-                        @frozen public enum EventFilterPayloadPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                            case artifactFetchFailed = "artifact_fetch_failed"
-                            case artifactSourceChanged = "artifact_source_changed"
-                            case autoscalingConfigChanged = "autoscaling_config_changed"
-                            case autoscalingEnded = "autoscaling_ended"
-                            case autoscalingStarted = "autoscaling_started"
-                            case branchDeleted = "branch_deleted"
-                            case buildEnded = "build_ended"
-                            case buildStarted = "build_started"
-                            case commitIgnored = "commit_ignored"
-                            case cronJobRunEnded = "cron_job_run_ended"
-                            case cronJobRunStarted = "cron_job_run_started"
-                            case deployEnded = "deploy_ended"
-                            case deployStarted = "deploy_started"
-                            case diskCreated = "disk_created"
-                            case diskUpdated = "disk_updated"
-                            case diskDeleted = "disk_deleted"
-                            case diskSnapshotRestored = "disk_snapshot_restored"
-                            case imagePullFailed = "image_pull_failed"
-                            case instanceCountChanged = "instance_count_changed"
-                            case jobRunEnded = "job_run_ended"
-                            case maintenanceModeEnabled = "maintenance_mode_enabled"
-                            case maintenanceModeUriUpdated = "maintenance_mode_uri_updated"
-                            case maintenanceEnded = "maintenance_ended"
-                            case maintenanceStarted = "maintenance_started"
-                            case pipelineMinutesExhausted = "pipeline_minutes_exhausted"
-                            case planChanged = "plan_changed"
-                            case preDeployEnded = "pre_deploy_ended"
-                            case preDeployStarted = "pre_deploy_started"
-                            case serverAvailable = "server_available"
-                            case serverFailed = "server_failed"
-                            case serverHardwareFailure = "server_hardware_failure"
-                            case serverRestarted = "server_restarted"
-                            case serviceResumed = "service_resumed"
-                            case serviceSuspended = "service_suspended"
-                            case zeroDowntimeRedeployEnded = "zero_downtime_redeploy_ended"
-                            case zeroDowntimeRedeployStarted = "zero_downtime_redeploy_started"
-                            case edgeCacheEnabled = "edge_cache_enabled"
-                            case edgeCacheDisabled = "edge_cache_disabled"
-                            case edgeCachePurged = "edge_cache_purged"
-                            case autoDeployDisabled = "auto_deploy_disabled"
-                            case autoDeployEnabled = "auto_deploy_enabled"
-                            case postgresAvailable = "postgres_available"
-                            case postgresBackupCompleted = "postgres_backup_completed"
-                            case postgresBackupFailed = "postgres_backup_failed"
-                            case postgresBackupStarted = "postgres_backup_started"
-                            case postgresClusterLeaderChanged = "postgres_cluster_leader_changed"
-                            case postgresConnectionPoolChanged = "postgres_connection_pool_changed"
-                            case postgresConnectionPoolEnabledChanged = "postgres_connection_pool_enabled_changed"
-                            case postgresCreated = "postgres_created"
-                            case postgresDiskSizeChanged = "postgres_disk_size_changed"
-                            case postgresDiskAutoscalingEnabledChanged = "postgres_disk_autoscaling_enabled_changed"
-                            case postgresHaStatusChanged = "postgres_ha_status_changed"
-                            case postgresRestarted = "postgres_restarted"
-                            case postgresUnavailable = "postgres_unavailable"
-                            case postgresUpgradeFailed = "postgres_upgrade_failed"
-                            case postgresUpgradeStarted = "postgres_upgrade_started"
-                            case postgresUpgradeSucceeded = "postgres_upgrade_succeeded"
-                            case postgresRestoreFailed = "postgres_restore_failed"
-                            case postgresRestoreSucceeded = "postgres_restore_succeeded"
-                            case postgresReadReplicasChanged = "postgres_read_replicas_changed"
-                            case postgresPitrCheckpointStarted = "postgres_pitr_checkpoint_started"
-                            case postgresPitrCheckpointFailed = "postgres_pitr_checkpoint_failed"
-                            case postgresPitrCheckpointCompleted = "postgres_pitr_checkpoint_completed"
-                            case postgresReadReplicaStale = "postgres_read_replica_stale"
-                            case postgresWalArchiveFailed = "postgres_wal_archive_failed"
-                            case keyValueAvailable = "key_value_available"
-                            case keyValueConfigRestart = "key_value_config_restart"
-                            case keyValueUnhealthy = "key_value_unhealthy"
-                        }
                         /// The event types that will trigger the webhook. An empty list means all event types will trigger the webhook.
                         ///
                         /// - Remark: Generated from `#/paths/webhooks/{webhookId}/GET/responses/200/content/json/eventFilter`.
-                        public typealias EventFilterPayload = [Operations.RetrieveWebhook.Output.Ok.Body.JsonPayload.EventFilterPayloadPayload]
-                        /// The event types that will trigger the webhook. An empty list means all event types will trigger the webhook.
-                        ///
-                        /// - Remark: Generated from `#/paths/webhooks/{webhookId}/GET/responses/200/content/json/eventFilter`.
-                        public var eventFilter: Operations.RetrieveWebhook.Output.Ok.Body.JsonPayload.EventFilterPayload
+                        public var eventFilter: [Swift.String]?
                         /// Creates a new `JsonPayload`.
                         ///
                         /// - Parameters:
@@ -88971,7 +88677,7 @@ public enum Operations {
                             name: Swift.String,
                             secret: Swift.String,
                             enabled: Swift.Bool,
-                            eventFilter: Operations.RetrieveWebhook.Output.Ok.Body.JsonPayload.EventFilterPayload
+                            eventFilter: [Swift.String]? = nil
                         ) {
                             self.id = id
                             self.url = url
@@ -89373,85 +89079,10 @@ public enum Operations {
                         public var secret: Swift.String
                         /// - Remark: Generated from `#/paths/webhooks/{webhookId}/PATCH/responses/200/content/json/enabled`.
                         public var enabled: Swift.Bool
-                        /// - Remark: Generated from `#/paths/webhooks/{webhookId}/PATCH/responses/200/content/json/EventFilterPayload`.
-                        @frozen public enum EventFilterPayloadPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                            case artifactFetchFailed = "artifact_fetch_failed"
-                            case artifactSourceChanged = "artifact_source_changed"
-                            case autoscalingConfigChanged = "autoscaling_config_changed"
-                            case autoscalingEnded = "autoscaling_ended"
-                            case autoscalingStarted = "autoscaling_started"
-                            case branchDeleted = "branch_deleted"
-                            case buildEnded = "build_ended"
-                            case buildStarted = "build_started"
-                            case commitIgnored = "commit_ignored"
-                            case cronJobRunEnded = "cron_job_run_ended"
-                            case cronJobRunStarted = "cron_job_run_started"
-                            case deployEnded = "deploy_ended"
-                            case deployStarted = "deploy_started"
-                            case diskCreated = "disk_created"
-                            case diskUpdated = "disk_updated"
-                            case diskDeleted = "disk_deleted"
-                            case diskSnapshotRestored = "disk_snapshot_restored"
-                            case imagePullFailed = "image_pull_failed"
-                            case instanceCountChanged = "instance_count_changed"
-                            case jobRunEnded = "job_run_ended"
-                            case maintenanceModeEnabled = "maintenance_mode_enabled"
-                            case maintenanceModeUriUpdated = "maintenance_mode_uri_updated"
-                            case maintenanceEnded = "maintenance_ended"
-                            case maintenanceStarted = "maintenance_started"
-                            case pipelineMinutesExhausted = "pipeline_minutes_exhausted"
-                            case planChanged = "plan_changed"
-                            case preDeployEnded = "pre_deploy_ended"
-                            case preDeployStarted = "pre_deploy_started"
-                            case serverAvailable = "server_available"
-                            case serverFailed = "server_failed"
-                            case serverHardwareFailure = "server_hardware_failure"
-                            case serverRestarted = "server_restarted"
-                            case serviceResumed = "service_resumed"
-                            case serviceSuspended = "service_suspended"
-                            case zeroDowntimeRedeployEnded = "zero_downtime_redeploy_ended"
-                            case zeroDowntimeRedeployStarted = "zero_downtime_redeploy_started"
-                            case edgeCacheEnabled = "edge_cache_enabled"
-                            case edgeCacheDisabled = "edge_cache_disabled"
-                            case edgeCachePurged = "edge_cache_purged"
-                            case autoDeployDisabled = "auto_deploy_disabled"
-                            case autoDeployEnabled = "auto_deploy_enabled"
-                            case postgresAvailable = "postgres_available"
-                            case postgresBackupCompleted = "postgres_backup_completed"
-                            case postgresBackupFailed = "postgres_backup_failed"
-                            case postgresBackupStarted = "postgres_backup_started"
-                            case postgresClusterLeaderChanged = "postgres_cluster_leader_changed"
-                            case postgresConnectionPoolChanged = "postgres_connection_pool_changed"
-                            case postgresConnectionPoolEnabledChanged = "postgres_connection_pool_enabled_changed"
-                            case postgresCreated = "postgres_created"
-                            case postgresDiskSizeChanged = "postgres_disk_size_changed"
-                            case postgresDiskAutoscalingEnabledChanged = "postgres_disk_autoscaling_enabled_changed"
-                            case postgresHaStatusChanged = "postgres_ha_status_changed"
-                            case postgresRestarted = "postgres_restarted"
-                            case postgresUnavailable = "postgres_unavailable"
-                            case postgresUpgradeFailed = "postgres_upgrade_failed"
-                            case postgresUpgradeStarted = "postgres_upgrade_started"
-                            case postgresUpgradeSucceeded = "postgres_upgrade_succeeded"
-                            case postgresRestoreFailed = "postgres_restore_failed"
-                            case postgresRestoreSucceeded = "postgres_restore_succeeded"
-                            case postgresReadReplicasChanged = "postgres_read_replicas_changed"
-                            case postgresPitrCheckpointStarted = "postgres_pitr_checkpoint_started"
-                            case postgresPitrCheckpointFailed = "postgres_pitr_checkpoint_failed"
-                            case postgresPitrCheckpointCompleted = "postgres_pitr_checkpoint_completed"
-                            case postgresReadReplicaStale = "postgres_read_replica_stale"
-                            case postgresWalArchiveFailed = "postgres_wal_archive_failed"
-                            case keyValueAvailable = "key_value_available"
-                            case keyValueConfigRestart = "key_value_config_restart"
-                            case keyValueUnhealthy = "key_value_unhealthy"
-                        }
                         /// The event types that will trigger the webhook. An empty list means all event types will trigger the webhook.
                         ///
                         /// - Remark: Generated from `#/paths/webhooks/{webhookId}/PATCH/responses/200/content/json/eventFilter`.
-                        public typealias EventFilterPayload = [Operations.UpdateWebhook.Output.Ok.Body.JsonPayload.EventFilterPayloadPayload]
-                        /// The event types that will trigger the webhook. An empty list means all event types will trigger the webhook.
-                        ///
-                        /// - Remark: Generated from `#/paths/webhooks/{webhookId}/PATCH/responses/200/content/json/eventFilter`.
-                        public var eventFilter: Operations.UpdateWebhook.Output.Ok.Body.JsonPayload.EventFilterPayload
+                        public var eventFilter: [Swift.String]?
                         /// Creates a new `JsonPayload`.
                         ///
                         /// - Parameters:
@@ -89467,7 +89098,7 @@ public enum Operations {
                             name: Swift.String,
                             secret: Swift.String,
                             enabled: Swift.Bool,
-                            eventFilter: Operations.UpdateWebhook.Output.Ok.Body.JsonPayload.EventFilterPayload
+                            eventFilter: [Swift.String]? = nil
                         ) {
                             self.id = id
                             self.url = url
