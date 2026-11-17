@@ -197,6 +197,13 @@ struct PostgresDetailView: View {
             } label: {
                 Label("Backups", systemImage: "externaldrive.badge.timemachine")
             }
+            NavigationLink {
+                PostgresUsersView(client: client, postgresID: database.id, databaseName: database.name) {
+                    Task { await store.refresh() }
+                }
+            } label: {
+                Label("Users", systemImage: "person.2")
+            }
         }
     }
 

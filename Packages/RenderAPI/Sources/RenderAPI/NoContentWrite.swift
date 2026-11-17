@@ -96,3 +96,20 @@ extension Operations.DeleteRoute.Output: NoContentWrite {
         return nil
     }
 }
+
+// Postgres users: the spec documents `202` for a create and `200` for a delete. Live, Render answered
+// `201` (body `{}`) and `204`.
+
+extension Operations.CreatePostgresUser.Output: NoContentWrite {
+    public var undocumentedStatusCode: Int? {
+        if case .undocumented(let statusCode, _) = self { return statusCode }
+        return nil
+    }
+}
+
+extension Operations.DeletePostgresUser.Output: NoContentWrite {
+    public var undocumentedStatusCode: Int? {
+        if case .undocumented(let statusCode, _) = self { return statusCode }
+        return nil
+    }
+}
