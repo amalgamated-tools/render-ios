@@ -65,13 +65,16 @@ walkthrough-verify:
 
 ## archive: build a signed device archive for distribution (needs TEAM_ID=XXXXXXXXXX)
 .PHONY: archive
+# Automatic signing makes a development profile before the archive, and Apple only issues one to a
+# team with a registered device. -allowProvisioningDeviceRegistration registers a connected iPhone,
+# so on a new team, plug one in for the first archive.
 archive:
 	@test -n "$(TEAM_ID)" || { echo "TEAM_ID is unset — pass your 10-character Apple Team ID: make archive TEAM_ID=XXXXXXXXXX"; exit 1; }
 	xcodebuild -project RenderiOS.xcodeproj -scheme RenderiOS \
 	  -destination 'generic/platform=iOS' \
 	  -archivePath '$(ARCHIVE_PATH)' \
 	  DEVELOPMENT_TEAM='$(TEAM_ID)' \
-	  -allowProvisioningUpdates $(XCODEBUILD_FLAGS) archive
+	  -allowProvisioningUpdates -allowProvisioningDeviceRegistration $(XCODEBUILD_FLAGS) archive
 
 ## ipa: turn the archive into an .ipa ready to upload to TestFlight
 # Not called `export`: that's a GNU make directive, and a target sharing the name is ambiguous.
