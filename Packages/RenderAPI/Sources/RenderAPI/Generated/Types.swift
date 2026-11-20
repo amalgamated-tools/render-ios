@@ -6829,113 +6829,14 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/auditLog/timestamp`.
             public var timestamp: Foundation.Date
-            /// The type of event that occurred
+            /// The type of event, such as CreateServerEvent. Free text: see Scripts/workspace-quirks.py.
             ///
             /// - Remark: Generated from `#/components/schemas/auditLog/event`.
-            @frozen public enum EventPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case acceptOrgInviteEvent = "AcceptOrgInviteEvent"
-                case acceptTeamInviteEvent = "AcceptTeamInviteEvent"
-                case addOrgMemberEvent = "AddOrgMemberEvent"
-                case applyBlueprintEvent = "ApplyBlueprintEvent"
-                case changeEnvironmentProtectionEvent = "ChangeEnvironmentProtectionEvent"
-                case changeOrg2FAEnforcementEvent = "ChangeOrg2FAEnforcementEvent"
-                case changeOrgAllowedLoginMethodsEvent = "ChangeOrgAllowedLoginMethodsEvent"
-                case changeOrgNameEvent = "ChangeOrgNameEvent"
-                case changeOrgRoleEvent = "ChangeOrgRoleEvent"
-                case changeTeam2FAEnforcementEvent = "ChangeTeam2FAEnforcementEvent"
-                case changeTeamAllowedLoginMethodsEvent = "ChangeTeamAllowedLoginMethodsEvent"
-                case changeTeamMemberRoleEvent = "ChangeTeamMemberRoleEvent"
-                case changeWorkspaceDeployHandlingEvent = "ChangeWorkspaceDeployHandlingEvent"
-                case changeWorkspacePrivacyEvent = "ChangeWorkspacePrivacyEvent"
-                case createBuildSourceEvent = "CreateBuildSourceEvent"
-                case deleteBuildSourceEvent = "DeleteBuildSourceEvent"
-                case updateBuildSourceEvent = "UpdateBuildSourceEvent"
-                case createCronJobEvent = "CreateCronJobEvent"
-                case createEnvVarsEvent = "CreateEnvVarsEvent"
-                case createEnvironmentEvent = "CreateEnvironmentEvent"
-                case createOrgDomainEvent = "CreateOrgDomainEvent"
-                case createOtelIntegrationEvent = "CreateOtelIntegrationEvent"
-                case createPostgresEvent = "CreatePostgresEvent"
-                case createPrivateLinkEvent = "CreatePrivateLinkEvent"
-                case createProjectEvent = "CreateProjectEvent"
-                case createRedisEvent = "CreateRedisEvent"
-                case createSSOConnectionEvent = "CreateSSOConnectionEvent"
-                case createSavedSearchEvent = "CreateSavedSearchEvent"
-                case createServerDiskEvent = "CreateServerDiskEvent"
-                case createServerEvent = "CreateServerEvent"
-                case createWebhookEvent = "CreateWebhookEvent"
-                case createWorkspaceEvent = "CreateWorkspaceEvent"
-                case deleteCronJobEvent = "DeleteCronJobEvent"
-                case deleteEnvGroupEvent = "DeleteEnvGroupEvent"
-                case deleteEnvVarsEvent = "DeleteEnvVarsEvent"
-                case deleteEnvironmentEvent = "DeleteEnvironmentEvent"
-                case deleteOrgDomainEvent = "DeleteOrgDomainEvent"
-                case deleteOtelIntegrationEvent = "DeleteOtelIntegrationEvent"
-                case deletePostgresEvent = "DeletePostgresEvent"
-                case deletePrivateLinkEvent = "DeletePrivateLinkEvent"
-                case deleteProjectEvent = "DeleteProjectEvent"
-                case deleteRedisEvent = "DeleteRedisEvent"
-                case deleteSSOConnectionEvent = "DeleteSSOConnectionEvent"
-                case deleteSavedSearchEvent = "DeleteSavedSearchEvent"
-                case deleteServerDiskEvent = "DeleteServerDiskEvent"
-                case deleteServerEvent = "DeleteServerEvent"
-                case deleteWebhookEvent = "DeleteWebhookEvent"
-                case deleteWorkspaceEvent = "DeleteWorkspaceEvent"
-                case documentDownloadEvent = "DocumentDownloadEvent"
-                case downloadDatabaseBackupEvent = "DownloadDatabaseBackupEvent"
-                case enableRedisInternalAuthEvent = "EnableRedisInternalAuthEvent"
-                case inviteToOrgEvent = "InviteToOrgEvent"
-                case inviteToTeamEvent = "InviteToTeamEvent"
-                case joinTeamEvent = "JoinTeamEvent"
-                case linkBuildSourceEnvGroupEvent = "LinkBuildSourceEnvGroupEvent"
-                case loginEvent = "LoginEvent"
-                case logoutEvent = "LogoutEvent"
-                case maintenanceModeEnabledEvent = "MaintenanceModeEnabledEvent"
-                case maintenanceModeURIUpdatedEvent = "MaintenanceModeURIUpdatedEvent"
-                case moveEnvironmentResourceEvent = "MoveEnvironmentResourceEvent"
-                case provisionOrganizationSCIMToken = "ProvisionOrganizationSCIMToken"
-                case removeOrgMemberEvent = "RemoveOrgMemberEvent"
-                case removeUserFromTeamEvent = "RemoveUserFromTeamEvent"
-                case restoreDiskSnapshotEvent = "RestoreDiskSnapshotEvent"
-                case resumePostgresEvent = "ResumePostgresEvent"
-                case resumeServiceEvent = "ResumeServiceEvent"
-                case revokeOrganizationSCIMToken = "RevokeOrganizationSCIMToken"
-                case signNDAEvent = "SignNDAEvent"
-                case endShellEvent = "EndShellEvent"
-                case startShellEvent = "StartShellEvent"
-                case suspendPostgresEvent = "SuspendPostgresEvent"
-                case suspendServiceEvent = "SuspendServiceEvent"
-                case unlinkBuildSourceEnvGroupEvent = "UnlinkBuildSourceEnvGroupEvent"
-                case updateEnvVarsEvent = "UpdateEnvVarsEvent"
-                case updateIPAllowListEvent = "UpdateIPAllowListEvent"
-                case updateOrgPaymentMethodEvent = "UpdateOrgPaymentMethodEvent"
-                case updateOtelIntegrationEvent = "UpdateOtelIntegrationEvent"
-                case updateSSOConnectionEvent = "UpdateSSOConnectionEvent"
-                case updateServiceBuildSourceEvent = "UpdateServiceBuildSourceEvent"
-                case updateServiceNameEvent = "UpdateServiceNameEvent"
-                case updateWebhookEvent = "UpdateWebhookEvent"
-                case updateWorkspacePaymentMethodEvent = "UpdateWorkspacePaymentMethodEvent"
-                case verifyOrgDomainEvent = "VerifyOrgDomainEvent"
-                case viewConnectionInfoEvent = "ViewConnectionInfoEvent"
-                case viewEnvVarValuesEvent = "ViewEnvVarValuesEvent"
-                case grantOAuthAccessEvent = "GrantOAuthAccessEvent"
-                case revokeOAuthAccessEvent = "RevokeOAuthAccessEvent"
-            }
-            /// The type of event that occurred
-            ///
-            /// - Remark: Generated from `#/components/schemas/auditLog/event`.
-            public var event: Components.Schemas.AuditLog.EventPayload
-            /// The status of the event
+            public var event: Swift.String
+            /// success or error. Free text: see Scripts/workspace-quirks.py.
             ///
             /// - Remark: Generated from `#/components/schemas/auditLog/status`.
-            @frozen public enum StatusPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case success = "success"
-                case error = "error"
-            }
-            /// The status of the event
-            ///
-            /// - Remark: Generated from `#/components/schemas/auditLog/status`.
-            public var status: Components.Schemas.AuditLog.StatusPayload
+            public var status: Swift.String
             /// - Remark: Generated from `#/components/schemas/auditLog/actor`.
             public var actor: Components.Schemas.AuditLogActor
             /// Additional context information about the event
@@ -6967,15 +6868,15 @@ public enum Components {
             /// - Parameters:
             ///   - id: Unique identifier for the audit log entry
             ///   - timestamp: When the event occurred (ISO 8601 format)
-            ///   - event: The type of event that occurred
-            ///   - status: The status of the event
+            ///   - event: The type of event, such as CreateServerEvent. Free text: see Scripts/workspace-quirks.py.
+            ///   - status: success or error. Free text: see Scripts/workspace-quirks.py.
             ///   - actor:
             ///   - metadata: Additional context information about the event
             public init(
                 id: Swift.String,
                 timestamp: Foundation.Date,
-                event: Components.Schemas.AuditLog.EventPayload,
-                status: Components.Schemas.AuditLog.StatusPayload,
+                event: Swift.String,
+                status: Swift.String,
                 actor: Components.Schemas.AuditLogActor,
                 metadata: Components.Schemas.AuditLog.MetadataPayload
             ) {
@@ -6997,18 +6898,10 @@ public enum Components {
         }
         /// - Remark: Generated from `#/components/schemas/auditLogActor`.
         public struct AuditLogActor: Codable, Hashable, Sendable {
-            /// The type of actor that performed the action
+            /// user, rest_api or system. Free text: see Scripts/workspace-quirks.py.
             ///
             /// - Remark: Generated from `#/components/schemas/auditLogActor/type`.
-            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case user = "user"
-                case restApi = "rest_api"
-                case system = "system"
-            }
-            /// The type of actor that performed the action
-            ///
-            /// - Remark: Generated from `#/components/schemas/auditLogActor/type`.
-            public var _type: Components.Schemas.AuditLogActor._TypePayload
+            public var _type: Swift.String
             /// Email address of the actor (if applicable)
             ///
             /// - Remark: Generated from `#/components/schemas/auditLogActor/email`.
@@ -7020,11 +6913,11 @@ public enum Components {
             /// Creates a new `AuditLogActor`.
             ///
             /// - Parameters:
-            ///   - _type: The type of actor that performed the action
+            ///   - _type: user, rest_api or system. Free text: see Scripts/workspace-quirks.py.
             ///   - email: Email address of the actor (if applicable)
             ///   - id: Unique identifier of the actor (if applicable)
             public init(
-                _type: Components.Schemas.AuditLogActor._TypePayload,
+                _type: Swift.String,
                 email: Swift.String? = nil,
                 id: Swift.String? = nil
             ) {
@@ -11270,15 +11163,14 @@ public enum Components {
             public var name: Swift.String
             /// - Remark: Generated from `#/components/schemas/teamMember/email`.
             public var email: Swift.String
+            /// active or inactive. Free text: see Scripts/workspace-quirks.py.
+            ///
             /// - Remark: Generated from `#/components/schemas/teamMember/status`.
-            @frozen public enum StatusPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case active = "active"
-                case inactive = "inactive"
-            }
-            /// - Remark: Generated from `#/components/schemas/teamMember/status`.
-            public var status: Components.Schemas.TeamMember.StatusPayload
+            public var status: Swift.String
+            /// ADMIN, DEVELOPER, WORKSPACE_CONTRIBUTOR, WORKSPACE_BILLING or WORKSPACE_VIEWER. Free text: see Scripts/workspace-quirks.py.
+            ///
             /// - Remark: Generated from `#/components/schemas/teamMember/role`.
-            public var role: Components.Schemas.TeamMemberRole
+            public var role: Swift.String
             /// - Remark: Generated from `#/components/schemas/teamMember/mfaEnabled`.
             public var mfaEnabled: Swift.Bool
             /// Creates a new `TeamMember`.
@@ -11287,15 +11179,15 @@ public enum Components {
             ///   - userId:
             ///   - name:
             ///   - email:
-            ///   - status:
-            ///   - role:
+            ///   - status: active or inactive. Free text: see Scripts/workspace-quirks.py.
+            ///   - role: ADMIN, DEVELOPER, WORKSPACE_CONTRIBUTOR, WORKSPACE_BILLING or WORKSPACE_VIEWER. Free text: see Scripts/workspace-quirks.py.
             ///   - mfaEnabled:
             public init(
                 userId: Swift.String,
                 name: Swift.String,
                 email: Swift.String,
-                status: Components.Schemas.TeamMember.StatusPayload,
-                role: Components.Schemas.TeamMemberRole,
+                status: Swift.String,
+                role: Swift.String,
                 mfaEnabled: Swift.Bool
             ) {
                 self.userId = userId

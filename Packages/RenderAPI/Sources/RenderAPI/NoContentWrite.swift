@@ -113,3 +113,13 @@ extension Operations.DeletePostgresUser.Output: NoContentWrite {
         return nil
     }
 }
+
+// Removing a workspace member is documented as `204`. It can't be tried live without a second
+// member to remove, so any 2xx is accepted, as for the other writes here.
+
+extension Operations.RemoveWorkspaceMember.Output: NoContentWrite {
+    public var undocumentedStatusCode: Int? {
+        if case .undocumented(let statusCode, _) = self { return statusCode }
+        return nil
+    }
+}
