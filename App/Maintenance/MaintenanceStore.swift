@@ -86,6 +86,20 @@ final class MaintenanceStore {
     private var generation = 0
     /// The current time; tests fix it so their dates stay in the future.
     private let now: @Sendable () -> Date
+    /// Writes Render accepted but may not show yet: both are asynchronous (`202`), so a list fetched
+    /// just after one can still have the old time or state. Keyed by run ID.
+    private var pending: [String: PendingChange] = [:]
+
+    /// What a write changed, kept over newer lists until one shows it or it expires.
+    private struct PendingChange {
+        var scheduledAt: Date?
+        var started = false
+        var expires: Date
+    }
+
+    /// How long an accepted write outranks a list that doesn't show it yet. After this the list wins,
+    /// so a write Render dropped doesn't stay on screen forever.
+    static let pendingWindow: TimeInterval = 120
 
     init(client: RenderClient, ownerID: String, now: @escaping @Sendable () -> Date = { Date() }) {
         self.client = client
@@ -119,7 +133,7 @@ final class MaintenanceStore {
                 }
             let names = await Self.resourceNames(for: Set(listed.map(\.resourceID)), client: client)
             guard current == generation else { return }
-            runs = Self.sorted(listed.map { run in
+            runs = Self.sorted(reconcile(listed).map { run in
                 var run = run
                 run.resourceName = names[run.resourceID] ?? nil
                 return run
@@ -162,6 +176,7 @@ final class MaintenanceStore {
                 body: .json(.init(scheduledAt: date))
             ).expectSuccess()
             update(run.id) { $0.scheduledAt = date }
+            remember(run.id) { $0.scheduledAt = date }
             actionResult = ActionResult(message: "Rescheduled maintenance for \(run.displayName).", isFailure: false)
             return true
         } catch {
@@ -185,6 +200,7 @@ final class MaintenanceStore {
             try await client.api.triggerMaintenance(path: .init(maintenanceRunID: run.id)).expectSuccess()
             // Render starts it asynchronously; show it as started rather than wait for the next load.
             update(run.id) { $0.state = .inProgress }
+            remember(run.id) { $0.started = true }
             actionResult = ActionResult(message: "Started maintenance for \(run.displayName).", isFailure: false)
             return true
         } catch {
@@ -220,6 +236,35 @@ final class MaintenanceStore {
         guard let index = runs.firstIndex(where: { $0.id == id }) else { return }
         change(&runs[index])
         runs = Self.sorted(runs)
+    }
+
+    private func remember(_ id: String, _ change: (inout PendingChange) -> Void) {
+        var entry = pending[id] ?? PendingChange(expires: now())
+        change(&entry)
+        entry.expires = now().addingTimeInterval(Self.pendingWindow)
+        pending[id] = entry
+    }
+
+    /// Lays accepted writes over a fresh list. A write the list already shows, or one that has expired,
+    /// is dropped; so is one whose run is gone from the list.
+    private func reconcile(_ listed: [MaintenanceRun]) -> [MaintenanceRun] {
+        let now = now()
+        var kept: [String: PendingChange] = [:]
+        let result = listed.map { run -> MaintenanceRun in
+            guard var entry = pending[run.id], now < entry.expires else { return run }
+            var run = run
+            if let date = entry.scheduledAt {
+                if run.scheduledAt == date { entry.scheduledAt = nil } else { run.scheduledAt = date }
+            }
+            if entry.started {
+                // Any state but `scheduled` means Render has picked the trigger up.
+                if run.state != .scheduled { entry.started = false } else { run.state = .inProgress }
+            }
+            if entry.scheduledAt != nil || entry.started { kept[run.id] = entry }
+            return run
+        }
+        pending = kept
+        return result
     }
 
     /// Looks up each resource's name by its ID prefix. A name that can't be found is nil and the ID is

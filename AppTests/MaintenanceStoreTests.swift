@@ -17,12 +17,47 @@ struct MaintenanceStoreTests {
         private var _list: (Int, String) = (200, "[]")
         private var _write: (Int, String) = (202, "")
         private var _writes: [(method: HTTPRequest.Method, path: String, body: [String: Any])] = []
+        private var _gates: [Hold: Gate] = [:]
+        private var _now = MaintenanceStoreTests.date("2026-11-20T00:00:00Z")
 
         var list: (Int, String) { get { lock.withLock { _list } } set { lock.withLock { _list = newValue } } }
         var write: (Int, String) { get { lock.withLock { _write } } set { lock.withLock { _write = newValue } } }
         var writes: [(method: HTTPRequest.Method, path: String, body: [String: Any])] {
             get { lock.withLock { _writes } }
             set { lock.withLock { _writes = newValue } }
+        }
+        /// The store's clock, so a test can move past the pending-write window.
+        var now: Date { get { lock.withLock { _now } } set { lock.withLock { _now = newValue } } }
+
+        enum Hold { case list, name, write }
+        func holdNext(_ hold: Hold, at gate: Gate) { lock.withLock { _gates[hold] = gate } }
+        func take(_ hold: Hold) -> Gate? { lock.withLock { _gates.removeValue(forKey: hold) } }
+    }
+
+    /// Lets a test hold a request in flight and know when it got there.
+    private actor Gate {
+        private var entered = false
+        private var isOpen = false
+        private var enteredWaiters: [CheckedContinuation<Void, Never>] = []
+        private var openWaiter: CheckedContinuation<Void, Never>?
+
+        func hold() async {
+            entered = true
+            enteredWaiters.forEach { $0.resume() }
+            enteredWaiters = []
+            guard !isOpen else { return }
+            await withCheckedContinuation { openWaiter = $0 }
+        }
+
+        func waitUntilEntered() async {
+            guard !entered else { return }
+            await withCheckedContinuation { enteredWaiters.append($0) }
+        }
+
+        func open() {
+            isOpen = true
+            openWaiter?.resume()
+            openWaiter = nil
         }
     }
 
@@ -42,21 +77,25 @@ struct MaintenanceStoreTests {
                 if let body { data = try await Data(collecting: body, upTo: 8192) }
                 let sent = (try? JSONSerialization.jsonObject(with: data) as? [String: Any]) ?? [:]
                 backend.writes.append((request.method, path, sent))
+                await backend.take(.write)?.hold()
                 answer = backend.write
             } else if path.hasPrefix("/services/srv-") {
+                await backend.take(.name)?.hold()
                 answer = (200, Fixtures.serviceJSON(id: "srv-web", type: "web_service", details: Fixtures.serviceDetailsJSON(for: "web_service"))
                     .replacingOccurrences(of: #""name":"api""#, with: #""name":"web""#))
             } else if path.hasPrefix("/postgres/") {
                 answer = (404, #"{"message":"not found"}"#)
             } else {
+                // Read the answer before holding, so a held list is the one from when it was sent.
                 answer = backend.list
+                await backend.take(.list)?.hold()
             }
             var response = HTTPResponse(status: .init(code: answer.0))
             response.headerFields = [.contentType: "application/json"]
             return (response, answer.1.isEmpty ? nil : HTTPBody(answer.1))
         }
         let client = RenderClient(apiKeyProvider: StaticAPIKeyProvider("test-key"), retryPolicy: .none, transport: transport)
-        return (MaintenanceStore(client: client, ownerID: "tea-1", now: { Self.date("2026-11-20T00:00:00Z") }), transport)
+        return (MaintenanceStore(client: client, ownerID: "tea-1", now: { backend.now }), transport)
     }
 
     private nonisolated static func date(_ iso: String) -> Date {
@@ -229,5 +268,122 @@ struct MaintenanceStoreTests {
         #expect(!(await store.trigger(run)))
         #expect(!(await store.reschedule(run, to: Self.date("2026-12-02T10:00:00Z"))))
         #expect(backend.writes.isEmpty)
+    }
+
+    // MARK: - Writes Render hasn't applied yet
+
+    private nonisolated static let scheduled = "[" + runJSON(id: "mrn-1", resource: "srv-web", state: "scheduled") + "]"
+
+    @Test("a list fetched after a reschedule that still has the old time doesn't undo it, until Render catches up")
+    func rescheduleSurvivesStaleList() async throws {
+        let backend = Backend()
+        backend.list = (200, Self.scheduled)
+        let (store, _) = store(backend)
+        await store.load()
+        let newDate = Self.date("2026-12-04T09:30:00Z")
+        #expect(await store.reschedule(try #require(store.run(id: "mrn-1")), to: newDate))
+
+        // Render accepted it but hasn't applied it yet.
+        await store.load()
+        #expect(store.run(id: "mrn-1")?.scheduledAt == newDate)
+
+        // Once the list shows it, the list is in charge again, so a later move by Render shows.
+        backend.list = (200, "[" + Self.runJSON(id: "mrn-1", resource: "srv-web", state: "scheduled", at: "2026-12-04T09:30:00Z") + "]")
+        await store.load()
+        backend.list = (200, "[" + Self.runJSON(id: "mrn-1", resource: "srv-web", state: "scheduled", at: "2026-12-06T10:00:00Z") + "]")
+        await store.load()
+        #expect(store.run(id: "mrn-1")?.scheduledAt == Self.date("2026-12-06T10:00:00Z"))
+    }
+
+    @Test("a list fetched after Run Now that still says scheduled doesn't offer Run Now again")
+    func triggerSurvivesStaleList() async throws {
+        let backend = Backend()
+        backend.list = (200, Self.scheduled)
+        let (store, _) = store(backend)
+        await store.load()
+        let run = try #require(store.run(id: "mrn-1"))
+        #expect(await store.trigger(run))
+
+        await store.load()
+        #expect(store.run(id: "mrn-1")?.state == .inProgress)
+        #expect(!(await store.trigger(run)))
+        #expect(backend.writes.count == 1)
+    }
+
+    @Test("a write the list never shows gives way to the list once the window passes")
+    func pendingWriteExpires() async throws {
+        let backend = Backend()
+        backend.list = (200, Self.scheduled)
+        let (store, _) = store(backend)
+        await store.load()
+        #expect(await store.trigger(try #require(store.run(id: "mrn-1"))))
+
+        backend.now = backend.now.addingTimeInterval(MaintenanceStore.pendingWindow)
+        await store.load()
+        #expect(store.run(id: "mrn-1")?.state == .scheduled)
+    }
+
+    @Test("a refresh sent before a reschedule, answered after it, can't put the old time back")
+    func refreshOverlappingReschedule() async throws {
+        let backend = Backend()
+        backend.list = (200, Self.scheduled)
+        let (store, _) = store(backend)
+        await store.load()
+
+        let gate = Gate()
+        backend.holdNext(.list, at: gate)
+        let refresh = Task { await store.load() }
+        await gate.waitUntilEntered()
+
+        let newDate = Self.date("2026-12-04T09:30:00Z")
+        #expect(await store.reschedule(try #require(store.run(id: "mrn-1")), to: newDate))
+
+        await gate.open()
+        await refresh.value
+        #expect(store.run(id: "mrn-1")?.scheduledAt == newDate)
+    }
+
+    @Test("a refresh held up looking up names, answered after Run Now, can't make the run scheduled again")
+    func refreshWithSlowNamesOverlappingTrigger() async throws {
+        let backend = Backend()
+        backend.list = (200, Self.scheduled)
+        let (store, _) = store(backend)
+        await store.load()
+
+        let gate = Gate()
+        backend.holdNext(.name, at: gate)
+        let refresh = Task { await store.load() }
+        await gate.waitUntilEntered()
+
+        #expect(await store.trigger(try #require(store.run(id: "mrn-1"))))
+
+        await gate.open()
+        await refresh.value
+        #expect(store.run(id: "mrn-1")?.state == .inProgress)
+    }
+
+    @Test("a refresh sent while Run Now is in flight, answered after it, can't make the run scheduled again")
+    func refreshDuringTrigger() async throws {
+        let backend = Backend()
+        backend.list = (200, Self.scheduled)
+        let (store, _) = store(backend)
+        await store.load()
+        let run = try #require(store.run(id: "mrn-1"))
+
+        let writeGate = Gate()
+        backend.holdNext(.write, at: writeGate)
+        let write = Task { await store.trigger(run) }
+        await writeGate.waitUntilEntered()
+
+        let listGate = Gate()
+        backend.holdNext(.list, at: listGate)
+        let refresh = Task { await store.load() }
+        await listGate.waitUntilEntered()
+
+        await writeGate.open()
+        #expect(await write.value)
+        await listGate.open()
+        await refresh.value
+        #expect(store.run(id: "mrn-1")?.state == .inProgress)
     }
 }
