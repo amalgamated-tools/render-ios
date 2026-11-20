@@ -49,7 +49,10 @@ struct MaintenanceView: View {
         .sheet(item: $rescheduling) { run in
             MaintenanceRescheduleSheet(run: run) { date in
                 // The banner is under the sheet, so the sheet shows a failure itself.
-                await store.reschedule(run, to: date) ? nil : (store.actionResult?.message ?? "Couldn't reschedule.")
+                if await store.reschedule(run, to: date) { return nil }
+                // Only a failure explains this attempt; an older success must not be shown as one.
+                guard let result = store.actionResult, result.isFailure else { return "Couldn't reschedule." }
+                return result.message
             }
         }
         .confirmationDialog(
@@ -181,8 +184,9 @@ struct MaintenanceRescheduleSheet: View {
 
     private var range: ClosedRange<Date> {
         let now = Date()
-        // The deadline itself isn't allowed, and the picker works in whole minutes.
-        let latest = max((run.pendingMaintenanceBy ?? .distantFuture).addingTimeInterval(-60), now)
+        // The deadline itself isn't allowed. Stop just short of it, not a whole minute short,
+        // so the last minute before a deadline with seconds (10:00 for 10:00:30) stays selectable.
+        let latest = max((run.pendingMaintenanceBy ?? .distantFuture).addingTimeInterval(-1), now)
         return now...latest
     }
 }

@@ -136,7 +136,11 @@ final class MaintenanceStore {
     @discardableResult
     func reschedule(_ run: MaintenanceRun, to date: Date) async -> Bool {
         // The sheet holds a copy of the run; a refresh since it opened may have changed its state or deadline.
-        guard !isSaving, let run = self.run(id: run.id), run.state.isActionable else { return false }
+        guard !isSaving else { return false }
+        guard let run = self.run(id: run.id), run.state.isActionable else {
+            actionResult = Self.noLongerScheduled
+            return false
+        }
         // The sheet can stay open past the time it shows, so check again here.
         if date <= now() {
             actionResult = ActionResult(message: "Choose a time in the future.", isFailure: true)
@@ -170,7 +174,11 @@ final class MaintenanceStore {
     @discardableResult
     func trigger(_ run: MaintenanceRun) async -> Bool {
         // The confirmation holds a copy of the run; act on what the list shows now.
-        guard !isSaving, let run = self.run(id: run.id), run.state.isActionable else { return false }
+        guard !isSaving else { return false }
+        guard let run = self.run(id: run.id), run.state.isActionable else {
+            actionResult = Self.noLongerScheduled
+            return false
+        }
         beginWrite()
         defer { endWrite() }
         do {
@@ -184,6 +192,12 @@ final class MaintenanceStore {
             return false
         }
     }
+
+    /// A refresh since the sheet or dialog opened shows the run has started, finished or gone.
+    private static let noLongerScheduled = ActionResult(
+        message: "This maintenance run is no longer scheduled.",
+        isFailure: true
+    )
 
     func dismissActionResult() {
         actionResult = nil

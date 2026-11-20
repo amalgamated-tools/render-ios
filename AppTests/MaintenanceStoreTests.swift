@@ -172,7 +172,12 @@ struct MaintenanceStoreTests {
         backend.list = (200, "[" + Self.runJSON(id: "mrn-1", resource: "srv-web", state: "in_progress") + "]")
         await store.load()
         #expect(!(await store.trigger(stale)))
+        #expect(store.actionResult?.isFailure == true)
+        store.dismissActionResult()
         #expect(!(await store.reschedule(stale, to: Self.date("2026-12-02T10:00:00Z"))))
+        // A fresh failure, so the sheet never shows an earlier message as this one.
+        #expect(store.actionResult?.message == "This maintenance run is no longer scheduled.")
+        #expect(store.actionResult?.isFailure == true)
 
         backend.list = (200, "[" + Self.runJSON(id: "mrn-1", resource: "srv-web", state: "scheduled", by: "2026-12-02T00:00:00Z") + "]")
         await store.load()
