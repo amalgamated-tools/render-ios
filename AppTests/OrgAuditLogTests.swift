@@ -13,12 +13,45 @@ import Testing
 @Suite("Organization audit log")
 struct OrgAuditLogTests {
     private final class MemoryStore: OrgAuditLogCredentialStoring, @unchecked Sendable {
+        struct Refused: Error {}
         private let lock = NSLock()
         private var _value: OrgAuditLogCredential?
+        private var _failsDelete = false
         var value: OrgAuditLogCredential? { get { lock.withLock { _value } } set { lock.withLock { _value = newValue } } }
+        var failsDelete: Bool { get { lock.withLock { _failsDelete } } set { lock.withLock { _failsDelete = newValue } } }
         init(_ value: OrgAuditLogCredential? = nil) { _value = value }
         func read() throws -> OrgAuditLogCredential? { value }
-        func write(_ credential: OrgAuditLogCredential?) throws { value = credential }
+        func write(_ credential: OrgAuditLogCredential?) throws {
+            if credential == nil, failsDelete { throw Refused() }
+            value = credential
+        }
+    }
+
+    /// Lets a test hold a request in flight and know when it got there.
+    private actor Gate {
+        private var entered = false
+        private var isOpen = false
+        private var enteredWaiters: [CheckedContinuation<Void, Never>] = []
+        private var openWaiter: CheckedContinuation<Void, Never>?
+
+        func hold() async {
+            entered = true
+            enteredWaiters.forEach { $0.resume() }
+            enteredWaiters = []
+            guard !isOpen else { return }
+            await withCheckedContinuation { openWaiter = $0 }
+        }
+
+        func waitUntilEntered() async {
+            guard !entered else { return }
+            await withCheckedContinuation { enteredWaiters.append($0) }
+        }
+
+        func open() {
+            isOpen = true
+            openWaiter?.resume()
+            openWaiter = nil
+        }
     }
 
     /// What Render answers, and the path and key of each request it got.
@@ -26,6 +59,8 @@ struct OrgAuditLogTests {
         private let lock = NSLock()
         private var _answer: (Int, String) = (200, "[]")
         private var _requests: [(path: String, key: String?)] = []
+        private var _gate: Gate?
+        var gate: Gate? { get { lock.withLock { _gate } } set { lock.withLock { _gate = newValue } } }
         var answer: (Int, String) { get { lock.withLock { _answer } } set { lock.withLock { _answer = newValue } } }
         var requests: [(path: String, key: String?)] { lock.withLock { _requests } }
         func record(_ path: String, _ key: String?) { lock.withLock { _requests.append((path, key)) } }
@@ -40,6 +75,7 @@ struct OrgAuditLogTests {
             let transport = StubTransport { request, _, _ in
                 backend.record(request.path ?? "", request.headerFields[.authorization])
                 let answer = backend.answer
+                if let gate = backend.gate { await gate.hold() }
                 var response = HTTPResponse(status: .init(code: answer.0))
                 response.headerFields = [.contentType: "application/json"]
                 return (response, HTTPBody(answer.1))
@@ -123,6 +159,64 @@ struct OrgAuditLogTests {
         #expect(settings.credential == nil)
         #expect(store.value == nil)
         #expect(settings.makeLogStore() == nil)
+    }
+
+    @Test("if the Keychain won't delete the pair, it stays and the error says so")
+    func failedRemovalKeepsPair() {
+        let original = OrgAuditLogCredential(organizationID: "org-abc", apiKey: "old")
+        let store = MemoryStore(original)
+        store.failsDelete = true
+        let settings = settings(Backend(), store: store)
+
+        #expect(!settings.remove())
+        #expect(settings.credential == original)
+        #expect(store.value == original)
+        #expect(settings.errorMessage?.contains("couldn't be removed") == true)
+
+        store.failsDelete = false
+        #expect(settings.remove())
+        #expect(settings.credential == nil)
+        #expect(settings.errorMessage == nil)
+    }
+
+    @Test("cancelling while a new pair is being checked keeps the saved one, even if Render then accepts it")
+    func cancelDuringCheck() async {
+        let backend = Backend()
+        let gate = Gate()
+        backend.gate = gate
+        let original = OrgAuditLogCredential(organizationID: "org-abc", apiKey: "old")
+        let store = MemoryStore(original)
+        let settings = settings(backend, store: store)
+
+        let save = Task { await settings.save(organizationID: "org-xyz", apiKey: "new") }
+        await gate.waitUntilEntered()
+        #expect(settings.isVerifying)
+        settings.cancelSave()
+        #expect(!settings.isVerifying)
+        await gate.open()
+
+        #expect(!(await save.value))
+        #expect(settings.credential == original)
+        #expect(store.value == original)
+        #expect(settings.errorMessage == nil)
+    }
+
+    @Test("removing the key while a new pair is being checked keeps it removed")
+    func removeDuringCheck() async {
+        let backend = Backend()
+        let gate = Gate()
+        backend.gate = gate
+        let store = MemoryStore(OrgAuditLogCredential(organizationID: "org-abc", apiKey: "old"))
+        let settings = settings(backend, store: store)
+
+        let save = Task { await settings.save(organizationID: "org-xyz", apiKey: "new") }
+        await gate.waitUntilEntered()
+        #expect(settings.remove())
+        await gate.open()
+
+        #expect(!(await save.value))
+        #expect(settings.credential == nil)
+        #expect(store.value == nil)
     }
 
     @Test("a workspace log's 403 keeps the general message")

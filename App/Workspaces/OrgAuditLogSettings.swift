@@ -16,6 +16,9 @@ final class OrgAuditLogSettings {
     private(set) var errorMessage: String?
 
     private let store: any OrgAuditLogCredentialStoring
+    /// Bumped by ``cancelSave()`` and ``remove()``, so a check still in flight when the user cancels,
+    /// leaves the form or removes the key can't save afterwards.
+    private var saveGeneration = 0
     private let makeClient: @Sendable (String) -> RenderClient
 
     init(
@@ -44,14 +47,17 @@ final class OrgAuditLogSettings {
         }
         guard !isVerifying else { return false }
         isVerifying = true
-        defer { isVerifying = false }
+        let generation = saveGeneration
+        defer { if generation == saveGeneration { isVerifying = false } }
         let scope = AuditLogStore.Scope.organization(id: id)
         do {
             _ = try await AuditLogStore.fetch(client: makeClient(key), scope: scope, cursor: nil, limit: 1)
         } catch {
+            guard generation == saveGeneration else { return false }
             errorMessage = AuditLogStore.describe(error, scope: scope)
             return false
         }
+        guard generation == saveGeneration else { return false }
         let credential = OrgAuditLogCredential(organizationID: id, apiKey: key)
         do {
             try store.write(credential)
@@ -64,11 +70,29 @@ final class OrgAuditLogSettings {
         return true
     }
 
+    /// Drops a save whose check is still in flight, so it can't replace the saved pair after the
+    /// form is gone.
+    func cancelSave() {
+        saveGeneration += 1
+        isVerifying = false
+        errorMessage = nil
+    }
+
     /// Deletes the saved pair from this device. The key itself stays valid until it's revoked in Render.
-    func remove() {
-        try? store.write(nil)
+    /// If the Keychain refuses, the pair is kept and the error says so, rather than reappearing later.
+    @discardableResult
+    func remove() -> Bool {
+        saveGeneration += 1
+        isVerifying = false
+        do {
+            try store.write(nil)
+        } catch {
+            errorMessage = "The key couldn't be removed from this device. Try again."
+            return false
+        }
         credential = nil
         errorMessage = nil
+        return true
     }
 
     /// A log store for the saved organization, with its own client carrying the Audit Log API key.

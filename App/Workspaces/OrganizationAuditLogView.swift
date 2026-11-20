@@ -7,6 +7,7 @@ struct OrganizationAuditLogView: View {
     @State private var settings: OrgAuditLogSettings
     @State private var isChanging = false
     @State private var isConfirmingRemoval = false
+    @State private var removalFailed = false
 
     init(settings: OrgAuditLogSettings = OrgAuditLogSettings()) {
         _settings = State(initialValue: settings)
@@ -32,17 +33,25 @@ struct OrganizationAuditLogView: View {
                     }
                     .confirmationDialog("Remove the Audit Log API key?", isPresented: $isConfirmingRemoval,
                                         titleVisibility: .visible) {
-                        Button("Remove Key", role: .destructive) { settings.remove() }
+                        Button("Remove Key", role: .destructive) { removalFailed = !settings.remove() }
                         Button("Cancel", role: .cancel) {}
                     } message: {
                         Text("It's deleted from this device only. The key still works until it's revoked in the Render Dashboard.")
+                    }
+                    .alert("Couldn't Remove the Key", isPresented: $removalFailed) {
+                        Button("OK", role: .cancel) {}
+                    } message: {
+                        Text(settings.errorMessage ?? "The key is still saved on this device.")
                     }
             } else {
                 OrgAuditLogSetupForm(
                     settings: settings,
                     initialOrganizationID: settings.credential?.organizationID ?? "",
                     onDone: { isChanging = false },
-                    onCancel: settings.credential == nil ? nil : { isChanging = false }
+                    onCancel: settings.credential == nil ? nil : {
+                        settings.cancelSave()
+                        isChanging = false
+                    }
                 )
             }
         }
@@ -111,6 +120,9 @@ private struct OrgAuditLogSetupForm: View {
         }
         .navigationTitle("Organization Audit Log")
         .navigationBarTitleDisplayMode(.inline)
+        // Leaving the form any way, Back included, abandons a check still in flight. After a
+        // successful save this runs too, with nothing left to drop.
+        .onDisappear { settings.cancelSave() }
         .toolbar {
             if let onCancel {
                 ToolbarItem(placement: .cancellationAction) {
