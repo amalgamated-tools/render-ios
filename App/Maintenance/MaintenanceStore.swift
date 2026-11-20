@@ -239,9 +239,11 @@ final class MaintenanceStore {
     }
 
     private func remember(_ id: String, _ change: (inout PendingChange) -> Void) {
-        var entry = pending[id] ?? PendingChange(expires: now())
+        let timestamp = now()
+        var entry = pending[id].flatMap { timestamp < $0.expires ? $0 : nil }
+            ?? PendingChange(expires: timestamp)
         change(&entry)
-        entry.expires = now().addingTimeInterval(Self.pendingWindow)
+        entry.expires = timestamp.addingTimeInterval(Self.pendingWindow)
         pending[id] = entry
     }
 
