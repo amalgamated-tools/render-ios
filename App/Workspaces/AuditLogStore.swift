@@ -116,7 +116,8 @@ extension AuditLogEntry {
     }
 }
 
-/// A workspace's audit log, newest first, a page at a time.
+/// A workspace's or an organization's audit log, newest first, a page at a time. Both return the
+/// same entries; an organization's covers it and all of its workspaces.
 ///
 /// Live, the log only reached back about a day in a new workspace, and Render keeps it for a
 /// limited time, so the screen says that rather than implying it's complete.
@@ -129,17 +130,27 @@ final class AuditLogStore {
     private(set) var errorMessage: String?
     var hasMore: Bool { nextCursor != nil }
 
+    enum Scope: Hashable, Sendable {
+        case workspace(ownerID: String)
+        /// Read with the organization's own Audit Log API key, which the client must carry.
+        case organization(id: String)
+    }
+
     private let client: RenderClient
-    let ownerID: String
+    let scope: Scope
     private let pageSize: Int
     private var nextCursor: String?
     /// Bumped by each fresh load, so a page requested before it can't land on the new list.
     private var generation = 0
 
-    init(client: RenderClient, ownerID: String, pageSize: Int = 50) {
+    init(client: RenderClient, scope: Scope, pageSize: Int = 50) {
         self.client = client
-        self.ownerID = ownerID
+        self.scope = scope
         self.pageSize = pageSize
+    }
+
+    convenience init(client: RenderClient, ownerID: String, pageSize: Int = 50) {
+        self.init(client: client, scope: .workspace(ownerID: ownerID), pageSize: pageSize)
     }
 
     func load() async {
@@ -154,14 +165,12 @@ final class AuditLogStore {
 
     private func loadPage(after cursor: String?, generation current: Int, replacing: Bool) async {
         let client = client
-        let ownerID = ownerID
+        let scope = scope
         isLoading = true
         defer { if current == generation { isLoading = false } }
         do {
             let paginator = CursorPaginator(pageSize: pageSize) { cursor, limit in
-                try await client.api
-                    .listOwnerAuditLogs(path: .init(ownerId: ownerID), query: .init(cursor: cursor, limit: limit))
-                    .ok.body.json
+                try await Self.fetch(client: client, scope: scope, cursor: cursor, limit: limit)
             } unwrap: { envelope in
                 (AuditLogEntry(envelope.auditLog), envelope.cursor)
             }
@@ -173,8 +182,40 @@ final class AuditLogStore {
             errorMessage = nil
         } catch {
             guard current == generation else { return }
-            errorMessage = RenderError.wrapping(error).errorDescription
+            errorMessage = Self.describe(error, scope: scope)
         }
         hasLoaded = true
+    }
+
+    nonisolated static func fetch(
+        client: RenderClient, scope: Scope, cursor: String?, limit: Int
+    ) async throws -> [Components.Schemas.AuditLogWithCursor] {
+        switch scope {
+        case .workspace(let ownerID):
+            try await client.api
+                .listOwnerAuditLogs(path: .init(ownerId: ownerID), query: .init(cursor: cursor, limit: limit))
+                .ok.body.json
+        case .organization(let id):
+            try await client.api
+                .listOrganizationAuditLogs(path: .init(orgId: id), query: .init(cursor: cursor, limit: limit))
+                .ok.body.json
+        }
+    }
+
+    /// For an organization, the key is the usual cause, so say which part Render refused. Live, a
+    /// key from another organization got 403 and a workspace ID in place of an organization's got 404.
+    nonisolated static func describe(_ error: any Error, scope: Scope) -> String? {
+        let renderError = RenderError.wrapping(error)
+        guard case .organization(let id) = scope else { return renderError.errorDescription }
+        switch renderError {
+        case .unauthorized:
+            return "Render didn't accept this Audit Log API key. It may have been revoked."
+        case .forbidden:
+            return "This key can't read \(id)'s audit log. An Audit Log API key only covers the organization it was created in."
+        case .notFound:
+            return "Render doesn't know an organization with the ID \(id)."
+        default:
+            return renderError.errorDescription
+        }
     }
 }

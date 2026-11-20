@@ -19,6 +19,7 @@ public enum Keychain {
     private static let service = "com.veverkap.RenderiOS.apiKey"
     private static let apiKeyAccount = "render-api-key"
     private static let oauthTokenAccount = "render-oauth-token"
+    private static let orgAuditLogAccount = "render-org-audit-log"
 
     // MARK: - API key (legacy paste-a-key path)
 
@@ -62,6 +63,24 @@ public enum Keychain {
     /// Removes the stored token pair. A missing item is not an error.
     public static func deleteOAuthToken() throws {
         try delete(account: oauthTokenAccount)
+    }
+
+    // MARK: - Organization audit log credential
+
+    /// Stores the organization ID and its Audit Log API key as one item, replacing any existing one.
+    /// `nil` deletes instead. Kept apart from the sign-in credential, so signing out leaves it.
+    public static func saveOrgAuditLogCredential(_ credential: OrgAuditLogCredential?) throws {
+        guard let credential else {
+            try delete(account: orgAuditLogAccount)
+            return
+        }
+        try save(try JSONEncoder().encode(credential), account: orgAuditLogAccount)
+    }
+
+    /// Returns the stored credential, or `nil` if none has been saved.
+    public static func readOrgAuditLogCredential() throws -> OrgAuditLogCredential? {
+        guard let data = try read(account: orgAuditLogAccount) else { return nil }
+        return try JSONDecoder().decode(OrgAuditLogCredential.self, from: data)
     }
 
     // MARK: - Generic-password plumbing

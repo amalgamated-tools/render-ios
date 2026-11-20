@@ -33,6 +33,11 @@ struct WorkspaceDetailView: View {
                             Label("Audit Log", systemImage: "list.bullet.clipboard")
                         }
                         NavigationLink {
+                            OrganizationAuditLogView()
+                        } label: {
+                            Label("Organization Audit Log", systemImage: "building.2")
+                        }
+                        NavigationLink {
                             MaintenanceView(client: client, ownerID: store.ownerID)
                         } label: {
                             Label("Maintenance", systemImage: "wrench.and.screwdriver")
@@ -218,12 +223,21 @@ struct WorkspaceDetailView: View {
     }
 }
 
-/// The workspace's audit log, newest first.
+/// A workspace's or organization's audit log, newest first.
 struct AuditLogView: View {
     @State private var store: AuditLogStore
+    private let title: String
+    private let emptyDescription: String
 
     init(client: RenderClient, ownerID: String) {
-        _store = State(initialValue: AuditLogStore(client: client, ownerID: ownerID))
+        self.init(store: AuditLogStore(client: client, ownerID: ownerID), title: "Audit Log",
+                  emptyDescription: "Nothing has been recorded for this workspace recently.")
+    }
+
+    init(store: AuditLogStore, title: String, emptyDescription: String) {
+        _store = State(initialValue: store)
+        self.title = title
+        self.emptyDescription = emptyDescription
     }
 
     var body: some View {
@@ -236,7 +250,7 @@ struct AuditLogView: View {
             if store.hasLoaded {
                 if store.entries.isEmpty, store.errorMessage == nil {
                     ContentUnavailableView("No Entries", systemImage: "list.bullet.clipboard",
-                                           description: Text("Nothing has been recorded for this workspace recently."))
+                                           description: Text(emptyDescription))
                 }
                 Section {
                     ForEach(store.entries) { entry in
@@ -259,7 +273,7 @@ struct AuditLogView: View {
                 ProgressView().frame(maxWidth: .infinity)
             }
         }
-        .navigationTitle("Audit Log")
+        .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .task { await store.load() }
         .refreshable { await store.load() }
