@@ -77969,17 +77969,10 @@ public enum Operations {
                         ///
                         /// - Remark: Generated from `#/paths/maintenance/GET/responses/200/content/JsonPayload/pendingMaintenanceBy`.
                         public var pendingMaintenanceBy: Foundation.Date?
+                        /// scheduled, in_progress, user_fix_required, cancelled, succeeded or failed. Free text: see Scripts/maintenance-quirks.py.
+                        ///
                         /// - Remark: Generated from `#/paths/maintenance/GET/responses/200/content/JsonPayload/state`.
-                        @frozen public enum StatePayload: String, Codable, Hashable, Sendable, CaseIterable {
-                            case scheduled = "scheduled"
-                            case inProgress = "in_progress"
-                            case userFixRequired = "user_fix_required"
-                            case cancelled = "cancelled"
-                            case succeeded = "succeeded"
-                            case failed = "failed"
-                        }
-                        /// - Remark: Generated from `#/paths/maintenance/GET/responses/200/content/JsonPayload/state`.
-                        public var state: Operations.ListMaintenance.Output.Ok.Body.JsonPayloadPayload.StatePayload
+                        public var state: Swift.String
                         /// The Id of a resource that can undergo maintenance (Id of a service, a Postgres instance, or a Redis instance)
                         ///
                         /// - Remark: Generated from `#/paths/maintenance/GET/responses/200/content/JsonPayload/resourceId`.
@@ -77991,14 +77984,14 @@ public enum Operations {
                         ///   - _type:
                         ///   - scheduledAt:
                         ///   - pendingMaintenanceBy: If present, the maintenance run cannot be scheduled for later than this date-time.
-                        ///   - state:
+                        ///   - state: scheduled, in_progress, user_fix_required, cancelled, succeeded or failed. Free text: see Scripts/maintenance-quirks.py.
                         ///   - resourceId: The Id of a resource that can undergo maintenance (Id of a service, a Postgres instance, or a Redis instance)
                         public init(
                             id: Swift.String,
                             _type: Swift.String,
                             scheduledAt: Foundation.Date,
                             pendingMaintenanceBy: Foundation.Date? = nil,
-                            state: Operations.ListMaintenance.Output.Ok.Body.JsonPayloadPayload.StatePayload,
+                            state: Swift.String,
                             resourceId: Swift.String
                         ) {
                             self.id = id
@@ -78302,17 +78295,10 @@ public enum Operations {
                         ///
                         /// - Remark: Generated from `#/paths/maintenance/{maintenanceRunID}/GET/responses/200/content/json/pendingMaintenanceBy`.
                         public var pendingMaintenanceBy: Foundation.Date?
+                        /// scheduled, in_progress, user_fix_required, cancelled, succeeded or failed. Free text: see Scripts/maintenance-quirks.py.
+                        ///
                         /// - Remark: Generated from `#/paths/maintenance/{maintenanceRunID}/GET/responses/200/content/json/state`.
-                        @frozen public enum StatePayload: String, Codable, Hashable, Sendable, CaseIterable {
-                            case scheduled = "scheduled"
-                            case inProgress = "in_progress"
-                            case userFixRequired = "user_fix_required"
-                            case cancelled = "cancelled"
-                            case succeeded = "succeeded"
-                            case failed = "failed"
-                        }
-                        /// - Remark: Generated from `#/paths/maintenance/{maintenanceRunID}/GET/responses/200/content/json/state`.
-                        public var state: Operations.RetrieveMaintenance.Output.Ok.Body.JsonPayload.StatePayload
+                        public var state: Swift.String
                         /// The Id of a resource that can undergo maintenance (Id of a service, a Postgres instance, or a Redis instance)
                         ///
                         /// - Remark: Generated from `#/paths/maintenance/{maintenanceRunID}/GET/responses/200/content/json/resourceId`.
@@ -78324,14 +78310,14 @@ public enum Operations {
                         ///   - _type:
                         ///   - scheduledAt:
                         ///   - pendingMaintenanceBy: If present, the maintenance run cannot be scheduled for later than this date-time.
-                        ///   - state:
+                        ///   - state: scheduled, in_progress, user_fix_required, cancelled, succeeded or failed. Free text: see Scripts/maintenance-quirks.py.
                         ///   - resourceId: The Id of a resource that can undergo maintenance (Id of a service, a Postgres instance, or a Redis instance)
                         public init(
                             id: Swift.String,
                             _type: Swift.String,
                             scheduledAt: Foundation.Date,
                             pendingMaintenanceBy: Foundation.Date? = nil,
-                            state: Operations.RetrieveMaintenance.Output.Ok.Body.JsonPayload.StatePayload,
+                            state: Swift.String,
                             resourceId: Swift.String
                         ) {
                             self.id = id
