@@ -14386,14 +14386,7 @@
                       },
                       "state": {
                         "type": "string",
-                        "enum": [
-                          "scheduled",
-                          "in_progress",
-                          "user_fix_required",
-                          "cancelled",
-                          "succeeded",
-                          "failed"
-                        ]
+                        "description": "scheduled, in_progress, user_fix_required, cancelled, succeeded or failed. Free text: see Scripts/maintenance-quirks.py."
                       },
                       "resourceId": {
                         "type": "string",
@@ -14480,14 +14473,7 @@
                     },
                     "state": {
                       "type": "string",
-                      "enum": [
-                        "scheduled",
-                        "in_progress",
-                        "user_fix_required",
-                        "cancelled",
-                        "succeeded",
-                        "failed"
-                      ]
+                      "description": "scheduled, in_progress, user_fix_required, cancelled, succeeded or failed. Free text: see Scripts/maintenance-quirks.py."
                     },
                     "resourceId": {
                       "type": "string",

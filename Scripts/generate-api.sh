@@ -77,6 +77,10 @@ echo "==> Making member and audit log enums free text"
 # whole audit log or member list. See the script.
 python3 "$REPO_ROOT/Scripts/workspace-quirks.py" "$SPEC"
 
+echo "==> Making maintenance run states free text"
+# A run state the spec doesn't list would fail every run in the workspace. See the script.
+python3 "$REPO_ROOT/Scripts/maintenance-quirks.py" "$SPEC"
+
 echo "==> Correcting the metrics endpoints the spec misdescribes"
 # bandwidth-sources returns the ordinary time-series array, not the envelope the spec describes;
 # the filter endpoints reject parameters the spec declares (and require one it deprecates). See

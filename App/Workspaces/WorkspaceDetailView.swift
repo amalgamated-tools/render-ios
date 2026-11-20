@@ -32,6 +32,11 @@ struct WorkspaceDetailView: View {
                         } label: {
                             Label("Audit Log", systemImage: "list.bullet.clipboard")
                         }
+                        NavigationLink {
+                            MaintenanceView(client: client, ownerID: store.ownerID)
+                        } label: {
+                            Label("Maintenance", systemImage: "wrench.and.screwdriver")
+                        }
                     }
                 } else {
                     ProgressView().frame(maxWidth: .infinity)

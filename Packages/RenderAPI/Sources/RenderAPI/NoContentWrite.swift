@@ -123,3 +123,20 @@ extension Operations.RemoveWorkspaceMember.Output: NoContentWrite {
         return nil
     }
 }
+
+// Maintenance runs: rescheduling and triggering are documented as `202` with no body. Neither can be
+// tried live without a run Render has scheduled, so any 2xx is accepted, as for the other writes here.
+
+extension Operations.UpdateMaintenance.Output: NoContentWrite {
+    public var undocumentedStatusCode: Int? {
+        if case .undocumented(let statusCode, _) = self { return statusCode }
+        return nil
+    }
+}
+
+extension Operations.TriggerMaintenance.Output: NoContentWrite {
+    public var undocumentedStatusCode: Int? {
+        if case .undocumented(let statusCode, _) = self { return statusCode }
+        return nil
+    }
+}
