@@ -37,10 +37,12 @@ collected.
 
 ## Removing your data
 
-Signing out removes your credentials from the Keychain and revokes the sign-in session with Render.
-iOS can keep Keychain items after an app is deleted, so sign out before deleting the app if you
-want them gone. You can also revoke the app's access at any time from your Render account
-settings.
+Signing out removes your sign-in token or API key from the Keychain and revokes the sign-in
+session with Render. It does not remove an organization audit log API key: remove that from the
+Organization Audit Log screen with **Remove Key from This Device**. iOS can keep Keychain items
+after an app is deleted, so do both before deleting the app if you want them gone. You can also
+revoke the app's access at any time from your Render account settings, and revoke an audit log
+API key from your organization's settings.
 
 ## Children
 
