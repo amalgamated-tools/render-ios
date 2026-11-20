@@ -86,9 +86,14 @@ private struct OrgAuditLogSetupForm: View {
                 Text("Render doesn't offer a way to look this up. It's in your organization's settings in the Render Dashboard.")
             }
             Section {
-                SecureField("Audit Log API key", text: $apiKey)
+                // A plain field, not a `SecureField`: iOS reads a secure field next to the ID as a
+                // login and offers to save the key to Passwords (seen live; see EnvVarsView). The
+                // key is visible only on this form; once saved, the app never shows it again.
+                TextField("Audit Log API key", text: $apiKey)
+                    .font(.body.monospaced())
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
+                    .privacySensitive()
             } header: {
                 Text("Audit Log API Key")
             } footer: {
@@ -123,6 +128,9 @@ private struct OrgAuditLogSetupForm: View {
         // Leaving the form any way, Back included, abandons a check still in flight. After a
         // successful save this runs too, with nothing left to drop.
         .onDisappear { settings.cancelSave() }
+        // When changing a saved pair, Cancel returns to the list. Back would leave the whole
+        // screen instead, and showing both side by side was confusing (seen live).
+        .navigationBarBackButtonHidden(onCancel != nil)
         .toolbar {
             if let onCancel {
                 ToolbarItem(placement: .cancellationAction) {
