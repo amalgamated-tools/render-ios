@@ -84,10 +84,13 @@ final class MaintenanceStore {
     /// Bumped by every load and by every write, when it starts and when it ends, so a refresh that
     /// overlaps a write can't put back what the write changed.
     private var generation = 0
+    /// The current time; tests fix it so their dates stay in the future.
+    private let now: @Sendable () -> Date
 
-    init(client: RenderClient, ownerID: String) {
+    init(client: RenderClient, ownerID: String, now: @escaping @Sendable () -> Date = { Date() }) {
         self.client = client
         self.ownerID = ownerID
+        self.now = now
     }
 
     var upcoming: [MaintenanceRun] { runs.filter { !$0.state.isFinished } }
@@ -132,10 +135,17 @@ final class MaintenanceStore {
     /// Moves a scheduled run. Returns whether Render accepted it.
     @discardableResult
     func reschedule(_ run: MaintenanceRun, to date: Date) async -> Bool {
-        guard !isSaving, run.state.isActionable else { return false }
-        if let latest = run.pendingMaintenanceBy, date > latest {
+        // The sheet holds a copy of the run; a refresh since it opened may have changed its state or deadline.
+        guard !isSaving, let run = self.run(id: run.id), run.state.isActionable else { return false }
+        // The sheet can stay open past the time it shows, so check again here.
+        if date <= now() {
+            actionResult = ActionResult(message: "Choose a time in the future.", isFailure: true)
+            return false
+        }
+        // The request says `scheduledAt` must be *before* the deadline, so the deadline itself is refused.
+        if let latest = run.pendingMaintenanceBy, date >= latest {
             actionResult = ActionResult(
-                message: "Maintenance must run by \(latest.formatted(date: .abbreviated, time: .shortened)).",
+                message: "Maintenance must start before \(latest.formatted(date: .abbreviated, time: .shortened)).",
                 isFailure: true
             )
             return false
@@ -159,7 +169,8 @@ final class MaintenanceStore {
     /// Starts a scheduled run now. Returns whether Render accepted it.
     @discardableResult
     func trigger(_ run: MaintenanceRun) async -> Bool {
-        guard !isSaving, run.state.isActionable else { return false }
+        // The confirmation holds a copy of the run; act on what the list shows now.
+        guard !isSaving, let run = self.run(id: run.id), run.state.isActionable else { return false }
         beginWrite()
         defer { endWrite() }
         do {

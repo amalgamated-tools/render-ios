@@ -56,10 +56,10 @@ struct MaintenanceStoreTests {
             return (response, answer.1.isEmpty ? nil : HTTPBody(answer.1))
         }
         let client = RenderClient(apiKeyProvider: StaticAPIKeyProvider("test-key"), retryPolicy: .none, transport: transport)
-        return (MaintenanceStore(client: client, ownerID: "tea-1"), transport)
+        return (MaintenanceStore(client: client, ownerID: "tea-1", now: { Self.date("2026-11-20T00:00:00Z") }), transport)
     }
 
-    private static func date(_ iso: String) -> Date {
+    private nonisolated static func date(_ iso: String) -> Date {
         try! Date(iso, strategy: .iso8601)
     }
 
@@ -141,6 +141,43 @@ struct MaintenanceStoreTests {
         #expect(!ok)
         #expect(backend.writes.isEmpty)
         #expect(store.actionResult?.isFailure == true)
+
+        // The request must be *before* the deadline, so the deadline itself is refused too.
+        #expect(!(await store.reschedule(run, to: Self.date("2026-12-08T10:00:00Z"))))
+        #expect(backend.writes.isEmpty)
+    }
+
+    @Test("a time that has already passed is refused without asking Render")
+    func reschedulePastTime() async throws {
+        let backend = Backend()
+        backend.list = (200, "[" + Self.runJSON(id: "mrn-1", resource: "srv-web", state: "scheduled") + "]")
+        let (store, _) = store(backend)
+        await store.load()
+        let run = try #require(store.run(id: "mrn-1"))
+
+        #expect(!(await store.reschedule(run, to: Self.date("2026-11-19T23:59:00Z"))))
+        #expect(backend.writes.isEmpty)
+        #expect(store.actionResult?.message == "Choose a time in the future.")
+    }
+
+    @Test("an action uses the run as the list shows it now, not the copy the sheet was opened with")
+    func actsOnCurrentRun() async throws {
+        let backend = Backend()
+        backend.list = (200, "[" + Self.runJSON(id: "mrn-1", resource: "srv-web", state: "scheduled") + "]")
+        let (store, _) = store(backend)
+        await store.load()
+        let stale = try #require(store.run(id: "mrn-1"))
+
+        // A refresh while the sheet is open: the run has started, and its deadline moved earlier.
+        backend.list = (200, "[" + Self.runJSON(id: "mrn-1", resource: "srv-web", state: "in_progress") + "]")
+        await store.load()
+        #expect(!(await store.trigger(stale)))
+        #expect(!(await store.reschedule(stale, to: Self.date("2026-12-02T10:00:00Z"))))
+
+        backend.list = (200, "[" + Self.runJSON(id: "mrn-1", resource: "srv-web", state: "scheduled", by: "2026-12-02T00:00:00Z") + "]")
+        await store.load()
+        #expect(!(await store.reschedule(stale, to: Self.date("2026-12-04T10:00:00Z"))))
+        #expect(backend.writes.isEmpty)
     }
 
     @Test("running now marks the run in progress, and any 2xx counts")

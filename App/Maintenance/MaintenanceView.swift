@@ -48,7 +48,8 @@ struct MaintenanceView: View {
         .actionOutcomeFeedback(store.actionResult)
         .sheet(item: $rescheduling) { run in
             MaintenanceRescheduleSheet(run: run) { date in
-                await store.reschedule(run, to: date)
+                // The banner is under the sheet, so the sheet shows a failure itself.
+                await store.reschedule(run, to: date) ? nil : (store.actionResult?.message ?? "Couldn't reschedule.")
             }
         }
         .confirmationDialog(
@@ -121,12 +122,14 @@ struct MaintenanceRow: View {
 
 struct MaintenanceRescheduleSheet: View {
     let run: MaintenanceRun
-    let save: (Date) async -> Bool
+    /// Returns nil on success, or why it failed.
+    let save: (Date) async -> String?
     @State private var date: Date
     @State private var isSaving = false
+    @State private var failure: String?
     @Environment(\.dismiss) private var dismiss
 
-    init(run: MaintenanceRun, save: @escaping (Date) async -> Bool) {
+    init(run: MaintenanceRun, save: @escaping (Date) async -> String?) {
         self.run = run
         self.save = save
         _date = State(initialValue: run.scheduledAt)
@@ -139,7 +142,14 @@ struct MaintenanceRescheduleSheet: View {
                     DatePicker("Start", selection: $date, in: range, displayedComponents: [.date, .hourAndMinute])
                 } footer: {
                     if let latest = run.pendingMaintenanceBy {
-                        Text("Render requires this maintenance by \(latest.formatted(date: .abbreviated, time: .shortened)).")
+                        Text("Render requires this maintenance to start before \(latest.formatted(date: .abbreviated, time: .shortened)).")
+                    }
+                }
+                if let failure {
+                    Section {
+                        Label(failure, systemImage: "exclamationmark.triangle")
+                            .font(.subheadline)
+                            .foregroundStyle(.red)
                     }
                 }
             }
@@ -152,8 +162,13 @@ struct MaintenanceRescheduleSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         isSaving = true
+                        failure = nil
                         Task {
-                            if await save(date) { dismiss() }
+                            if let message = await save(date) {
+                                failure = message
+                            } else {
+                                dismiss()
+                            }
                             isSaving = false
                         }
                     }
@@ -166,7 +181,8 @@ struct MaintenanceRescheduleSheet: View {
 
     private var range: ClosedRange<Date> {
         let now = Date()
-        let latest = max(run.pendingMaintenanceBy ?? .distantFuture, now)
+        // The deadline itself isn't allowed, and the picker works in whole minutes.
+        let latest = max((run.pendingMaintenanceBy ?? .distantFuture).addingTimeInterval(-60), now)
         return now...latest
     }
 }
