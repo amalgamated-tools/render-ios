@@ -198,6 +198,76 @@ struct DiskStoreTests {
         #expect(store.snapshots.isEmpty)
     }
 
+    private nonisolated static let twoUndated = #"""
+    [
+      {"instanceId": "srv-1", "snapshotKey": "key-a"},
+      {"instanceId": "srv-1", "snapshotKey": "key-b"}
+    ]
+    """#
+
+    @Test("undated snapshots of one instance get distinct IDs")
+    func undatedSnapshotsAreDistinct() async {
+        let (store, _) = store { _ in (200, Self.twoUndated) }
+
+        await store.load()
+
+        #expect(Set(store.snapshots.map(\.id)).count == 2)
+    }
+
+    @Test("an undated snapshot whose key is gone is not swapped for another undated one")
+    func undatedRestoreNeedsTheSameKey() async throws {
+        let recorder = Recorder()
+        let refetched = LockedFlag()
+        let store = writingStore(recorder: recorder) { _, _ in
+            if refetched.value { return (200, #"[{"instanceId": "srv-1", "snapshotKey": "key-b"}]"#) }
+            refetched.value = true
+            return (200, Self.twoUndated)
+        }
+        await store.load()
+        let shown = try #require(store.snapshots.first { $0.key == "key-a" })
+
+        await store.restore(shown)
+
+        #expect(!recorder.requests.contains { $0.path.hasSuffix("/restore") })
+        #expect(store.actionResult?.isFailure == true)
+    }
+
+    @Test("an undated snapshot still listed under its key is restored")
+    func undatedRestoreWithSameKey() async throws {
+        let recorder = Recorder()
+        let store = writingStore(recorder: recorder) { _, path in
+            path.hasSuffix("/restore") ? (200, Self.disk(sizeGB: 10)) : (200, Self.twoUndated)
+        }
+        await store.load()
+
+        await store.restore(try #require(store.snapshots.first { $0.key == "key-b" }))
+
+        let restore = try #require(recorder.requests.last)
+        let body = try JSONSerialization.jsonObject(with: Data((restore.body ?? "").utf8)) as? [String: String]
+        #expect(body == ["snapshotKey": "key-b", "instanceId": "srv-1"])
+        #expect(store.actionResult?.isFailure == false)
+    }
+
+    @Test("two snapshots matching the same time and instance are not guessed between")
+    func ambiguousRestoreIsRefused() async throws {
+        let recorder = Recorder()
+        let refetched = LockedFlag()
+        let dated = #"{"createdAt": "2026-11-21T00:10:00Z", "instanceId": "srv-1", "snapshotKey": "%@"}"#
+        let store = writingStore(recorder: recorder) { _, _ in
+            if refetched.value {
+                return (200, "[" + String(format: dated, "key-x") + "," + String(format: dated, "key-y") + "]")
+            }
+            refetched.value = true
+            return (200, "[" + String(format: dated, "key-x") + "]")
+        }
+        await store.load()
+
+        await store.restore(try #require(store.snapshots.first))
+
+        #expect(!recorder.requests.contains { $0.path.hasSuffix("/restore") })
+        #expect(store.actionResult?.isFailure == true)
+    }
+
     @Test("a failed restore is reported")
     func restoreFails() async throws {
         let store = writingStore(recorder: Recorder()) { _, path in

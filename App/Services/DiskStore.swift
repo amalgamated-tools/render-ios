@@ -11,9 +11,16 @@ import RenderAPI
 @Observable
 final class DiskStore {
     struct Snapshot: Identifiable, Hashable, Sendable {
-        /// When and where it was taken. Not the restore key: keys expire after 24 hours and may differ
-        /// between fetches, so they can't identify a snapshot across reloads.
-        var id: String { "\(instanceID ?? "")|\(createdAt?.timeIntervalSince1970 ?? 0)" }
+        /// When and where it was taken, for a dated snapshot. Not the restore key: keys expire after
+        /// 24 hours and may differ between fetches, so they can't identify a snapshot across reloads.
+        ///
+        /// An undated snapshot has only its key to tell it apart: instance alone would give every
+        /// undated snapshot of an instance the same ID. Such a snapshot can only be restored while a
+        /// fresh fetch still returns that exact key.
+        var id: String {
+            guard let createdAt else { return "key|\(key)" }
+            return "\(instanceID ?? "")|\(createdAt.timeIntervalSince1970)"
+        }
         /// Render's opaque restore key, as of the last fetch.
         let key: String
         let createdAt: Date?
@@ -95,7 +102,8 @@ final class DiskStore {
     /// Overwrites the disk with `snapshot`.
     ///
     /// The list is fetched again first, because the key on screen may have expired; the snapshot is
-    /// matched by its time and instance. If it's no longer listed, nothing is restored.
+    /// matched by its ID (see `Snapshot.id`). If it's no longer listed, or more than one snapshot
+    /// matches, nothing is restored: a restore overwrites the disk, so a guess isn't good enough.
     func restore(_ snapshot: Snapshot) async {
         guard !isWriting else { return }
         restoringID = snapshot.id
@@ -105,7 +113,8 @@ final class DiskStore {
         do {
             let fresh = try await fetchSnapshots()
             snapshots = fresh
-            guard let current = fresh.first(where: { $0.id == snapshot.id }) else {
+            let matches = fresh.filter { $0.id == snapshot.id }
+            guard matches.count == 1, let current = matches.first else {
                 actionResult = ActionResult(
                     message: "That snapshot is no longer available. Nothing was restored.",
                     isFailure: true
