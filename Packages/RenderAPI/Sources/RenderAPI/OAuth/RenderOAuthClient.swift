@@ -155,6 +155,11 @@ public struct RenderOAuthClient: Sendable {
                 return try await fetchDeviceToken(for: grant)
             } catch OAuthError.authorizationPending {
                 continue
+            } catch OAuthError.transport {
+                // The user is in the browser approving, so the app is usually suspended and an
+                // in-flight poll fails ("network connection was lost"). The grant is still good:
+                // keep polling until it expires rather than abandoning the sign-in.
+                continue
             }
         }
     }
