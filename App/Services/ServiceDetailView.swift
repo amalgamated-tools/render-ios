@@ -146,8 +146,10 @@ struct ServiceDetailView: View {
                     // it's "docmo…", and minimumScaleFactor is ignored inside this bordered button.
                     // So say what the button does instead, and drop the icon, which at the largest
                     // sizes squeezes even that into "Ope-n Webs…"; alone it wraps between words.
+                    // Only public services are websites; a private service's URL is an internal
+                    // address like http://internal:10000.
                     if dynamicTypeSize.isAccessibilitySize {
-                        Text("Open Website")
+                        Text(service.type == .webService || service.type == .staticSite ? "Open Website" : "Open URL")
                             .font(.subheadline.weight(.medium))
                             .frame(maxWidth: .infinity)
                     } else {
