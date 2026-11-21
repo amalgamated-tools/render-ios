@@ -416,8 +416,6 @@ struct TaskRunDetailStoreTests {
     }
 }
 
-/// Like `RenderClient.routed`, but the route also sees the method, since fetching and cancelling a
-/// run share a path.
 /// The idempotency keys of the runs a store asked to start, in order.
 private final class KeyRecorder: @unchecked Sendable {
     private let lock = NSLock()
@@ -447,6 +445,8 @@ private func keyRecording(
     return (client, keys)
 }
 
+/// Like `RenderClient.routed`, but the route also sees the method, since fetching and cancelling a
+/// run share a path.
 private func methodRouted(
     _ route: @escaping @Sendable (HTTPRequest.Method, String) -> (status: Int, body: String)
 ) -> (client: RenderClient, transport: StubTransport) {
