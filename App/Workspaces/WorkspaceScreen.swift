@@ -29,7 +29,7 @@ struct WorkspaceScreen: View {
     @Environment(NotificationRouter.self) private var router
 
     private enum WorkspaceTab: Hashable {
-        case services, postgres, keyValue, envGroups
+        case services, postgres, keyValue, envGroups, workflows
     }
 
     init(authStore: AuthStore, client: RenderClient, ownerID: String) {
@@ -74,6 +74,12 @@ struct WorkspaceScreen: View {
             Tab("Env Groups", systemImage: "rectangle.stack", value: .envGroups) {
                 NavigationStack {
                     EnvGroupsListView(client: client, ownerID: ownerID)
+                        .toolbar { sharedToolbar }
+                }
+            }
+            Tab("Workflows", systemImage: "point.3.filled.connected.trianglepath.dotted", value: .workflows) {
+                NavigationStack {
+                    WorkflowsListView(client: client, ownerID: ownerID)
                         .toolbar { sharedToolbar }
                 }
             }

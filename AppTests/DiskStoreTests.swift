@@ -212,15 +212,6 @@ struct DiskStoreTests {
     }
 }
 
-private final class LockedFlag: @unchecked Sendable {
-    private let lock = NSLock()
-    private var _value = false
-    var value: Bool {
-        get { lock.withLock { _value } }
-        set { lock.withLock { _value = newValue } }
-    }
-}
-
 /// Every request the writing store sent, with its body.
 private final class Recorder: @unchecked Sendable {
     struct Request {

@@ -72,6 +72,9 @@ public struct RenderClient: Sendable {
                 // has done its retries. Retry sits above Auth so a retried attempt re-reads the API
                 // key, which matters if the user swapped workspaces mid-flight.
                 StatusMappingMiddleware(),
+                // Only ever touches a 2xx body, so its place relative to the others doesn't matter;
+                // here it sees the final response once, rather than once per retry.
+                NullListMiddleware(),
                 RetryMiddleware(policy: retryPolicy),
                 AuthMiddleware(provider: apiKeyProvider),
             ]

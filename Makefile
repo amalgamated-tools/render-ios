@@ -38,6 +38,11 @@ test-app:
 	xcodebuild -project RenderiOS.xcodeproj -scheme RenderiOS \
 	  -destination "$$(Scripts/test-destination.sh)" $(XCODEBUILD_FLAGS) test
 
+## ui-test: UI tests against the live API with the key in .env — headless, screenshots in build/ui-tests
+.PHONY: ui-test
+ui-test:
+	@SIMULATOR="$(SIMULATOR)" Scripts/ui-test.sh
+
 ## run: build, install, and launch on the simulator
 .PHONY: run
 run:
