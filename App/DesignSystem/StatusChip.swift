@@ -32,29 +32,6 @@ struct StatusChip: View {
     }
 }
 
-/// A neutral pill for facts rather than health — region, plan, instance count. Same geometry as a
-/// status chip so a row of the two lines up, but it borrows the surrounding text colour instead of
-/// claiming a semantic tint of its own.
-struct FactChip: View {
-    let title: String
-    var systemImage: String?
-
-    var body: some View {
-        Label {
-            Text(title)
-        } icon: {
-            if let systemImage {
-                Image(systemName: systemImage)
-            }
-        }
-        .font(.caption.weight(.medium))
-        .foregroundStyle(.secondary)
-        .padding(.horizontal, Theme.Chip.horizontalPadding)
-        .padding(.vertical, Theme.Chip.verticalPadding)
-        .background(.quaternary, in: Capsule())
-    }
-}
-
 /// The smallest badge: a word sitting next to a row's title, qualifying it. "Suspended" on a
 /// service, "Replica" on a Postgres instance. Smaller than a ``StatusChip`` because it rides
 /// alongside a headline rather than standing on its own line.
