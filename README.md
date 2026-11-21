@@ -398,9 +398,26 @@ image may stop shipping.
 CI (`.github/workflows/ci.yml`) runs the package tests, the app tests, and a simulator build on every
 PR and every push to `main`, through the same `make` targets used locally.
 
+### UI tests (headless)
+
+`UITests/` holds XCUITest tests that sign in with the key in `.env`, walk real screens and save
+screenshots. They run without the Simulator window and never touch the Mac's mouse or keyboard, so
+you can keep working while they run. They reach the live API, so CI and `make test` skip them; they
+have their own scheme, `RenderiOSUITests`.
+
+```sh
+make ui-test                              # every UI test; screenshots in build/ui-tests/screens
+make ui-test ONLY=ServiceScreensTests     # one class, or Class/testMethod
+make ui-test TEXT_SIZE=AccessibilityM     # at a Dynamic Type size
+make ui-test UI_SERVICE=my-api            # UI_* variables reach the tests via AppDriver.value
+```
+
+The simulator's Keychain is reset first, so every run starts signed out with the current key.
+
 ### Driving the simulator
 
-Screens can be exercised end-to-end without XCUITest:
+Screens can also be exercised end-to-end with real mouse events. This brings the Simulator window to
+the front and moves the cursor, so prefer `make ui-test` for anything new:
 
 ```sh
 make run

@@ -16,11 +16,13 @@
 /* Begin PBXFileReference section */
 		A00000000000000000000004 /* RenderiOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RenderiOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A00000000000000000000020 /* RenderiOSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RenderiOSTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A00000000000000000000035 /* RenderiOSUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RenderiOSUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		A0000000000000000000000F /* App */ = {isa = PBXFileSystemSynchronizedRootGroup; path = App; sourceTree = "<group>"; };
 		A00000000000000000000021 /* AppTests */ = {isa = PBXFileSystemSynchronizedRootGroup; path = AppTests; sourceTree = "<group>"; };
+		A00000000000000000000036 /* UITests */ = {isa = PBXFileSystemSynchronizedRootGroup; path = UITests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -42,6 +44,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A00000000000000000000037 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -50,6 +59,7 @@
 			children = (
 				A0000000000000000000000F /* App */,
 				A00000000000000000000021 /* AppTests */,
+				A00000000000000000000036 /* UITests */,
 				A00000000000000000000003 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -59,6 +69,7 @@
 			children = (
 				A00000000000000000000004 /* RenderiOS.app */,
 				A00000000000000000000020 /* RenderiOSTests.xctest */,
+				A00000000000000000000035 /* RenderiOSUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -115,6 +126,27 @@
 			productReference = A00000000000000000000020 /* RenderiOSTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		A0000000000000000000003A /* RenderiOSUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A0000000000000000000003B /* Build configuration list for PBXNativeTarget "RenderiOSUITests" */;
+			buildPhases = (
+				A00000000000000000000038 /* Sources */,
+				A00000000000000000000037 /* Frameworks */,
+				A00000000000000000000039 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A0000000000000000000003E /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				A00000000000000000000036 /* UITests */,
+			);
+			name = RenderiOSUITests;
+			productName = RenderiOSUITests;
+			productReference = A00000000000000000000035 /* RenderiOSUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -129,6 +161,10 @@
 						CreatedOnToolsVersion = 26.6;
 					};
 					A00000000000000000000022 = {
+						CreatedOnToolsVersion = 26.6;
+						TestTargetID = A00000000000000000000005;
+					};
+					A0000000000000000000003A = {
 						CreatedOnToolsVersion = 26.6;
 						TestTargetID = A00000000000000000000005;
 					};
@@ -153,11 +189,19 @@
 			targets = (
 				A00000000000000000000005 /* RenderiOS */,
 				A00000000000000000000022 /* RenderiOSTests */,
+				A0000000000000000000003A /* RenderiOSUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		A00000000000000000000039 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A00000000000000000000008 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -175,6 +219,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		A00000000000000000000038 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A00000000000000000000006 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -192,6 +243,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		A0000000000000000000003E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A00000000000000000000005 /* RenderiOS */;
+			targetProxy = A0000000000000000000003F /* PBXContainerItemProxy */;
+		};
 		A00000000000000000000029 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = A00000000000000000000005 /* RenderiOS */;
@@ -200,6 +256,13 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXContainerItemProxy section */
+		A0000000000000000000003F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A00000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A00000000000000000000005;
+			remoteInfo = RenderiOS;
+		};
 		A0000000000000000000002A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = A00000000000000000000001 /* Project object */;
@@ -210,6 +273,36 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin XCBuildConfiguration section */
+		A0000000000000000000003C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.veverkap.RenderiOSUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = RenderiOS;
+			};
+			name = Debug;
+		};
+		A0000000000000000000003D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.veverkap.RenderiOSUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = RenderiOS;
+			};
+			name = Release;
+		};
 		A0000000000000000000000A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -358,6 +451,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		A0000000000000000000003B /* Build configuration list for PBXNativeTarget "RenderiOSUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A0000000000000000000003C /* Debug */,
+				A0000000000000000000003D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		A00000000000000000000009 /* Build configuration list for PBXProject "RenderiOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
