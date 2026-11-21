@@ -57,8 +57,10 @@ private enum WorkflowJSON {
         entry("flow", id: "flw-2", name: "describe", version: "wfv-2"),
     ].joined(separator: ",") + "]"
 
-    static func route(for path: String) -> (Int, String) {
+    /// `defaultVersionID` is what the refreshed workflow (`GET /workflows?workflowID=`) says.
+    static func route(for path: String, defaultVersionID: String? = "wfv-2") -> (Int, String) {
         if path.contains("/workflowversions") { return (200, versions) }
+        if path.contains("/workflows") { return (200, workflowsPage([workflow(defaultVersionID: defaultVersionID)])) }
         if path.contains("/tasks") { return (200, tasks) }
         if path.contains("/flows") { return (200, flows) }
         return (404, "{}")
@@ -147,9 +149,9 @@ struct WorkflowDetailStoreTests {
         return try #require(list.workflows.first)
     }
 
-    @Test("tasks and flows come from the default version only, not once per build")
+    @Test("tasks and flows come from the default version only, fetched by version ID")
     func defaultVersion() async throws {
-        let (client, transport) = RenderClient.routed { WorkflowJSON.route(for: $0) }
+        let (client, transport) = RenderClient.routed { WorkflowJSON.route(for: $0, defaultVersionID: "wfv-1") }
         let store = WorkflowDetailStore(client: client, workflow: try await workflow(defaultVersionID: "wfv-1"))
 
         await store.load()
@@ -158,16 +160,45 @@ struct WorkflowDetailStoreTests {
         #expect(store.currentVersion?.id == "wfv-1")
         #expect(store.tasks.map(\.id) == ["tsk-1b", "tsk-1a"])  // slow, square
         #expect(store.flows.map(\.id) == ["flw-1"])
-        // Every list is filtered by this workflow.
-        // The versions list spells the parameter `workflowID`, as the spec does; the live API accepts it.
-        #expect(transport.requests.allSatisfy {
-            $0.path?.lowercased().contains("workflowid=wfl-1") == true
+        let paths = transport.requests.compactMap(\.path)
+        // Tasks and flows are asked for by version, so a long history can't crowd them out.
+        #expect(paths.filter { $0.hasPrefix("/tasks") || $0.hasPrefix("/flows") }.allSatisfy {
+            $0.contains("workflowVersionId=wfv-1") && !$0.contains("workflowId=")
         })
+        // The versions list spells the parameter `workflowID`, as the spec does; the live API accepts it.
+        #expect(paths.contains { $0.hasPrefix("/workflowversions") && $0.contains("workflowID=wfl-1") })
+    }
+
+    @Test("a refresh picks up a default version changed by a deploy")
+    func refreshUpdatesDefault() async throws {
+        let (client, transport) = RenderClient.routed { WorkflowJSON.route(for: $0, defaultVersionID: "wfv-2") }
+        let store = WorkflowDetailStore(client: client, workflow: try await workflow(defaultVersionID: "wfv-1"))
+
+        await store.load()
+
+        #expect(store.workflow.defaultVersionID == "wfv-2")
+        #expect(store.currentVersion?.id == "wfv-2")
+        #expect(store.tasks.map(\.id) == ["tsk-2c", "tsk-2b", "tsk-2a"])
+        #expect(transport.requests.contains { $0.path?.hasPrefix("/workflows?") == true && $0.path?.contains("workflowID=wfl-1") == true })
+    }
+
+    @Test("a default version missing from the versions list still picks the tasks")
+    func defaultOutsideVersionsList() async throws {
+        let (client, _) = RenderClient.routed { path in
+            path.contains("/workflowversions") ? (200, "[]") : WorkflowJSON.route(for: path, defaultVersionID: "wfv-1")
+        }
+        let store = WorkflowDetailStore(client: client, workflow: try await workflow(defaultVersionID: "wfv-1"))
+
+        await store.load()
+
+        #expect(store.currentVersionID == "wfv-1")
+        #expect(store.currentVersion == nil)
+        #expect(store.tasks.map(\.id) == ["tsk-1b", "tsk-1a"])
     }
 
     @Test("versions are newest first, and with no default the newest ready one is current")
     func newestReadyFallback() async throws {
-        let (client, _) = RenderClient.routed { WorkflowJSON.route(for: $0) }
+        let (client, transport) = RenderClient.routed { WorkflowJSON.route(for: $0, defaultVersionID: nil) }
         let store = WorkflowDetailStore(client: client, workflow: try await workflow(defaultVersionID: nil))
 
         await store.load()
@@ -177,12 +208,13 @@ struct WorkflowDetailStoreTests {
         // The failed build is newest, but registered nothing runnable, so v2 is current.
         #expect(store.currentVersion?.id == "wfv-2")
         #expect(store.tasks.map(\.name) == ["fail", "slow", "square"])
+        #expect(transport.requests.contains { $0.path?.contains("workflowVersionId=wfv-2") == true })
     }
 
     @Test("with no version to pick by, duplicate names across builds are collapsed")
     func noVersionCollapses() async throws {
-        let (client, _) = RenderClient.routed { path in
-            path.contains("/workflowversions") ? (200, "[]") : WorkflowJSON.route(for: path)
+        let (client, transport) = RenderClient.routed { path in
+            path.contains("/workflowversions") ? (200, "[]") : WorkflowJSON.route(for: path, defaultVersionID: nil)
         }
         let store = WorkflowDetailStore(client: client, workflow: try await workflow(defaultVersionID: nil))
 
@@ -191,6 +223,7 @@ struct WorkflowDetailStoreTests {
         #expect(store.currentVersion == nil)
         #expect(store.tasks.map(\.name) == ["fail", "slow", "square"])
         #expect(store.flows.map(\.name) == ["describe"])
+        #expect(transport.requests.contains { $0.path?.hasPrefix("/tasks") == true && $0.path?.contains("workflowId=wfl-1") == true })
     }
 
     @Test("one failing list fails the load and keeps what was shown")

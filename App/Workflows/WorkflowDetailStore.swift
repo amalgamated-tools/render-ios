@@ -55,6 +55,7 @@ struct WorkflowEntry: Identifiable, Hashable, Sendable {
 /// so a workflow built ten times lists each task ten times. The screen shows the default version's —
 /// the one a run uses when it doesn't name one — and falls back to the newest ready version when the
 /// workflow doesn't say. Versions that are still building or failed registered nothing runnable.
+/// Once the version is chosen, only its tasks and flows are fetched.
 @MainActor
 @Observable
 final class WorkflowDetailStore {
@@ -65,7 +66,11 @@ final class WorkflowDetailStore {
     private(set) var hasLoaded = false
     private(set) var errorMessage: String?
 
-    let workflow: WorkflowSummary
+    /// Refreshed on every load, so a deploy that changes the default version shows up.
+    private(set) var workflow: WorkflowSummary
+    /// The version whose tasks and flows are shown. Kept apart from `currentVersion` because the
+    /// default version can be one the versions list doesn't include.
+    private(set) var currentVersionID: String?
     private let client: RenderClient
     private let pageSize: Int
 
@@ -75,12 +80,18 @@ final class WorkflowDetailStore {
         self.pageSize = pageSize
     }
 
-    /// The version whose tasks and flows are shown.
+    /// The version whose tasks and flows are shown, when the versions list includes it.
     var currentVersion: WorkflowVersionSummary? {
-        if let id = workflow.defaultVersionID, let version = versions.first(where: { $0.id == id }) {
-            return version
-        }
-        return versions.first { $0.status == .ready }
+        currentVersionID.flatMap { id in versions.first { $0.id == id } }
+    }
+
+    /// The default version, else the newest ready one. Builds still in progress or failed registered
+    /// nothing runnable.
+    nonisolated static func currentVersionID(
+        workflow: WorkflowSummary, versions: [WorkflowVersionSummary]
+    ) -> String? {
+        workflow.defaultVersionID
+            ?? versions.sorted { $0.createdAt > $1.createdAt }.first { $0.status == .ready }?.id
     }
 
     func load() async {
@@ -89,13 +100,21 @@ final class WorkflowDetailStore {
         defer { isLoading = false }
 
         do {
+            // First the workflow and its versions, to know which version is current.
+            async let refreshed = fetchWorkflow()
             async let loadedVersions = fetchVersions()
-            async let loadedTasks = fetchTasks()
-            async let loadedFlows = fetchFlows()
-            let (allVersions, allTasks, allFlows) = try await (loadedVersions, loadedTasks, loadedFlows)
+            let (latest, allVersions) = try await (refreshed, loadedVersions)
+            if let latest { workflow = latest }
+            let versionID = Self.currentVersionID(workflow: workflow, versions: allVersions)
+
+            // Then only that version's tasks and flows, rather than every build's and filtering
+            // after, which a long history could push past the paginator's cap.
+            async let loadedTasks = fetchTasks(versionID: versionID)
+            async let loadedFlows = fetchFlows(versionID: versionID)
+            let (allTasks, allFlows) = try await (loadedTasks, loadedFlows)
 
             versions = allVersions.sorted { $0.createdAt > $1.createdAt }
-            let versionID = currentVersion?.id
+            currentVersionID = versionID
             tasks = Self.entries(allTasks, in: versionID)
             flows = Self.entries(allFlows, in: versionID)
             errorMessage = nil
@@ -120,6 +139,13 @@ final class WorkflowDetailStore {
 
     // MARK: - Fetching
 
+    /// The workflow as it is now, or nil if Render no longer lists it (the screen keeps what it had).
+    private func fetchWorkflow() async throws -> WorkflowSummary? {
+        try await client.api
+            .listWorkflows(query: .init(workflowID: [workflow.id], limit: 1))
+            .ok.body.json.first.map { WorkflowSummary($0.workflow) }
+    }
+
     private func fetchVersions() async throws -> [WorkflowVersionSummary] {
         let client = client
         let workflowID = workflow.id
@@ -134,30 +160,37 @@ final class WorkflowDetailStore {
         }.collect()
     }
 
-    private func fetchTasks() async throws -> [WorkflowEntry] {
+    /// One version's tasks, or every version's when none is known (collapsed by name afterwards).
+    private func fetchTasks(versionID: String?) async throws -> [WorkflowEntry] {
         let client = client
         let workflowID = workflow.id
         return try await CursorPaginator<Components.Schemas.TaskWithCursor, WorkflowEntry>(
             pageSize: pageSize
         ) { cursor, limit in
-            try await client.api
-                .listTasks(query: .init(workflowId: [workflowID], cursor: cursor, limit: limit))
-                .ok.body.json
+            let query: Operations.ListTasks.Input.Query = if let versionID {
+                .init(workflowVersionId: [versionID], cursor: cursor, limit: limit)
+            } else {
+                .init(workflowId: [workflowID], cursor: cursor, limit: limit)
+            }
+            return try await client.api.listTasks(query: query).ok.body.json
         } unwrap: { envelope in
             let task = envelope.task
             return (WorkflowEntry(id: task.id, name: task.name, versionID: task.workflowVersionId), envelope.cursor)
         }.collect()
     }
 
-    private func fetchFlows() async throws -> [WorkflowEntry] {
+    private func fetchFlows(versionID: String?) async throws -> [WorkflowEntry] {
         let client = client
         let workflowID = workflow.id
         return try await CursorPaginator<Components.Schemas.FlowWithCursor, WorkflowEntry>(
             pageSize: pageSize
         ) { cursor, limit in
-            try await client.api
-                .listFlows(query: .init(workflowId: [workflowID], cursor: cursor, limit: limit))
-                .ok.body.json
+            let query: Operations.ListFlows.Input.Query = if let versionID {
+                .init(workflowVersionId: [versionID], cursor: cursor, limit: limit)
+            } else {
+                .init(workflowId: [workflowID], cursor: cursor, limit: limit)
+            }
+            return try await client.api.listFlows(query: query).ok.body.json
         } unwrap: { envelope in
             let flow = envelope.flow
             return (WorkflowEntry(id: flow.id, name: flow.name, versionID: flow.workflowVersionId), envelope.cursor)
