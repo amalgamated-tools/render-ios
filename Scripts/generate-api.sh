@@ -92,6 +92,11 @@ echo "==> Correcting the metrics endpoints the spec misdescribes"
 # the script.
 python3 "$REPO_ROOT/Scripts/metrics-quirks.py" "$SPEC"
 
+echo "==> Letting a task run without results decode"
+# GET /task-runs/{taskRunId} sends `"results": null` for failed, canceled and unfinished runs; the
+# spec says it's a required array. See the script.
+python3 "$REPO_ROOT/Scripts/workflow-quirks.py" "$SPEC"
+
 echo "==> Fixing numeric query parameter types"
 # The spec types every numeric query parameter as `number`, which the generator maps to Double or
 # Float — and Render accepts neither serialization: it rejects `resolutionSeconds=60.0` outright, and
