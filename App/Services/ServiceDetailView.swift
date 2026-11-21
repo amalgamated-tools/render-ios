@@ -131,17 +131,18 @@ struct ServiceDetailView: View {
 
             deployStatus
 
-            if let url = service.details.url, let parsed = URL(string: url) {
+            // Only public services get the button. A private service's URL is an internal address
+            // like http://internal:10000 that can't open outside Render's private network.
+            if service.type == .webService || service.type == .staticSite,
+               let url = service.details.url, let parsed = URL(string: url) {
                 Link(destination: parsed) {
                     // At accessibility sizes a hostname doesn't fit, and every way of squeezing it
                     // is unreadable: wrapped it breaks into "doc-most-va.onren-der.com", truncated
                     // it's "docmo…", and minimumScaleFactor is ignored inside this bordered button.
                     // So say what the button does instead, and drop the icon, which at the largest
                     // sizes squeezes even that into "Ope-n Webs…"; alone it wraps between words.
-                    // Only public services are websites; a private service's URL is an internal
-                    // address like http://internal:10000.
                     if dynamicTypeSize.isAccessibilitySize {
-                        Text(service.type == .webService || service.type == .staticSite ? "Open Website" : "Open URL")
+                        Text("Open Website")
                             .font(.subheadline.weight(.medium))
                             .frame(maxWidth: .infinity)
                     } else {
