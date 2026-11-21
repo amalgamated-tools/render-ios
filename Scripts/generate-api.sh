@@ -81,6 +81,11 @@ echo "==> Making maintenance run states free text"
 # A run state the spec doesn't list would fail every run in the workspace. See the script.
 python3 "$REPO_ROOT/Scripts/maintenance-quirks.py" "$SPEC"
 
+echo "==> Correcting the disk snapshot list's success status"
+# The spec says GET /disks/{diskId}/snapshots answers 201; the live API answers 200, which the
+# generated client would treat as undocumented. See the script.
+python3 "$REPO_ROOT/Scripts/disk-quirks.py" "$SPEC"
+
 echo "==> Correcting the metrics endpoints the spec misdescribes"
 # bandwidth-sources returns the ordinary time-series array, not the envelope the spec describes;
 # the filter endpoints reject parameters the spec declares (and require one it deprecates). See

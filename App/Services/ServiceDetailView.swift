@@ -311,7 +311,11 @@ struct ServiceDetailView: View {
                 LabeledContent("Health Check", value: healthCheckPath)
             }
             if let disk = details.disk {
-                LabeledContent("Disk", value: "\(disk.name) · \(disk.sizeGB) GB · \(disk.mountPath)")
+                NavigationLink {
+                    DiskView(client: client, disk: disk)
+                } label: {
+                    LabeledContent("Disk", value: "\(disk.name) · \(disk.sizeGB) GB")
+                }
             }
             if details.isMaintenanceModeEnabled {
                 Label("Maintenance mode is on", systemImage: "wrench.and.screwdriver.fill")
