@@ -105,9 +105,10 @@ struct ServiceDetailView: View {
 
     // MARK: - Sections
 
-    /// The answers you want before reading anything else: what this is, whether it's up, where it
-    /// runs, and how to open it. Previously these were scattered between a section header and four
-    /// LabeledContent rows halfway down a wall of them.
+    /// The answers you want before reading anything else: what this is, whether it's up, and how to
+    /// open it. Region, plan, and instance count were pills here once, but unlabeled pills don't say
+    /// what "Starter" is, and at large Dynamic Type they stacked into a table without labels — so
+    /// they are the first rows of Configuration instead.
     private func heroHeader(for service: ServiceDetailModel) -> some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.row) {
             HStack(spacing: Theme.Spacing.row) {
@@ -128,15 +129,6 @@ struct ServiceDetailView: View {
             }
 
             deployStatus
-
-            if !factChips.isEmpty {
-                // Wraps rather than truncates: on a cron job in a long-named region at largest
-                // Dynamic Type these do not fit on one line.
-                ViewThatFits(in: .horizontal) {
-                    HStack(spacing: Theme.Spacing.tight) { chips }
-                    VStack(alignment: .leading, spacing: Theme.Spacing.tight) { chips }
-                }
-            }
 
             if let url = service.details.url, let parsed = URL(string: url) {
                 Link(destination: parsed) {
@@ -164,33 +156,6 @@ struct ServiceDetailView: View {
             Text("Never deployed")
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(.secondary)
-        }
-    }
-
-    /// Region, instance type, and instance count — the three facts that were LabeledContent rows in
-    /// Configuration. They are shown here instead of in both places.
-    private var factChips: [(title: String, systemImage: String)] {
-        guard let details = store.service?.details else { return [] }
-        var chips: [(String, String)] = []
-        if let region = details.region {
-            chips.append((region.rawValue.capitalized, "globe.americas"))
-        }
-        if let plan = details.plan {
-            chips.append((plan.rawValue.replacingOccurrences(of: "_", with: " ").capitalized, "cpu"))
-        }
-        if let instances = details.numInstances {
-            var title = "\(instances) \(instances == 1 ? "instance" : "instances")"
-            if let autoscaling = details.autoscaling, autoscaling.isEnabled {
-                title += " · auto \(autoscaling.min)–\(autoscaling.max)"
-            }
-            chips.append((title, "square.stack.3d.up"))
-        }
-        return chips
-    }
-
-    private var chips: some View {
-        ForEach(factChips, id: \.title) { chip in
-            FactChip(title: chip.title, systemImage: chip.systemImage)
         }
     }
 
@@ -291,10 +256,22 @@ struct ServiceDetailView: View {
     @ViewBuilder
     private func configurationSection(for service: ServiceDetailModel) -> some View {
         let details = service.details
-        // Instance type, region, and instance count are deliberately absent: they are the fact
-        // chips in the hero header, and saying them twice on one screen is how a config list stops
-        // being scannable.
+        // Plan, region, and instance count lead: they are the facts people look for first, and the
+        // same labels the Postgres and Key Value screens use.
         Section("Configuration") {
+            if let plan = details.plan {
+                LabeledContent("Plan", value: plan.rawValue.replacingOccurrences(of: "_", with: " ").capitalized)
+            }
+            if let region = details.region {
+                LabeledContent("Region", value: region.rawValue.capitalized)
+            }
+            if let instances = details.numInstances {
+                if let autoscaling = details.autoscaling, autoscaling.isEnabled {
+                    LabeledContent("Instances", value: "\(instances) · autoscaling \(autoscaling.min)–\(autoscaling.max)")
+                } else {
+                    LabeledContent("Instances", value: "\(instances)")
+                }
+            }
             if let schedule = details.schedule {
                 LabeledContent("Schedule", value: schedule)
                     .monospaced()
