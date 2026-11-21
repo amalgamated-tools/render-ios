@@ -242,4 +242,24 @@ struct WorkflowDetailStoreTests {
         #expect(store.tasks.count == 3)
         #expect(store.flows.count == 1)
     }
+
+    @Test("a refresh whose lists fail keeps the old workflow alongside the old lists")
+    func failedRefreshKeepsWorkflow() async throws {
+        let fail = LockedFlag()
+        let (client, _) = RenderClient.routed { path in
+            // After the first load, a deploy moves the default to v1, but the flows request fails.
+            guard fail.value else { return WorkflowJSON.route(for: path, defaultVersionID: "wfv-2") }
+            return path.contains("/flows") ? (500, #"{"message":"boom"}"#) : WorkflowJSON.route(for: path, defaultVersionID: "wfv-1")
+        }
+        let store = WorkflowDetailStore(client: client, workflow: try await workflow(defaultVersionID: "wfv-2"))
+
+        await store.load()
+        fail.value = true
+        await store.load()
+
+        #expect(store.errorMessage != nil)
+        #expect(store.workflow.defaultVersionID == "wfv-2")
+        #expect(store.currentVersion?.id == "wfv-2")
+        #expect(store.tasks.map(\.id) == ["tsk-2c", "tsk-2b", "tsk-2a"])
+    }
 }
