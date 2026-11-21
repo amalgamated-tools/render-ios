@@ -36,23 +36,29 @@ final class TaskRunDetailStore {
         isLoading = true
         defer { isLoading = false }
 
+        let id = runID
+        let loaded: Operations.GetTaskRun.Output.Ok.Body.JsonPayload
         do {
-            let id = runID
-            async let detail = client.api.getTaskRun(path: .init(taskRunId: id)).ok.body.json
-            // Children share this run's root. Listing by root gets them in one request; the ones
-            // that are this run's direct children say so in parentTaskRunId.
-            async let family = client.api.listTaskRuns(query: .init(limit: 100, rootTaskRunId: [id])).ok.body.json
-            let (loaded, related) = try await (detail, family)
-            run = TaskRunDetail(loaded)
-            if taskName == nil {
-                taskName = try? await client.api.getTask(path: .init(taskId: loaded.taskId)).ok.body.json.name
-            }
+            loaded = try await client.api.getTaskRun(path: .init(taskRunId: id)).ok.body.json
+        } catch {
+            errorMessage = RenderError.wrapping(error).errorDescription
+            return
+        }
+        run = TaskRunDetail(loaded)
+        errorMessage = nil
+        if taskName == nil {
+            taskName = try? await client.api.getTask(path: .init(taskId: loaded.taskId)).ok.body.json.name
+        }
+        // Children share the run's root, which is this run's own ID only when it is the root. Listing
+        // by root gets the whole family in one request; this run's direct children say so in
+        // parentTaskRunId. Best-effort: if the list fails, the run still shows, with the children
+        // from the last load.
+        let root = loaded.rootTaskRunId.isEmpty ? id : loaded.rootTaskRunId
+        if let related = try? await client.api
+            .listTaskRuns(query: .init(limit: 100, rootTaskRunId: [root])).ok.body.json {
             children = related.map { TaskRunSummary($0.taskRun) }
                 .filter { $0.parentID == id }
                 .sorted(by: TaskRunsStore.newestFirst)
-            errorMessage = nil
-        } catch {
-            errorMessage = RenderError.wrapping(error).errorDescription
         }
     }
 
