@@ -104,8 +104,10 @@ final class WorkflowDetailStore {
             async let refreshed = fetchWorkflow()
             async let loadedVersions = fetchVersions()
             let (latest, allVersions) = try await (refreshed, loadedVersions)
-            if let latest { workflow = latest }
-            let versionID = Self.currentVersionID(workflow: workflow, versions: allVersions)
+            // Staged, not stored yet: if a list below fails, the screen keeps the workflow that
+            // matches the versions, tasks and flows it already shows.
+            let staged = latest ?? workflow
+            let versionID = Self.currentVersionID(workflow: staged, versions: allVersions)
 
             // Then only that version's tasks and flows, rather than every build's and filtering
             // after, which a long history could push past the paginator's cap.
@@ -113,6 +115,7 @@ final class WorkflowDetailStore {
             async let loadedFlows = fetchFlows(versionID: versionID)
             let (allTasks, allFlows) = try await (loadedTasks, loadedFlows)
 
+            workflow = staged
             versions = allVersions.sorted { $0.createdAt > $1.createdAt }
             currentVersionID = versionID
             tasks = Self.entries(allTasks, in: versionID)
