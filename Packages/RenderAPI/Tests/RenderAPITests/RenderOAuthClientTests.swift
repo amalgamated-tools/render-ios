@@ -109,6 +109,31 @@ struct RenderOAuthClientTests {
         #expect(transport.callCount == 2)
     }
 
+    @Test("a failed poll while the app is suspended keeps polling instead of ending sign-in")
+    func pollingSurvivesTransportFailure() async throws {
+        let transport = StubOAuthTransport { request, call in
+            if call == 1 { throw URLError(.networkConnectionLost) }
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            return (Data(Self.tokenJSON.utf8), response)
+        }
+        let client = makeClient(transport: transport)
+
+        _ = try await client.pollForToken(grant: grant())
+        #expect(transport.callCount == 2)
+    }
+
+    @Test("repeated transport failures still stop at the grant's expiry")
+    func pollingTransportFailuresExpire() async throws {
+        let transport = StubOAuthTransport { _, _ in throw URLError(.notConnectedToInternet) }
+        let clock = TestClock()
+        let client = makeClient(transport: transport, sleep: { clock.advance(by: $0) }, now: { clock.now })
+
+        await #expect(throws: OAuthError.grantExpired) {
+            _ = try await client.pollForToken(grant: grant(expiresIn: 11, interval: 5))
+        }
+        #expect(transport.callCount == 2)
+    }
+
     @Test("a zero interval is floored to one second, not a request flood")
     func intervalFloor() async throws {
         let transport = StubOAuthTransport(responses: [(200, Self.tokenJSON)])
