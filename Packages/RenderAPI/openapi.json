@@ -19045,7 +19045,6 @@
                     "id",
                     "taskId",
                     "status",
-                    "results",
                     "input",
                     "parentTaskRunId",
                     "rootTaskRunId",
