@@ -78,9 +78,13 @@ struct WorkflowDetailView: View {
         Section {
             ForEach(entries) { entry in
                 if title == "Tasks" {
-                    // Runs are filtered by slug so every version's runs of this task show up.
+                    // Every version is named, since a bare slug only matches the latest version's runs.
                     NavigationLink {
-                        TaskRunsView(client: client, scope: .task(slug: "\(workflow.slug)/\(entry.name)"), title: entry.name)
+                        TaskRunsView(
+                            client: client,
+                            scope: .task(slug: "\(workflow.slug)/\(entry.name)", versions: store.versions.map(\.name)),
+                            title: entry.name
+                        )
                     } label: {
                         Text(entry.name)
                             .font(.system(.body, design: .monospaced))
