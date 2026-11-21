@@ -63,8 +63,30 @@ walkthrough-captions:
 walkthrough-verify:
 	@Scripts/verify-walkthrough.sh
 
+## register-device: register a connected iPhone with TEAM_ID — once, before a new team's first archive
+.PHONY: register-device
+# Automatic signing makes a development profile before `archive`, and Apple only issues one to a
+# team with a registered device. The archive's generic destination has no device to register, so
+# this builds once for the connected iPhone (or DEVICE_ID=<UDID>), which registers it.
+register-device:
+	@test -n "$(TEAM_ID)" || { echo "TEAM_ID is unset — pass your 10-character Apple Team ID: make register-device TEAM_ID=XXXXXXXXXX"; exit 1; }
+	@id='$(DEVICE_ID)'; \
+	if [ -z "$$id" ]; then \
+	  json=$$(mktemp -t devices); \
+	  xcrun devicectl list devices --json-output "$$json" -q >/dev/null 2>&1; \
+	  id=$$(jq -r '[.result.devices[] | select(.hardwareProperties.reality == "physical" and .hardwareProperties.platform == "iOS" and .connectionProperties.pairingState == "paired") | .hardwareProperties.udid] | first // empty' "$$json" 2>/dev/null); \
+	  rm -f "$$json"; \
+	fi; \
+	test -n "$$id" || { echo "No connected iPhone found. Plug one in and trust this Mac, or pass DEVICE_ID=<UDID>."; exit 1; }; \
+	echo "Registering $$id with team $(TEAM_ID)"; \
+	xcodebuild -project RenderiOS.xcodeproj -scheme RenderiOS \
+	  -destination "id=$$id" \
+	  DEVELOPMENT_TEAM='$(TEAM_ID)' \
+	  -allowProvisioningUpdates -allowProvisioningDeviceRegistration $(XCODEBUILD_FLAGS) build
+
 ## archive: build a signed device archive for distribution (needs TEAM_ID=XXXXXXXXXX)
 .PHONY: archive
+# On a team with no registered devices, run `make register-device` first.
 archive:
 	@test -n "$(TEAM_ID)" || { echo "TEAM_ID is unset — pass your 10-character Apple Team ID: make archive TEAM_ID=XXXXXXXXXX"; exit 1; }
 	xcodebuild -project RenderiOS.xcodeproj -scheme RenderiOS \
