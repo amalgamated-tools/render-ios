@@ -130,12 +130,9 @@ struct ServiceDetailView: View {
             deployStatus
 
             if !factChips.isEmpty {
-                // Wraps rather than truncates: on a cron job in a long-named region at largest
-                // Dynamic Type these do not fit on one line.
-                ViewThatFits(in: .horizontal) {
-                    HStack(spacing: Theme.Spacing.tight) { chips }
-                    VStack(alignment: .leading, spacing: Theme.Spacing.tight) { chips }
-                }
+                // Wraps onto more lines rather than truncating or breaking words: on a cron job in a
+                // long-named region at large Dynamic Type these do not fit on one line.
+                FlowLayout(spacing: Theme.Spacing.tight) { chips }
             }
 
             if let url = service.details.url, let parsed = URL(string: url) {
