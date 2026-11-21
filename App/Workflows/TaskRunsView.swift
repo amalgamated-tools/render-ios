@@ -57,7 +57,7 @@ struct TaskRunsView: View {
             }
         }
         .sheet(isPresented: $isStarting) {
-            StartTaskRunSheet(store: store, taskName: title) { id in
+            StartRunSheet(store: store, name: title) { id in
                 startedRunID = id
             }
         }
@@ -140,10 +140,22 @@ struct TaskRunStatusChip: View {
     }
 }
 
-/// Typing a task's input and starting it.
-private struct StartTaskRunSheet: View {
-    let store: TaskRunsStore
-    let taskName: String
+/// A store that can start a run from typed JSON input: a task's runs or a flow's runs.
+@MainActor
+protocol RunStarting: AnyObject, Observable {
+    var isStarting: Bool { get }
+    var startError: String? { get }
+    func start(inputText: String) async -> String?
+    func clearStartError()
+}
+
+extension TaskRunsStore: RunStarting {}
+extension FlowRunsStore: RunStarting {}
+
+/// Typing a task's or flow's input and starting it.
+struct StartRunSheet<Store: RunStarting>: View {
+    let store: Store
+    let name: String
     let started: (String) -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -169,7 +181,7 @@ private struct StartTaskRunSheet: View {
                         .foregroundStyle(.red)
                 }
             }
-            .navigationTitle("Run \(taskName)")
+            .navigationTitle("Run \(name)")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
