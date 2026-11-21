@@ -4,9 +4,11 @@ import RenderAPI
 
 /// Recent runs of one task, or of every task in a workflow, newest first, and starting a new run.
 ///
-/// **Which runs.** A task is filtered by its slug (`workflow-slug/task-name`), not its ID: every
-/// version registers the task afresh with a new ID, and the slug covers all of them. A workflow is
-/// filtered by its ID.
+/// **Which runs.** A task is filtered by slug, not ID, since every version registers the task afresh
+/// with a new ID. A bare slug (`workflow-slug/task-name`) only matches the latest version's runs, so
+/// the query also names each known version (`workflow-slug/task-name:version-name`). Render answers
+/// a list mixing valid and unknown versions with the runs of the valid ones, and the bare slug keeps
+/// at least one valid. A workflow is filtered by its ID.
 ///
 /// Only the newest page is loaded. This is a phone screen for "what just happened", not an archive.
 @MainActor
@@ -14,7 +16,15 @@ import RenderAPI
 final class TaskRunsStore {
     enum Scope: Sendable, Equatable {
         case workflow(id: String)
-        case task(slug: String)
+        /// `versions` are version names, newest first; older runs than these aren't listed.
+        case task(slug: String, versions: [String] = [])
+    }
+
+    /// Bounds the query string for a workflow with a long history.
+    nonisolated static let maxVersionsQueried = 20
+
+    nonisolated static func taskSlugs(slug: String, versions: [String]) -> [String] {
+        [slug] + versions.prefix(maxVersionsQueried).map { "\(slug):\($0)" }
     }
 
     private(set) var runs: [TaskRunSummary] = []
@@ -30,6 +40,8 @@ final class TaskRunsStore {
     let scope: Scope
     private let client: RenderClient
     private let limit: Int
+    /// The key of the last start that failed, and the input it was for.
+    private var unconfirmedStart: (input: String, key: String)?
 
     init(client: RenderClient, scope: Scope, limit: Int = 25) {
         self.client = client
@@ -47,7 +59,7 @@ final class TaskRunsStore {
 
         let query: Operations.ListTaskRuns.Input.Query = switch scope {
         case .workflow(let id): .init(limit: limit, workflowId: [id])
-        case .task(let slug): .init(limit: limit, taskSlug: [slug])
+        case .task(let slug, let versions): .init(limit: limit, taskSlug: Self.taskSlugs(slug: slug, versions: versions))
         }
         do {
             async let names = taskNamesIfNeeded()
@@ -118,10 +130,14 @@ final class TaskRunsStore {
     /// couldn't start (with `startError` saying why). Only a task can be started, not a workflow.
     ///
     /// The run starts on the version Render currently uses for the task, the same as a run started
-    /// without a version from the CLI. Each call carries a fresh idempotency key, so a retried request
-    /// can't start a second run.
+    /// without a version from the CLI.
+    ///
+    /// **Idempotency.** A failed start may still have reached Render (a lost response, or a 5xx
+    /// after it accepted the run), and POSTs aren't retried automatically. So the key outlives a
+    /// failure: trying the same input again reuses it, and Render won't start a second run. A
+    /// success, or different input, gets a new key.
     func start(inputText: String) async -> String? {
-        guard case .task(let slug) = scope, !isStarting else { return nil }
+        guard case .task(let slug, _) = scope, !isStarting else { return nil }
         let input: Operations.CreateTask.Input.Body.JsonPayload.InputPayload
         do {
             input = try Self.parseInput(inputText)
@@ -130,12 +146,16 @@ final class TaskRunsStore {
             return nil
         }
 
+        let key = unconfirmedStart.flatMap { $0.input == inputText ? $0.key : nil } ?? UUID().uuidString
+        unconfirmedStart = (inputText, key)
+
         isStarting = true
         defer { isStarting = false }
         do {
             let run = try await client.api.createTask(body: .json(.init(
-                task: slug, input: input, idempotencyKey: UUID().uuidString
+                task: slug, input: input, idempotencyKey: key
             ))).accepted.body.json
+            unconfirmedStart = nil
             startError = nil
             await load()
             return run.id
