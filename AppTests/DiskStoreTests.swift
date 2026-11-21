@@ -62,12 +62,3 @@ struct DiskStoreTests {
         #expect(store.error != nil)
     }
 }
-
-private final class LockedFlag: @unchecked Sendable {
-    private let lock = NSLock()
-    private var _value = false
-    var value: Bool {
-        get { lock.withLock { _value } }
-        set { lock.withLock { _value = newValue } }
-    }
-}
