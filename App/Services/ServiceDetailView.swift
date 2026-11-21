@@ -13,6 +13,7 @@ struct ServiceDetailView: View {
     @State private var watchDenialMessage: String?
     @Environment(FailureWatchCoordinator.self) private var coordinator
     @Environment(NotificationRouter.self) private var router
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     private let client: RenderClient
     /// Needed by the log screen: `/logs` is scoped by workspace, and a service ID alone won't do.
@@ -140,9 +141,20 @@ struct ServiceDetailView: View {
 
             if let url = service.details.url, let parsed = URL(string: url) {
                 Link(destination: parsed) {
-                    Label(parsed.host() ?? url, systemImage: "arrow.up.right.square")
-                        .font(.subheadline.weight(.medium))
-                        .frame(maxWidth: .infinity)
+                    // At accessibility sizes a hostname doesn't fit, and every way of squeezing it
+                    // is unreadable: wrapped it breaks into "doc-most-va.onren-der.com", truncated
+                    // it's "docmo…", and minimumScaleFactor is ignored inside this bordered button.
+                    // So say what the button does instead, and drop the icon, which at the largest
+                    // sizes squeezes even that into "Ope-n Webs…"; alone it wraps between words.
+                    if dynamicTypeSize.isAccessibilitySize {
+                        Text("Open Website")
+                            .font(.subheadline.weight(.medium))
+                            .frame(maxWidth: .infinity)
+                    } else {
+                        Label(parsed.host() ?? url, systemImage: "arrow.up.right.square")
+                            .font(.subheadline.weight(.medium))
+                            .frame(maxWidth: .infinity)
+                    }
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.large)
