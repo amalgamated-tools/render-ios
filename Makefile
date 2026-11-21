@@ -72,8 +72,10 @@ register-device:
 	@test -n "$(TEAM_ID)" || { echo "TEAM_ID is unset — pass your 10-character Apple Team ID: make register-device TEAM_ID=XXXXXXXXXX"; exit 1; }
 	@id='$(DEVICE_ID)'; \
 	if [ -z "$$id" ]; then \
-	  id=$$(xcrun devicectl list devices 2>/dev/null | grep -E 'available.*physical' \
-	    | grep -oE '[0-9A-F]{8}-[0-9A-F]{16}|[0-9a-f]{40}' | head -1); \
+	  json=$$(mktemp -t devices); \
+	  xcrun devicectl list devices --json-output "$$json" -q >/dev/null 2>&1; \
+	  id=$$(jq -r '[.result.devices[] | select(.hardwareProperties.reality == "physical" and .hardwareProperties.platform == "iOS" and .connectionProperties.pairingState == "paired") | .hardwareProperties.udid] | first // empty' "$$json" 2>/dev/null); \
+	  rm -f "$$json"; \
 	fi; \
 	test -n "$$id" || { echo "No connected iPhone found. Plug one in and trust this Mac, or pass DEVICE_ID=<UDID>."; exit 1; }; \
 	echo "Registering $$id with team $(TEAM_ID)"; \
