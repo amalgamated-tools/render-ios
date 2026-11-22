@@ -320,6 +320,26 @@ struct TaskRunDetailStoreTests {
         #expect(transport.requests.contains { $0.path?.contains("rootTaskRunId=trn-root") == true })
     }
 
+    @Test func childrenPastTheFirstPageOfTheFamilyAreListed() async throws {
+        let detail = RunJSON.detail(status: "completed")
+        let firstPage = RunJSON.page((0..<100).map {
+            RunJSON.run(id: "trn-other-\($0)", status: "completed", parent: "trn-elsewhere", root: "trn-1")
+        })
+        let secondPage = RunJSON.page([
+            RunJSON.run(id: "trn-child", status: "completed", parent: "trn-1", root: "trn-1"),
+        ])
+        let (client, transport) = RenderClient.routed { path in
+            if path.hasPrefix("/task-runs/trn-1") { return (200, detail) }
+            return path.contains("cursor=") ? (200, secondPage) : (200, firstPage)
+        }
+        let store = TaskRunDetailStore(client: client, runID: "trn-1")
+
+        await store.load()
+
+        #expect(store.children.map(\.id) == ["trn-child"])
+        #expect(transport.requests.contains { $0.path?.contains("cursor=c99") == true })
+    }
+
     @Test func aFailedChildrenListStillShowsTheRun() async {
         let running = RunJSON.detail(status: "running", completedAt: nil)
         let (client, _) = RenderClient.routed { path in

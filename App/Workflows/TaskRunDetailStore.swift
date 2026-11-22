@@ -31,6 +31,9 @@ final class TaskRunDetailStore {
 
     var canCancel: Bool { run.map { !$0.status.isFinished } ?? false }
 
+    /// The most family members read per load, so a runaway fan-out can't page forever.
+    static let familyLimit = 1000
+
     func load() async {
         guard !isLoading else { return }
         isLoading = true
@@ -50,13 +53,19 @@ final class TaskRunDetailStore {
             taskName = try? await client.api.getTask(path: .init(taskId: loaded.taskId)).ok.body.json.name
         }
         // Children share the run's root, which is this run's own ID only when it is the root. Listing
-        // by root gets the whole family in one request; this run's direct children say so in
-        // parentTaskRunId. Best-effort: if the list fails, the run still shows, with the children
-        // from the last load.
+        // by root gets the whole family; this run's direct children say so in parentTaskRunId. The
+        // family is paged through before filtering, since a big fan-out spans several pages; it
+        // stops at `familyLimit` runs. Best-effort: if the list fails, the run still shows, with the
+        // children from the last load.
         let root = loaded.rootTaskRunId.isEmpty ? id : loaded.rootTaskRunId
-        if let related = try? await client.api
-            .listTaskRuns(query: .init(limit: 100, rootTaskRunId: [root])).ok.body.json {
-            children = related.map { TaskRunSummary($0.taskRun) }
+        let api = client.api
+        let family = CursorPaginator(pageSize: 100) { cursor, limit in
+            try await api.listTaskRuns(query: .init(cursor: cursor, limit: limit, rootTaskRunId: [root])).ok.body.json
+        } unwrap: { (element: Components.Schemas.TaskRunWithCursor) in
+            (TaskRunSummary(element.taskRun), element.cursor)
+        }
+        if let related = try? await family.collect(limit: Self.familyLimit) {
+            children = related
                 .filter { $0.parentID == id }
                 .sorted(by: TaskRunsStore.newestFirst)
         }
