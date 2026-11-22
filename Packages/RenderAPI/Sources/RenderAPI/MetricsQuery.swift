@@ -103,6 +103,10 @@ public enum MetricKind: Sendable, Hashable {
     case bandwidthSources
     /// Postgres replica lag in seconds. Asked of the primary, it returns one series per replica.
     case replicationLag
+    /// Task runs that finished in each bucket, one series per outcome in the `taskState` label
+    /// (`succeeded`, `failed`). The resource is a *workflow* ID, and the counts include its flow
+    /// runs: a task ID returns zeros, whatever the spec says. See `Scripts/metrics-quirks.py`.
+    case taskRunsCompleted
 
     public enum HTTPRequestGrouping: String, Sendable, Hashable, CaseIterable {
         case statusCode
@@ -128,6 +132,7 @@ public enum MetricKind: Sendable, Hashable {
         case .diskCapacity: "disk-capacity"
         case .bandwidthSources: "bandwidth-sources"
         case .replicationLag: "replication-lag"
+        case .taskRunsCompleted: "task-runs-completed"
         }
     }
 }
@@ -270,6 +275,15 @@ extension RenderClient {
             return MetricSeries.from(
                 try await api.getReplicationLag(query: .init(
                     startTime: start, endTime: end, resolutionSeconds: resolution, resource: resource
+                )).ok.body.json
+            )
+        case .taskRunsCompleted:
+            // SUM is the only method Render accepts here, and it rejects a request without one;
+            // the spec omits the parameter, so Scripts/metrics-quirks.py adds it as required.
+            return MetricSeries.from(
+                try await api.getTaskRunsCompleted(query: .init(
+                    startTime: start, endTime: end, resolutionSeconds: resolution,
+                    resource: resource, aggregateBy: .state, aggregationMethod: .sum
                 )).ok.body.json
             )
         }

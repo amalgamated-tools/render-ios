@@ -18,6 +18,13 @@ Measured 2026-11 against a real workspace, read-only:
    to a time range, and the same for `resolutionSeconds`. Its own description says the suggestions
    come from the most recent 5000 log lines, so there's no window to give it. All three are dropped.
 
+4. GET /metrics/task-runs-queued and /metrics/task-runs-completed answer `400 ... does not support
+   aggregation method NONE` to every request, and the spec declares no way to choose one. They work
+   with `aggregationMethod=SUM`, which is added as a required parameter so no caller can omit it.
+   Their `resource` parameter is described as a task ID, but a task ID returns all zeros; only a
+   workflow ID returns counts, and those include the workflow's flow runs. The description is
+   corrected so callers pass the ID that works.
+
 Runs after flatten-path-refs.py in generate-api.sh. Shared parameters like `startTime` are still
 `$ref`s to components at that point, so names are resolved through the reference. Idempotent.
 """
@@ -55,6 +62,31 @@ def undeprecate(spec, path, name):
                 )
 
 
+TASK_RUN_METRICS = ("/metrics/task-runs-queued", "/metrics/task-runs-completed")
+
+
+def require_sum(spec, path):
+    plist, _ = params(spec, path)
+    plist[:] = [p for p in plist if name_of(spec, p) != "aggregationMethod"]
+    plist.append({
+        "name": "aggregationMethod",
+        "in": "query",
+        "required": True,
+        "description": (
+            "How to combine the matching series. Render rejects requests without it. See "
+            "Scripts/metrics-quirks.py."
+        ),
+        "schema": {"type": "string", "enum": ["SUM"]},
+    })
+    for p in plist:
+        if name_of(spec, p) == "resource" and "$ref" not in p:
+            p["description"] = (
+                "Workflow ID to query. A task ID returns zeros; counts for a workflow include its "
+                "flow runs. See Scripts/metrics-quirks.py."
+            )
+            p["schema"]["example"] = "wfl-xxxxx"
+
+
 def main():
     path = sys.argv[1] if len(sys.argv) > 1 else "openapi/render.json"
     with open(path) as f:
@@ -76,6 +108,12 @@ def main():
         drop(spec, "/metrics/filters/path", {"startTime", "endTime", "resolutionSeconds"})
     else:
         print("  warn: /metrics/filters/path not found", file=sys.stderr)
+
+    for metric in TASK_RUN_METRICS:
+        if metric in spec["paths"]:
+            require_sum(spec, metric)
+        else:
+            print(f"  warn: {metric} not found", file=sys.stderr)
 
     with open(path, "w") as f:
         json.dump(spec, f, indent=2)

@@ -82,3 +82,9 @@ extension Operations.GetBandwidthSources.Output.Ok.Body.JsonPayloadPayload: Metr
 extension Operations.GetReplicationLag.Output.Ok.Body.JsonPayloadPayload.LabelsPayloadPayload: MetricSeriesLabelPayload {}
 extension Operations.GetReplicationLag.Output.Ok.Body.JsonPayloadPayload.ValuesPayloadPayload: MetricSeriesPointPayload {}
 extension Operations.GetReplicationLag.Output.Ok.Body.JsonPayloadPayload: MetricSeriesPayload {}
+
+// MARK: - Workflows
+
+extension Operations.GetTaskRunsCompleted.Output.Ok.Body.JsonPayloadPayload.LabelsPayloadPayload: MetricSeriesLabelPayload {}
+extension Operations.GetTaskRunsCompleted.Output.Ok.Body.JsonPayloadPayload.ValuesPayloadPayload: MetricSeriesPointPayload {}
+extension Operations.GetTaskRunsCompleted.Output.Ok.Body.JsonPayloadPayload: MetricSeriesPayload {}

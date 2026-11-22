@@ -29919,6 +29919,13 @@ public struct Client: APIProtocol {
                     name: "resource",
                     value: input.query.resource
                 )
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "aggregationMethod",
+                    value: input.query.aggregationMethod
+                )
                 converter.setAcceptHeader(
                     in: &request.headerFields,
                     contentTypes: input.headers.accept
@@ -30067,6 +30074,13 @@ public struct Client: APIProtocol {
                     explode: true,
                     name: "aggregateBy",
                     value: input.query.aggregateBy
+                )
+                try converter.setQueryItemAsURI(
+                    in: &request,
+                    style: .form,
+                    explode: true,
+                    name: "aggregationMethod",
+                    value: input.query.aggregationMethod
                 )
                 converter.setAcceptHeader(
                     in: &request.headerFields,

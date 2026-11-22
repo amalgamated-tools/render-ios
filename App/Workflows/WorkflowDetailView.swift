@@ -5,11 +5,13 @@ import SwiftUI
 /// its versions, newest first.
 struct WorkflowDetailView: View {
     @State private var store: WorkflowDetailStore
+    @State private var runCounts: WorkflowRunCountsStore
     private let client: RenderClient
 
     init(client: RenderClient, workflow: WorkflowSummary) {
         self.client = client
         _store = State(initialValue: WorkflowDetailStore(client: client, workflow: workflow))
+        _runCounts = State(initialValue: WorkflowRunCountsStore(client: client, workflowID: workflow.id))
     }
 
     private var workflow: WorkflowSummary { store.workflow }
@@ -22,6 +24,7 @@ struct WorkflowDetailView: View {
                     .foregroundStyle(.orange)
             }
             detailsSection
+            runCountsSection
             Section {
                 NavigationLink {
                     TaskRunsView(client: client, scope: .workflow(id: workflow.id), title: "All Task Runs")
@@ -40,8 +43,41 @@ struct WorkflowDetailView: View {
         }
         .navigationTitle(workflow.name)
         .navigationBarTitleDisplayMode(.inline)
-        .refreshable { await store.load() }
-        .task { await store.load() }
+        .refreshable { await load() }
+        .task { await load() }
+    }
+
+    private func load() async {
+        async let detail: Void = store.load()
+        async let counts: Void = runCounts.load()
+        _ = await (detail, counts)
+    }
+
+    /// Finished runs over the last week. Render counts per workflow and includes flow runs, so the
+    /// footer says so rather than calling them task runs.
+    @ViewBuilder
+    private var runCountsSection: some View {
+        Section {
+            if let counts = runCounts.counts {
+                LabeledContent("Succeeded", value: counts.succeeded.formatted())
+                LabeledContent("Failed") {
+                    Text(counts.failed.formatted())
+                        .foregroundStyle(counts.failed > 0 ? .red : .secondary)
+                }
+            }
+            if let message = runCounts.errorMessage {
+                Label(message, systemImage: "exclamationmark.triangle")
+                    .font(.footnote)
+                    .foregroundStyle(.orange)
+            } else if runCounts.counts == nil {
+                ProgressView()
+                    .frame(maxWidth: .infinity)
+            }
+        } header: {
+            Text("Finished Runs, Last \(WorkflowRunCountsStore.days) Days")
+        } footer: {
+            Text("Task and flow runs, counted by UTC day.")
+        }
     }
 
     private var detailsSection: some View {

@@ -10499,10 +10499,22 @@
         {
           "name": "resource",
           "in": "query",
-          "description": "Task ID to query. When multiple task IDs are provided, they are ORed together",
+          "description": "Workflow ID to query. A task ID returns zeros; counts for a workflow include its flow runs. See Scripts/metrics-quirks.py.",
           "schema": {
             "type": "string",
-            "example": "tsk-xxxxx"
+            "example": "wfl-xxxxx"
+          }
+        },
+        {
+          "name": "aggregationMethod",
+          "in": "query",
+          "required": true,
+          "description": "How to combine the matching series. Render rejects requests without it. See Scripts/metrics-quirks.py.",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "SUM"
+            ]
           }
         }
       ],
@@ -10595,7 +10607,8 @@
           "500": {
             "$ref": "#/components/responses/500InternalServerError"
           }
-        }
+        },
+        "parameters": []
       }
     },
     "/metrics/task-runs-completed": {
@@ -10621,10 +10634,10 @@
         {
           "name": "resource",
           "in": "query",
-          "description": "Task ID to query. When multiple task IDs are provided, they are ORed together",
+          "description": "Workflow ID to query. A task ID returns zeros; counts for a workflow include its flow runs. See Scripts/metrics-quirks.py.",
           "schema": {
             "type": "string",
-            "example": "tsk-xxxxx"
+            "example": "wfl-xxxxx"
           }
         },
         {
@@ -10649,6 +10662,18 @@
             "type": "string",
             "enum": [
               "state"
+            ]
+          }
+        },
+        {
+          "name": "aggregationMethod",
+          "in": "query",
+          "required": true,
+          "description": "How to combine the matching series. Render rejects requests without it. See Scripts/metrics-quirks.py.",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "SUM"
             ]
           }
         }
@@ -10742,7 +10767,8 @@
           "500": {
             "$ref": "#/components/responses/500InternalServerError"
           }
-        }
+        },
+        "parameters": []
       }
     },
     "/key-value": {

@@ -4304,7 +4304,7 @@ extension APIProtocol {
     /// - Remark: HTTP `GET /metrics/task-runs-queued`.
     /// - Remark: Generated from `#/paths//metrics/task-runs-queued/get(get-task-runs-queued)`.
     public func getTaskRunsQueued(
-        query: Operations.GetTaskRunsQueued.Input.Query = .init(),
+        query: Operations.GetTaskRunsQueued.Input.Query,
         headers: Operations.GetTaskRunsQueued.Input.Headers = .init()
     ) async throws -> Operations.GetTaskRunsQueued.Output {
         try await getTaskRunsQueued(Operations.GetTaskRunsQueued.Input(
@@ -4320,7 +4320,7 @@ extension APIProtocol {
     /// - Remark: HTTP `GET /metrics/task-runs-completed`.
     /// - Remark: Generated from `#/paths//metrics/task-runs-completed/get(get-task-runs-completed)`.
     public func getTaskRunsCompleted(
-        query: Operations.GetTaskRunsCompleted.Input.Query = .init(),
+        query: Operations.GetTaskRunsCompleted.Input.Query,
         headers: Operations.GetTaskRunsCompleted.Input.Headers = .init()
     ) async throws -> Operations.GetTaskRunsCompleted.Output {
         try await getTaskRunsCompleted(Operations.GetTaskRunsCompleted.Input(
@@ -58723,27 +58723,38 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/metrics/task-runs-queued/GET/query/resolutionSeconds`.
                 public var resolutionSeconds: Swift.Int?
-                /// Task ID to query. When multiple task IDs are provided, they are ORed together
+                /// Workflow ID to query. A task ID returns zeros; counts for a workflow include its flow runs. See Scripts/metrics-quirks.py.
                 ///
                 /// - Remark: Generated from `#/paths/metrics/task-runs-queued/GET/query/resource`.
                 public var resource: Swift.String?
+                /// - Remark: Generated from `#/paths/metrics/task-runs-queued/GET/query/aggregationMethod`.
+                @frozen public enum AggregationMethodPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case sum = "SUM"
+                }
+                /// How to combine the matching series. Render rejects requests without it. See Scripts/metrics-quirks.py.
+                ///
+                /// - Remark: Generated from `#/paths/metrics/task-runs-queued/GET/query/aggregationMethod`.
+                public var aggregationMethod: Operations.GetTaskRunsQueued.Input.Query.AggregationMethodPayload
                 /// Creates a new `Query`.
                 ///
                 /// - Parameters:
                 ///   - startTime: Epoch/Unix timestamp of start of time range to return. Defaults to `now() - 1 hour`.
                 ///   - endTime: Epoch/Unix timestamp of end of time range to return. Defaults to `now()`.
                 ///   - resolutionSeconds: The resolution of the returned data
-                ///   - resource: Task ID to query. When multiple task IDs are provided, they are ORed together
+                ///   - resource: Workflow ID to query. A task ID returns zeros; counts for a workflow include its flow runs. See Scripts/metrics-quirks.py.
+                ///   - aggregationMethod: How to combine the matching series. Render rejects requests without it. See Scripts/metrics-quirks.py.
                 public init(
                     startTime: Components.Parameters.StartTimeParam? = nil,
                     endTime: Components.Parameters.EndTimeParam? = nil,
                     resolutionSeconds: Swift.Int? = nil,
-                    resource: Swift.String? = nil
+                    resource: Swift.String? = nil,
+                    aggregationMethod: Operations.GetTaskRunsQueued.Input.Query.AggregationMethodPayload
                 ) {
                     self.startTime = startTime
                     self.endTime = endTime
                     self.resolutionSeconds = resolutionSeconds
                     self.resource = resource
+                    self.aggregationMethod = aggregationMethod
                 }
             }
             public var query: Operations.GetTaskRunsQueued.Input.Query
@@ -58765,7 +58776,7 @@ public enum Operations {
             ///   - query:
             ///   - headers:
             public init(
-                query: Operations.GetTaskRunsQueued.Input.Query = .init(),
+                query: Operations.GetTaskRunsQueued.Input.Query,
                 headers: Operations.GetTaskRunsQueued.Input.Headers = .init()
             ) {
                 self.query = query
@@ -59022,7 +59033,7 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/metrics/task-runs-completed/GET/query/resolutionSeconds`.
                 public var resolutionSeconds: Swift.Int?
-                /// Task ID to query. When multiple task IDs are provided, they are ORed together
+                /// Workflow ID to query. A task ID returns zeros; counts for a workflow include its flow runs. See Scripts/metrics-quirks.py.
                 ///
                 /// - Remark: Generated from `#/paths/metrics/task-runs-completed/GET/query/resource`.
                 public var resource: Swift.String?
@@ -59043,22 +59054,32 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/metrics/task-runs-completed/GET/query/aggregateBy`.
                 public var aggregateBy: Operations.GetTaskRunsCompleted.Input.Query.AggregateByPayload?
+                /// - Remark: Generated from `#/paths/metrics/task-runs-completed/GET/query/aggregationMethod`.
+                @frozen public enum AggregationMethodPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case sum = "SUM"
+                }
+                /// How to combine the matching series. Render rejects requests without it. See Scripts/metrics-quirks.py.
+                ///
+                /// - Remark: Generated from `#/paths/metrics/task-runs-completed/GET/query/aggregationMethod`.
+                public var aggregationMethod: Operations.GetTaskRunsCompleted.Input.Query.AggregationMethodPayload
                 /// Creates a new `Query`.
                 ///
                 /// - Parameters:
                 ///   - startTime: Epoch/Unix timestamp of start of time range to return. Defaults to `now() - 1 hour`.
                 ///   - endTime: Epoch/Unix timestamp of end of time range to return. Defaults to `now()`.
                 ///   - resolutionSeconds: The resolution of the returned data
-                ///   - resource: Task ID to query. When multiple task IDs are provided, they are ORed together
+                ///   - resource: Workflow ID to query. A task ID returns zeros; counts for a workflow include its flow runs. See Scripts/metrics-quirks.py.
                 ///   - state: The state of task runs to filter to. When multiple state query params are provided, they are ORed together
                 ///   - aggregateBy: The field to aggregate by
+                ///   - aggregationMethod: How to combine the matching series. Render rejects requests without it. See Scripts/metrics-quirks.py.
                 public init(
                     startTime: Components.Parameters.StartTimeParam? = nil,
                     endTime: Components.Parameters.EndTimeParam? = nil,
                     resolutionSeconds: Swift.Int? = nil,
                     resource: Swift.String? = nil,
                     state: Operations.GetTaskRunsCompleted.Input.Query.StatePayload? = nil,
-                    aggregateBy: Operations.GetTaskRunsCompleted.Input.Query.AggregateByPayload? = nil
+                    aggregateBy: Operations.GetTaskRunsCompleted.Input.Query.AggregateByPayload? = nil,
+                    aggregationMethod: Operations.GetTaskRunsCompleted.Input.Query.AggregationMethodPayload
                 ) {
                     self.startTime = startTime
                     self.endTime = endTime
@@ -59066,6 +59087,7 @@ public enum Operations {
                     self.resource = resource
                     self.state = state
                     self.aggregateBy = aggregateBy
+                    self.aggregationMethod = aggregationMethod
                 }
             }
             public var query: Operations.GetTaskRunsCompleted.Input.Query
@@ -59087,7 +59109,7 @@ public enum Operations {
             ///   - query:
             ///   - headers:
             public init(
-                query: Operations.GetTaskRunsCompleted.Input.Query = .init(),
+                query: Operations.GetTaskRunsCompleted.Input.Query,
                 headers: Operations.GetTaskRunsCompleted.Input.Headers = .init()
             ) {
                 self.query = query
