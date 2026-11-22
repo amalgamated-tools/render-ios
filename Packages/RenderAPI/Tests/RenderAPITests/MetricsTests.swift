@@ -197,6 +197,7 @@ struct MetricsTests {
             (.activeConnections, "/metrics/active-connections?"),
             (.diskUsage, "/metrics/disk-usage?"),
             (.diskCapacity, "/metrics/disk-capacity?"),
+            (.taskRunsCompleted, "/metrics/task-runs-completed?"),
         ]
 
         for (kind, prefix) in expected {
@@ -204,6 +205,15 @@ struct MetricsTests {
             _ = try await client.metricSeries(kind, query)
             #expect(try #require(transport.requests.first?.path).hasPrefix(prefix), "\(kind.id)")
         }
+    }
+
+    @Test("completed task runs are summed and split by outcome, which Render requires")
+    func taskRunsCompletedSendsSumByState() async throws {
+        let (client, transport) = RenderClient.stubbed(jsonBodies: [seriesJSON()])
+        _ = try await client.metricSeries(.taskRunsCompleted, query)
+        let path = try #require(transport.requests.first?.path)
+        #expect(path.contains("aggregationMethod=SUM"))
+        #expect(path.contains("aggregateBy=state"))
     }
 
     // MARK: - Errors

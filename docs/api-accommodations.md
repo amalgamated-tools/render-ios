@@ -142,6 +142,14 @@ turned a *successful* write into an error banner over a change Render had alread
 8. **The OAuth device-flow endpoints aren't in the spec at all**, and the token endpoint wants a **JSON
    body with an `application/x-www-form-urlencoded` Content-Type**. Mirrored from Render's open-source
    CLI and preserved rather than "fixed" — see `OAuth/RenderOAuthClient.swift`.
+9. **The task-run metrics need a parameter the spec doesn't declare, and count per workflow.**
+   `/metrics/task-runs-queued` and `/metrics/task-runs-completed` answer every request with `400 ...
+   does not support aggregation method NONE` until it carries `aggregationMethod=SUM`, which
+   `Scripts/metrics-quirks.py` adds as a required parameter. Their `resource` is documented as a task
+   ID, but a task ID returns zeros; a workflow ID returns counts, and those include the workflow's flow
+   runs. Completed counts come in UTC-day buckets that count in full even when the window starts
+   mid-day, and hourly buckets over a week answer `500`. The queued series came back unlabelled, with a
+   value that matched no queued runs, so the app doesn't show it. Measured 2026-11-22, read-only.
 
 ---
 
