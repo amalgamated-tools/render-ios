@@ -64,11 +64,12 @@ struct WorkflowDetailView: View {
                     Text(counts.failed.formatted())
                         .foregroundStyle(counts.failed > 0 ? .red : .secondary)
                 }
-            } else if let message = runCounts.errorMessage {
+            }
+            if let message = runCounts.errorMessage {
                 Label(message, systemImage: "exclamationmark.triangle")
                     .font(.footnote)
                     .foregroundStyle(.orange)
-            } else {
+            } else if runCounts.counts == nil {
                 ProgressView()
                     .frame(maxWidth: .infinity)
             }
