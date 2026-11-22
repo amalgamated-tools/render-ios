@@ -11,13 +11,16 @@ import RenderAPI
 @Observable
 final class DiskStore {
     struct Snapshot: Identifiable, Hashable, Sendable {
-        /// When and where it was taken, for a dated snapshot. Not the restore key: keys expire after
-        /// 24 hours and may differ between fetches, so they can't identify a snapshot across reloads.
-        ///
-        /// An undated snapshot has only its key to tell it apart: instance alone would give every
-        /// undated snapshot of an instance the same ID. Such a snapshot can only be restored while a
-        /// fresh fetch still returns that exact key.
-        var id: String {
+        /// The row's identity within one fetch: the restore key, which `snapshots(from:)` keeps unique.
+        /// It isn't stable across fetches (keys expire after 24 hours and may be reissued), so it
+        /// isn't used to find a snapshot again; see `matchID`.
+        var id: String { key }
+
+        /// Finds the same snapshot in a later fetch: when and where it was taken. An undated snapshot
+        /// has only its key to tell it apart (instance alone would match every undated snapshot of
+        /// an instance), so it can only be found again while a fresh fetch still returns that key.
+        /// Two snapshots can share a match ID; a restore refuses to pick between them.
+        var matchID: String {
             guard let createdAt else { return "key|\(key)" }
             return "\(instanceID ?? "")|\(createdAt.timeIntervalSince1970)"
         }
@@ -41,8 +44,9 @@ final class DiskStore {
 
     private(set) var sizeGB: Int
     private(set) var isResizing = false
-    /// The snapshot being restored, so its row can show progress.
-    private(set) var restoringID: Snapshot.ID?
+    /// The `matchID` of the snapshot being restored, so its row can show progress even after the
+    /// fresh fetch renews its key.
+    private(set) var restoringID: String?
     private(set) var actionResult: ActionResult?
 
     var isWriting: Bool { isResizing || restoringID != nil }
@@ -102,18 +106,18 @@ final class DiskStore {
     /// Overwrites the disk with `snapshot`.
     ///
     /// The list is fetched again first, because the key on screen may have expired; the snapshot is
-    /// matched by its ID (see `Snapshot.id`). If it's no longer listed, or more than one snapshot
+    /// matched by `Snapshot.matchID`. If it's no longer listed, or more than one snapshot
     /// matches, nothing is restored: a restore overwrites the disk, so a guess isn't good enough.
     func restore(_ snapshot: Snapshot) async {
         guard !isWriting else { return }
-        restoringID = snapshot.id
+        restoringID = snapshot.matchID
         actionResult = nil
         defer { restoringID = nil }
 
         do {
             let fresh = try await fetchSnapshots()
             snapshots = fresh
-            let matches = fresh.filter { $0.id == snapshot.id }
+            let matches = fresh.filter { $0.matchID == snapshot.matchID }
             guard matches.count == 1, let current = matches.first else {
                 actionResult = ActionResult(
                     message: "That snapshot is no longer available. Nothing was restored.",
@@ -145,12 +149,15 @@ final class DiskStore {
     }
 
     /// Newest first, since "how recent is my last snapshot?" is the question. A snapshot without a
-    /// key can't be restored, so it's dropped; one without a date sorts last.
+    /// key can't be restored, so it's dropped, as is a repeat of a key already listed; one without a
+    /// date sorts last.
     nonisolated static func snapshots(from payload: [Components.Schemas.DiskSnapshot]) -> [Snapshot] {
-        payload
+        var seen = Set<String>()
+        return payload
             .compactMap { item in
                 item.snapshotKey.map { Snapshot(key: $0, createdAt: item.createdAt, instanceID: item.instanceId) }
             }
+            .filter { seen.insert($0.key).inserted }
             .sorted { ($0.createdAt ?? .distantPast) > ($1.createdAt ?? .distantPast) }
     }
 

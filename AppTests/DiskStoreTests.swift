@@ -212,6 +212,7 @@ struct DiskStoreTests {
         await store.load()
 
         #expect(Set(store.snapshots.map(\.id)).count == 2)
+        #expect(Set(store.snapshots.map(\.matchID)).count == 2)
     }
 
     @Test("an undated snapshot whose key is gone is not swapped for another undated one")
@@ -266,6 +267,20 @@ struct DiskStoreTests {
 
         #expect(!recorder.requests.contains { $0.path.hasSuffix("/restore") })
         #expect(store.actionResult?.isFailure == true)
+        // Both are listed, and each row still has its own identity.
+        #expect(store.snapshots.count == 2)
+        #expect(Set(store.snapshots.map(\.id)).count == 2)
+    }
+
+    @Test("a key Render lists twice is shown once")
+    func repeatedKeyIsShownOnce() async {
+        let (store, _) = store { _ in
+            (200, #"[{"instanceId": "srv-1", "snapshotKey": "key-a"}, {"instanceId": "srv-1", "snapshotKey": "key-a"}]"#)
+        }
+
+        await store.load()
+
+        #expect(store.snapshots.map(\.key) == ["key-a"])
     }
 
     @Test("a failed restore is reported")

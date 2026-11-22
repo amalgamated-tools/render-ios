@@ -112,7 +112,7 @@ struct DiskView: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            if store.restoringID == snapshot.id {
+            if store.restoringID == snapshot.matchID {
                 ProgressView()
             } else {
                 Button("Restore") { confirmingRestore = snapshot }
