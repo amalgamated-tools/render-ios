@@ -283,6 +283,21 @@ struct DiskStoreTests {
         #expect(store.snapshots.map(\.key) == ["key-a"])
     }
 
+    @Test("the restore prompt names the instance whose disk it overwrites")
+    func restoreTitleNamesInstance() {
+        let scaled = DiskStore.Snapshot(key: "k1", createdAt: nil, instanceID: "srv-abc-xyz12")
+        #expect(scaled.instanceLabel == "Instance srv-abc-xyz12")
+        #expect(scaled.restoreTitle(diskName: "data") == "Restore data on instance srv-abc-xyz12 from this snapshot?")
+
+        let dated = DiskStore.Snapshot(key: "k2", createdAt: Date(timeIntervalSince1970: 0), instanceID: "srv-abc-xyz12")
+        #expect(dated.restoreTitle(diskName: "data").contains("on instance srv-abc-xyz12 to "))
+
+        let single = DiskStore.Snapshot(key: "k3", createdAt: nil, instanceID: nil)
+        #expect(single.instanceLabel == nil)
+        #expect(single.restoreTitle(diskName: "data") == "Restore data from this snapshot?")
+        #expect(DiskStore.Snapshot(key: "k4", createdAt: nil, instanceID: "").instanceLabel == nil)
+    }
+
     @Test("a failed restore is reported")
     func restoreFails() async throws {
         let store = writingStore(recorder: Recorder()) { _, path in

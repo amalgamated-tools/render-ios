@@ -29,6 +29,20 @@ final class DiskStore {
         let createdAt: Date?
         /// The instance the snapshot was taken from.
         let instanceID: String?
+
+        /// Which instance's disk a restore overwrites. On a scaled service each instance has its own
+        /// disk and snapshots, often taken at the same time, so the date alone can't tell them apart.
+        var instanceLabel: String? {
+            guard let instanceID, !instanceID.isEmpty else { return nil }
+            return "Instance \(instanceID)"
+        }
+
+        /// The restore confirmation's title, naming the instance whenever Render reports one.
+        func restoreTitle(diskName: String) -> String {
+            let when = createdAt.map { "to \($0.formatted(date: .abbreviated, time: .shortened))" } ?? "from this snapshot"
+            guard let instanceLabel else { return "Restore \(diskName) \(when)?" }
+            return "Restore \(diskName) on \(instanceLabel.lowercased()) \(when)?"
+        }
     }
 
     struct ActionResult: Identifiable, ActionOutcome {

@@ -68,8 +68,7 @@ struct DiskView: View {
     }
 
     private var restoreTitle: String {
-        guard let date = confirmingRestore?.createdAt else { return "Restore \(disk.name) from this snapshot?" }
-        return "Restore \(disk.name) to \(date.formatted(date: .abbreviated, time: .shortened))?"
+        confirmingRestore?.restoreTitle(diskName: disk.name) ?? "Restore \(disk.name) from this snapshot?"
     }
 
     @ViewBuilder
@@ -100,16 +99,23 @@ struct DiskView: View {
 
     private func snapshotRow(_ snapshot: DiskStore.Snapshot) -> some View {
         HStack {
-            if let date = snapshot.createdAt {
-                VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 2) {
+                if let date = snapshot.createdAt {
                     Text(date, format: .dateTime.month().day().year().hour().minute())
                     Text(date, format: .relative(presentation: .named))
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                } else {
+                    Text("Unknown date")
+                        .foregroundStyle(.secondary)
                 }
-            } else {
-                Text("Unknown date")
-                    .foregroundStyle(.secondary)
+                if let instance = snapshot.instanceLabel {
+                    Text(instance)
+                        .font(.caption.monospaced())
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
             }
             Spacer()
             if store.restoringID == snapshot.matchID {
