@@ -92,7 +92,11 @@ struct WorkflowDetailView: View {
                 } else {
                     // Same for flows: the slug covers every version's copy of the flow.
                     NavigationLink {
-                        FlowRunsView(client: client, scope: .flow(slug: "\(workflow.slug)/\(entry.name)"), title: entry.name)
+                        FlowRunsView(
+                            client: client,
+                            scope: .flow(slug: "\(workflow.slug)/\(entry.name)", versions: store.versions.map(\.name)),
+                            title: entry.name
+                        )
                     } label: {
                         Text(entry.name)
                             .font(.system(.body, design: .monospaced))

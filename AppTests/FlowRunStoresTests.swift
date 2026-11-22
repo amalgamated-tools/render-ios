@@ -45,15 +45,24 @@ private enum FlowJSON {
 
     static let canceled = running.replacingOccurrences(of: #""status":"running""#, with: #""status":"canceled""#)
 
-    /// Listed out of order on purpose.
+    /// In the order Render lists them: the order the flow started them.
     static let steps = """
         {"hasMore":false,"steps":[\
-        {"completedAt":"2026-11-21T17:52:17.469Z","name":"describe","seq":1,"startedAt":"2026-11-21T17:52:17.436Z","status":"succeeded","stepKey":"","type":"inline"},\
         {"completedAt":"2026-11-21T17:52:17.364Z","name":"double","seq":0,"startedAt":"2026-11-21T17:52:17.301Z","status":"succeeded","stepKey":"","type":"inline"},\
+        {"completedAt":"2026-11-21T17:52:17.469Z","name":"describe","seq":1,"startedAt":"2026-11-21T17:52:17.436Z","status":"succeeded","stepKey":"","type":"inline"},\
         {"childTaskRunId":"trn-9","name":"","seq":2,"startedAt":"2026-11-21T17:52:17.500Z","status":"running","stepKey":"","type":"detached"}]}
         """
 
     static let noSteps = #"{"hasMore":false,"steps":[]}"#
+
+    /// One step run in a loop: three iterations share seq 0, keyed "2", "10" and "1" in the order
+    /// they started, which sorting the keys would scramble.
+    static let repeatedSteps = """
+        {"hasMore":false,"steps":[\
+        {"name":"tick","seq":0,"startedAt":"2026-11-21T17:52:17.100Z","status":"succeeded","stepKey":"2","type":"inline"},\
+        {"name":"tick","seq":0,"startedAt":"2026-11-21T17:52:17.200Z","status":"succeeded","stepKey":"10","type":"inline"},\
+        {"name":"tick","seq":0,"startedAt":"2026-11-21T17:52:17.300Z","status":"succeeded","stepKey":"1","type":"inline"}]}
+        """
 
     static let flow = #"{"createdAt":"2026-11-21T17:51:43.441888Z","id":"flw-1","name":"double_and_describe","workflowId":"wfl-1","workflowVersionId":"wfv-1"}"#
 
@@ -143,6 +152,45 @@ struct FlowRunsStoreTests {
         #expect((json["idempotencyKey"] as? String)?.isEmpty == false)
     }
 
+    @Test func aFlowsListNamesEveryVersionSoOlderRunsStayListed() async throws {
+        let (client, transport) = RenderClient.stubbed(jsonBodies: [FlowJSON.page([])])
+        let store = FlowRunsStore(client: client, scope: .flow(slug: "sample/flow", versions: ["v2", "v1"]))
+
+        await store.load()
+
+        let path = try #require(transport.requests.first?.path).removingPercentEncoding ?? ""
+        #expect(path.contains("flowSlug=sample/flow&"), "the bare slug keeps the query valid")
+        #expect(path.contains("flowSlug=sample/flow:v2"))
+        #expect(path.contains("flowSlug=sample/flow:v1"))
+    }
+
+    @Test func aRetryAfterAFailedStartReusesTheKey() async {
+        let (client, keys) = keyRecording { _ in (500, #"{"message":"boom"}"#) }
+        let store = FlowRunsStore(client: client, scope: .flow(slug: "sample/flow"))
+
+        #expect(await store.start(inputText: "[5]") == nil)
+        #expect(await store.start(inputText: "[5]") == nil)
+        #expect(await store.start(inputText: "[6]") == nil)
+
+        #expect(keys.values.count == 3)
+        #expect(keys.values[0] == keys.values[1], "same input again: same key, so Render can't run it twice")
+        #expect(keys.values[1] != keys.values[2], "different input: a new run, so a new key")
+    }
+
+    @Test func aSuccessfulStartGetsANewKeyNextTime() async {
+        let started = FlowJSON.run(id: "frn-started", status: "pending", completedAt: nil)
+        let (client, keys) = keyRecording { method in
+            method == .post ? (202, started) : (200, FlowJSON.page([started]))
+        }
+        let store = FlowRunsStore(client: client, scope: .flow(slug: "sample/flow"))
+
+        #expect(await store.start(inputText: "[5]") == "frn-started")
+        #expect(await store.start(inputText: "[5]") == "frn-started")
+
+        #expect(keys.values.count == 2)
+        #expect(keys.values[0] != keys.values[1], "running the same input twice on purpose starts two runs")
+    }
+
     @Test func badInputIsNeverSent() async {
         let (client, transport) = RenderClient.stubbed(jsonBodies: ["{}"])
         let store = FlowRunsStore(client: client, scope: .flow(slug: "sample/double_and_describe"))
@@ -192,6 +240,46 @@ struct FlowRunDetailStoreTests {
         #expect(store.steps[0].duration == .milliseconds(62), "17.364 - 17.301, truncated to whole milliseconds")
         #expect(!store.hasMoreSteps)
         #expect(!store.canCancel)
+    }
+
+    @Test func repeatedStepsKeepTheOrderTheyStartedIn() async {
+        let (client, _) = routes(detail: { FlowJSON.succeeded }, steps: FlowJSON.repeatedSteps)
+        let store = FlowRunDetailStore(client: client, runID: "frn-1", flowName: "x")
+
+        await store.load()
+
+        #expect(store.steps.map(\.stepKey) == ["2", "10", "1"])
+    }
+
+    @Test func aFailedStepsListStillShowsTheRun() async throws {
+        let stepsFail = LockedFlag()
+        let (client, _) = methodRouted { _, path in
+            if path.hasPrefix("/flow-runs/frn-1/steps") {
+                return stepsFail.value ? (500, #"{"message":"boom"}"#) : (200, FlowJSON.steps)
+            }
+            return (200, FlowJSON.running)
+        }
+        let store = FlowRunDetailStore(client: client, runID: "frn-1", flowName: "x")
+        await store.load()
+        stepsFail.value = true
+
+        await store.load()
+
+        #expect(store.run?.status == .running)
+        #expect(store.errorMessage == nil)
+        #expect(store.steps.count == 3, "the steps from the last load stay")
+    }
+
+    @Test func aRunWhoseStepsNeverLoadStillShows() async {
+        let (client, _) = methodRouted { _, path in
+            path.hasPrefix("/flow-runs/frn-1/steps") ? (500, #"{"message":"boom"}"#) : (200, FlowJSON.succeeded)
+        }
+        let store = FlowRunDetailStore(client: client, runID: "frn-1", flowName: "x")
+
+        await store.load()
+
+        #expect(store.run?.status == .succeeded)
+        #expect(store.steps.isEmpty)
     }
 
     @Test func aFailedRunHasNoResultAndNoSteps() async throws {
@@ -291,6 +379,27 @@ struct FlowRunDetailStoreTests {
         #expect(store.detail?.result == "10")
         #expect(store.detail?.error == nil)
         #expect(transport.requests.first?.path == "/flow-runs/frn-1/steps/0", "no empty stepKey sent")
+    }
+
+    @Test func aStepThatFinishedSinceTheListShowsItsNewStatus() async throws {
+        let (listClient, _) = routes(detail: { FlowJSON.running })
+        let run = FlowRunDetailStore(client: listClient, runID: "frn-1", flowName: "x")
+        await run.load()
+        let step = try #require(run.steps.last)
+        #expect(step.status == .running)
+        let finished = """
+            {"childTaskRunId":"trn-9","completedAt":"2026-11-21T17:52:18.500Z","name":"","result":7,"seq":2,\
+            "startedAt":"2026-11-21T17:52:17.500Z","status":"succeeded","stepKey":"","type":"detached"}
+            """
+        let (client, _) = RenderClient.stubbed(jsonBodies: [finished])
+        let store = FlowRunStepStore(client: client, runID: "frn-1", step: step)
+
+        await store.load()
+
+        #expect(store.step.status == .succeeded)
+        #expect(store.step.duration == .seconds(1))
+        #expect(store.step.id == step.id)
+        #expect(store.detail?.result == "7")
     }
 }
 

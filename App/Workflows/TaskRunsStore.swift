@@ -23,6 +23,7 @@ final class TaskRunsStore {
     /// Bounds the query string for a workflow with a long history.
     nonisolated static let maxVersionsQueried = 20
 
+    /// The bare slug plus one versioned slug per known version. Flow slugs work the same way.
     nonisolated static func taskSlugs(slug: String, versions: [String]) -> [String] {
         [slug] + versions.prefix(maxVersionsQueried).map { "\(slug):\($0)" }
     }

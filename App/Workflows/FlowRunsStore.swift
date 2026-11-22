@@ -4,14 +4,16 @@ import RenderAPI
 
 /// Recent runs of one flow, or of every flow in a workflow, newest first, and starting a new run.
 ///
-/// Like task runs, a flow is filtered by its slug (`workflow-slug/flow-name`) so runs of every
-/// version show up, and a workflow by its ID. Only the newest page is loaded.
+/// Like task runs, a flow is filtered by slug: the bare `workflow-slug/flow-name`, which matches only
+/// the latest version's runs, plus `workflow-slug/flow-name:version-name` for each known version (see
+/// `TaskRunsStore`). A workflow is filtered by its ID. Only the newest page is loaded.
 @MainActor
 @Observable
 final class FlowRunsStore {
     enum Scope: Sendable, Equatable {
         case workflow(id: String)
-        case flow(slug: String)
+        /// `versions` are version names, newest first; older runs than these aren't listed.
+        case flow(slug: String, versions: [String] = [])
     }
 
     private(set) var runs: [FlowRunSummary] = []
@@ -26,6 +28,8 @@ final class FlowRunsStore {
     let scope: Scope
     private let client: RenderClient
     private let limit: Int
+    /// The key of the last start that failed, and the input it was for.
+    private var unconfirmedStart: (input: String, key: String)?
 
     init(client: RenderClient, scope: Scope, limit: Int = 25) {
         self.client = client
@@ -42,7 +46,8 @@ final class FlowRunsStore {
 
         let query: Operations.ListFlowRuns.Input.Query = switch scope {
         case .workflow(let id): .init(limit: limit, workflowId: [id])
-        case .flow(let slug): .init(limit: limit, flowSlug: [slug])
+        case .flow(let slug, let versions):
+            .init(limit: limit, flowSlug: TaskRunsStore.taskSlugs(slug: slug, versions: versions))
         }
         do {
             async let names = flowNamesIfNeeded()
@@ -66,9 +71,13 @@ final class FlowRunsStore {
     }
 
     /// Starts a run of this flow with the typed input and returns the new run's ID, or nil when it
-    /// couldn't start (with `startError` saying why). Each call carries a fresh idempotency key.
+    /// couldn't start (with `startError` saying why).
+    ///
+    /// **Idempotency.** As with task runs, a failed start may still have reached Render, so its key
+    /// is kept: trying the same input again reuses it and Render won't start a second run. A
+    /// success, or different input, gets a new key.
     func start(inputText: String) async -> String? {
-        guard case .flow(let slug) = scope, !isStarting else { return nil }
+        guard case .flow(let slug, _) = scope, !isStarting else { return nil }
         let input: Operations.StartFlowRun.Input.Body.JsonPayload.InputPayload
         do {
             input = try TaskRunsStore.parseInput(inputText, empty: .case1([]))
@@ -77,12 +86,16 @@ final class FlowRunsStore {
             return nil
         }
 
+        let key = unconfirmedStart.flatMap { $0.input == inputText ? $0.key : nil } ?? UUID().uuidString
+        unconfirmedStart = (inputText, key)
+
         isStarting = true
         defer { isStarting = false }
         do {
             let run = try await client.api.startFlowRun(body: .json(.init(
-                flow: slug, input: input, idempotencyKey: UUID().uuidString
+                flow: slug, input: input, idempotencyKey: key
             ))).accepted.body.json
+            unconfirmedStart = nil
             startError = nil
             await load()
             return run.id

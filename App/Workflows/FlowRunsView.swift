@@ -19,9 +19,15 @@ struct FlowRunsView: View {
         if case .flow = store.scope { true } else { false }
     }
 
-    /// A flow's own list knows the flow's name; a workflow-wide list looks it up per run.
+    /// A flow's own list knows the flow's name; a workflow-wide list looks it up per run. Nil when
+    /// the lookup failed or missed the flow, so the detail screen can look it up itself.
+    private func knownFlowName(_ run: FlowRunSummary) -> String? {
+        isOneFlow ? title : store.flowNames[run.flowID]
+    }
+
+    /// For a row, the ID stands in for a name that isn't known.
     private func flowName(_ run: FlowRunSummary) -> String {
-        isOneFlow ? title : (store.flowNames[run.flowID] ?? run.flowID)
+        knownFlowName(run) ?? run.flowID
     }
 
     var body: some View {
@@ -34,7 +40,7 @@ struct FlowRunsView: View {
             Section {
                 ForEach(store.runs) { run in
                     NavigationLink {
-                        FlowRunDetailView(client: client, runID: run.id, flowName: flowName(run))
+                        FlowRunDetailView(client: client, runID: run.id, flowName: knownFlowName(run))
                     } label: {
                         FlowRunRow(run: run, flowName: isOneFlow ? nil : flowName(run))
                     }

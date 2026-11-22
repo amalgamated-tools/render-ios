@@ -119,16 +119,36 @@ struct FlowRunStep: Identifiable, Hashable, Sendable {
     var duration: Duration? { TaskRunFormat.duration(from: startedAt, to: completedAt) }
 
     init(_ step: Operations.ListFlowRunSteps.Output.Ok.Body.JsonPayload.StepsPayloadPayload) {
-        seq = step.seq
-        stepKey = step.stepKey
+        self.init(
+            seq: step.seq, stepKey: step.stepKey, name: step.name, kind: step._type.rawValue,
+            status: step.status.rawValue, startedAt: step.startedAt, completedAt: step.completedAt,
+            wakeAt: step.wakeAt, childTaskRunID: step.childTaskRunId
+        )
+    }
+
+    /// The same step as its own endpoint reports it, which is newer than the list it was opened from.
+    init(_ step: Operations.GetFlowRunStep.Output.Ok.Body.JsonPayload) {
+        self.init(
+            seq: step.seq, stepKey: step.stepKey, name: step.name, kind: step._type.rawValue,
+            status: step.status.rawValue, startedAt: step.startedAt, completedAt: step.completedAt,
+            wakeAt: step.wakeAt, childTaskRunID: step.childTaskRunId
+        )
+    }
+
+    private init(
+        seq: Int, stepKey: String, name: String?, kind: String, status: String,
+        startedAt: Date, completedAt: Date?, wakeAt: Date?, childTaskRunID: String?
+    ) {
+        self.seq = seq
+        self.stepKey = stepKey
         // A step only lacks a name if the flow didn't give one; its position is the best label then.
-        name = step.name.flatMap { $0.isEmpty ? nil : $0 } ?? "Step \(step.seq + 1)"
-        kind = FlowStepKind(raw: step._type.rawValue)
-        status = TaskRunStatus(raw: step.status.rawValue)
-        startedAt = step.startedAt
-        completedAt = step.completedAt
-        wakeAt = step.wakeAt
-        childTaskRunID = step.childTaskRunId.flatMap { $0.isEmpty ? nil : $0 }
+        self.name = name.flatMap { $0.isEmpty ? nil : $0 } ?? "Step \(seq + 1)"
+        self.kind = FlowStepKind(raw: kind)
+        self.status = TaskRunStatus(raw: status)
+        self.startedAt = startedAt
+        self.completedAt = completedAt
+        self.wakeAt = wakeAt
+        self.childTaskRunID = childTaskRunID.flatMap { $0.isEmpty ? nil : $0 }
     }
 }
 

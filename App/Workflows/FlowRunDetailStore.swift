@@ -8,7 +8,8 @@ import RenderAPI
 @Observable
 final class FlowRunDetailStore {
     private(set) var run: FlowRunDetail?
-    /// In the order the flow took them.
+    /// In the order the flow started them, which is the order Render lists them in. Repeated steps
+    /// share a seq, and their keys say nothing about order, so the list isn't re-sorted.
     private(set) var steps: [FlowRunStep] = []
     /// True when the run has more steps than one page holds; the screen says only the first are shown.
     private(set) var hasMoreSteps = false
@@ -37,20 +38,27 @@ final class FlowRunDetailStore {
         isLoading = true
         defer { isLoading = false }
 
+        // The run and its steps load side by side, but the steps are best-effort: if only they
+        // fail, the run still shows (and keeps refreshing), with the steps from the last load.
+        let id = runID
+        async let detail = client.api.getFlowRun(path: .init(flowRunId: id)).ok.body.json
+        async let stepPage = try? client.api.listFlowRunSteps(path: .init(flowRunId: id), query: .init(limit: 100)).ok.body.json
+        let loaded: Operations.GetFlowRun.Output.Ok.Body.JsonPayload
         do {
-            let id = runID
-            async let detail = client.api.getFlowRun(path: .init(flowRunId: id)).ok.body.json
-            async let stepPage = client.api.listFlowRunSteps(path: .init(flowRunId: id), query: .init(limit: 100)).ok.body.json
-            let (loaded, page) = try await (detail, stepPage)
-            run = FlowRunDetail(loaded)
-            steps = page.steps.map(FlowRunStep.init).sorted { ($0.seq, $0.stepKey) < ($1.seq, $1.stepKey) }
-            hasMoreSteps = page.hasMore
-            if flowName == nil {
-                flowName = try? await client.api.getFlow(path: .init(flowId: loaded.flowId)).ok.body.json.name
-            }
-            errorMessage = nil
+            loaded = try await detail
         } catch {
+            _ = await stepPage
             errorMessage = RenderError.wrapping(error).errorDescription
+            return
+        }
+        run = FlowRunDetail(loaded)
+        errorMessage = nil
+        if let page = await stepPage {
+            steps = page.steps.map(FlowRunStep.init)
+            hasMoreSteps = page.hasMore
+        }
+        if flowName == nil {
+            flowName = try? await client.api.getFlow(path: .init(flowId: loaded.flowId)).ok.body.json.name
         }
     }
 
@@ -93,7 +101,9 @@ final class FlowRunStepStore {
     private(set) var errorMessage: String?
 
     let runID: String
-    let step: FlowRunStep
+    /// The step as last loaded: first from the run's step list, then from its own endpoint, so its
+    /// status and finish time are as current as its result.
+    private(set) var step: FlowRunStep
     private let client: RenderClient
 
     init(client: RenderClient, runID: String, step: FlowRunStep) {
@@ -110,6 +120,7 @@ final class FlowRunStepStore {
                 // out says the same thing more plainly.
                 query: .init(stepKey: step.stepKey.isEmpty ? nil : step.stepKey)
             ).ok.body.json
+            step = FlowRunStep(loaded)
             detail = FlowRunStepDetail(loaded)
             errorMessage = nil
         } catch {
