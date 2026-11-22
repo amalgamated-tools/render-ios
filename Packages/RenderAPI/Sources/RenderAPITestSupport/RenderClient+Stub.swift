@@ -20,7 +20,8 @@ extension RenderClient {
         jsonBodies: [String],
         status: Int = 200,
         logSocketConnector: any LogSocketConnecting = StubLogSocketConnector.refusing(),
-        logReconnectPolicy: LogStream.ReconnectPolicy = .none
+        logReconnectPolicy: LogStream.ReconnectPolicy = .none,
+        eventSourceConnector: any EventSourceConnecting = StubEventSourceConnector.refusing()
     ) -> (client: RenderClient, transport: StubTransport) {
         let transport = StubTransport(
             responses: jsonBodies.map { (status: status, headers: [.contentType: "application/json"], body: $0) }
@@ -34,7 +35,10 @@ extension RenderClient {
             logSocketConnector: logSocketConnector,
             // Same reasoning as `retryPolicy: .none`: a stubbed drop should surface as a failure the
             // test can assert on, not as a reconnect loop it has to wait out.
-            logReconnectPolicy: logReconnectPolicy
+            logReconnectPolicy: logReconnectPolicy,
+            eventSourceConnector: eventSourceConnector,
+            // A stubbed failure should end the stream, not start a reconnect loop.
+            eventReconnectPolicy: .none
         )
         return (client, transport)
     }
@@ -51,6 +55,7 @@ extension RenderClient {
     public static func routed(
         logSocketConnector: any LogSocketConnecting = StubLogSocketConnector.refusing(),
         logReconnectPolicy: LogStream.ReconnectPolicy = .none,
+        eventSourceConnector: any EventSourceConnecting = StubEventSourceConnector.refusing(),
         route: @escaping @Sendable (String) -> (status: Int, body: String)
     ) -> (client: RenderClient, transport: StubTransport) {
         let transport = StubTransport { request, _, _ in
@@ -64,7 +69,10 @@ extension RenderClient {
             retryPolicy: .none,
             transport: transport,
             logSocketConnector: logSocketConnector,
-            logReconnectPolicy: logReconnectPolicy
+            logReconnectPolicy: logReconnectPolicy,
+            eventSourceConnector: eventSourceConnector,
+            // A stubbed failure should end the stream, not start a reconnect loop.
+            eventReconnectPolicy: .none
         )
         return (client, transport)
     }

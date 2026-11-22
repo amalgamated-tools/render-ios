@@ -150,6 +150,15 @@ turned a *successful* write into an error banner over a change Render had alread
    runs. Completed counts come in UTC-day buckets that count in full even when the window starts
    mid-day, and hourly buckets over a week answer `500`. The queued series came back unlabelled, with a
    value that matched no queued runs, so the app doesn't show it. Measured 2026-11-22, read-only.
+10. **`GET /task-runs/events` sends the whole run, not the spec's event shape, and only terminal
+    states.** Each `task.completed` frame carries the full run, the same shape as `GET /task-runs/{id}`,
+    where the spec's example shows a smaller object. `TaskRunEventStream` decodes only `id` and `status`
+    so either shape works, and the run screen reloads the run for the rest. A run that already finished
+    gets its event as soon as the stream opens, and the stream closes itself once every requested run
+    has finished. Nothing reports Pending → Running, so the run screen still polls, more slowly while
+    the stream is connected. The generator can only deliver the body once the response ends, so the
+    transport is hand-written, like `LogStream`. Checked 2026-11-22 with runs in the write-test
+    workspace.
 
 ---
 

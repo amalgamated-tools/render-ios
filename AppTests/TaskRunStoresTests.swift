@@ -411,6 +411,57 @@ struct TaskRunDetailStoreTests {
         #expect(fetches.count == 3)
     }
 
+    @Test func watchReloadsAsSoonAsTheStreamSaysTheRunFinished() async {
+        // Both poll intervals are an hour, so only the stream can end this watch.
+        let fetches = FetchCounter()
+        let events = StubEventSourceConnector { _ in StubEventSourceConnector.completedFrame(id: "trn-1") }
+        let (client, _) = methodRouted(eventSourceConnector: events) { _, path in
+            guard path.hasPrefix("/task-runs/trn-1") else { return (200, "[]") }
+            return fetches.next() < 1
+                ? (200, RunJSON.detail(status: "running", completedAt: nil))
+                : (200, RunJSON.detail(status: "completed", results: "[1]"))
+        }
+        let store = TaskRunDetailStore(
+            client: client, runID: "trn-1", refreshInterval: .seconds(3600), streamingRefreshInterval: .seconds(3600)
+        )
+
+        await store.watch()
+
+        #expect(store.run?.status == .completed)
+        #expect(fetches.count == 2, "the first load, then one reload on the event")
+        #expect(events.requests.first?.url?.query == "taskRunIds=trn-1")
+        #expect(!store.isStreaming)
+    }
+
+    @Test func watchPollsSlowerWhileTheStreamIsConnected() async throws {
+        // Full-speed polling is every millisecond and the streaming interval is an hour. Once the
+        // stream is connected, fetching should stop, except for one poll whose sleep began before
+        // the stream connected.
+        let fetches = FetchCounter()
+        let events = StubEventSourceConnector { _ in [.silence] }
+        let (client, _) = methodRouted(eventSourceConnector: events) { _, path in
+            guard path.hasPrefix("/task-runs/trn-1") else { return (200, "[]") }
+            _ = fetches.next()
+            return (200, RunJSON.detail(status: "running", completedAt: nil))
+        }
+        let store = TaskRunDetailStore(
+            client: client, runID: "trn-1", refreshInterval: .milliseconds(1), streamingRefreshInterval: .seconds(3600)
+        )
+        let watching = Task { await store.watch() }
+        defer { watching.cancel() }
+
+        let deadline = ContinuousClock.now + .seconds(5)
+        while !store.isStreaming, ContinuousClock.now < deadline { try await Task.sleep(for: .milliseconds(1)) }
+        try #require(store.isStreaming)
+        let atConnect = fetches.count
+        try await Task.sleep(for: .milliseconds(200))
+
+        #expect(fetches.count <= atConnect + 1)
+        watching.cancel()
+        await watching.value
+        #expect(!store.isStreaming, "leaving the screen closes the stream")
+    }
+
     @Test func watchGivesUpWhenTheRunCantBeLoaded() async {
         let (client, transport) = RenderClient.stubbed(jsonBodies: [#"{"message":"not found"}"#], status: 404)
         let store = TaskRunDetailStore(client: client, runID: "trn-1", refreshInterval: .milliseconds(1))

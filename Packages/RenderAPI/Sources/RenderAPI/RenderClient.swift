@@ -17,6 +17,10 @@ public struct RenderClient: Sendable {
     /// can't emit — see ``LogStream``. It shares this client's base URL and API key.
     public let logs: LogStream
 
+    /// Live task-run completions over server-sent events, hand-written for the same reason as
+    /// ``logs`` — see ``TaskRunEventStream``. Shares this client's base URL and API key.
+    public let taskRunEvents: TaskRunEventStream
+
     /// `servers` in the spec declares exactly one URL, so this is not configurable in practice —
     /// it stays a parameter only so tests can point at a stub.
     public static let productionBaseURL = URL(string: "https://api.render.com/v1")!
@@ -27,6 +31,8 @@ public struct RenderClient: Sendable {
     private let transport: any ClientTransport
     private let logSocketConnector: any LogSocketConnecting
     private let logReconnectPolicy: LogStream.ReconnectPolicy
+    private let eventSourceConnector: any EventSourceConnecting
+    private let eventReconnectPolicy: LogStream.ReconnectPolicy
 
     /// The same client — same base URL, key, transport and middleware order — with a different
     /// retry policy. For endpoints where an automatic retry is wrong, such as Postgres query
@@ -38,7 +44,9 @@ public struct RenderClient: Sendable {
             retryPolicy: policy,
             transport: transport,
             logSocketConnector: logSocketConnector,
-            logReconnectPolicy: logReconnectPolicy
+            logReconnectPolicy: logReconnectPolicy,
+            eventSourceConnector: eventSourceConnector,
+            eventReconnectPolicy: eventReconnectPolicy
         )
     }
 
@@ -48,13 +56,23 @@ public struct RenderClient: Sendable {
         retryPolicy: RetryMiddleware.Policy = .default,
         transport: any ClientTransport = URLSessionTransport(),
         logSocketConnector: any LogSocketConnecting = URLSessionLogSocketConnector(),
-        logReconnectPolicy: LogStream.ReconnectPolicy = .default
+        logReconnectPolicy: LogStream.ReconnectPolicy = .default,
+        eventSourceConnector: any EventSourceConnecting = URLSessionEventSourceConnector(),
+        eventReconnectPolicy: LogStream.ReconnectPolicy = .default
     ) {
         self.baseURL = baseURL
         self.apiKeyProvider = apiKeyProvider
         self.transport = transport
         self.logSocketConnector = logSocketConnector
         self.logReconnectPolicy = logReconnectPolicy
+        self.eventSourceConnector = eventSourceConnector
+        self.eventReconnectPolicy = eventReconnectPolicy
+        self.taskRunEvents = TaskRunEventStream(
+            baseURL: baseURL,
+            apiKeyProvider: apiKeyProvider,
+            connector: eventSourceConnector,
+            policy: eventReconnectPolicy
+        )
         self.logs = LogStream(
             baseURL: baseURL,
             apiKeyProvider: apiKeyProvider,
