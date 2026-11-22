@@ -15681,20 +15681,10 @@ public enum Components {
                 public var ownerId: Swift.String
                 /// - Remark: Generated from `#/components/schemas/blueprintWithCursor/blueprint/name`.
                 public var name: Swift.String
-                /// A Blueprint has status `created` until its first Sync is approved.
+                /// A Blueprint has status `created` until its first Sync is approved. Free text: see Scripts/blueprint-quirks.py.
                 ///
                 /// - Remark: Generated from `#/components/schemas/blueprintWithCursor/blueprint/status`.
-                @frozen public enum StatusPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                    case created = "created"
-                    case paused = "paused"
-                    case inSync = "in_sync"
-                    case syncing = "syncing"
-                    case error = "error"
-                }
-                /// A Blueprint has status `created` until its first Sync is approved.
-                ///
-                /// - Remark: Generated from `#/components/schemas/blueprintWithCursor/blueprint/status`.
-                public var status: Components.Schemas.BlueprintWithCursor.BlueprintPayload.StatusPayload
+                public var status: Swift.String
                 /// Configuration value that controls whether or not this blueprint will be re-synced on each git push to the configured branch.
                 /// Even when true, autoSync will not apply when the blueprint has the Created status, which indicates its first sync has not yet been approved.
                 /// Other conditions, such as a locked workspace, can also prevent automatic syncing even when this is true.
@@ -15718,7 +15708,7 @@ public enum Components {
                 ///   - id:
                 ///   - ownerId: ID of the workspace that owns this Blueprint.
                 ///   - name:
-                ///   - status: A Blueprint has status `created` until its first Sync is approved.
+                ///   - status: A Blueprint has status `created` until its first Sync is approved. Free text: see Scripts/blueprint-quirks.py.
                 ///   - autoSync: Configuration value that controls whether or not this blueprint will be re-synced on each git push to the configured branch.
                 ///   - repo:
                 ///   - branch:
@@ -15728,7 +15718,7 @@ public enum Components {
                     id: Swift.String,
                     ownerId: Swift.String,
                     name: Swift.String,
-                    status: Components.Schemas.BlueprintWithCursor.BlueprintPayload.StatusPayload,
+                    status: Swift.String,
                     autoSync: Swift.Bool,
                     repo: Swift.String,
                     branch: Swift.String,
@@ -15807,16 +15797,10 @@ public enum Components {
                 public var startedAt: Foundation.Date?
                 /// - Remark: Generated from `#/components/schemas/syncWithCursor/sync/completedAt`.
                 public var completedAt: Foundation.Date?
+                /// Free text: see Scripts/blueprint-quirks.py.
+                ///
                 /// - Remark: Generated from `#/components/schemas/syncWithCursor/sync/state`.
-                @frozen public enum StatePayload: String, Codable, Hashable, Sendable, CaseIterable {
-                    case created = "created"
-                    case pending = "pending"
-                    case running = "running"
-                    case error = "error"
-                    case success = "success"
-                }
-                /// - Remark: Generated from `#/components/schemas/syncWithCursor/sync/state`.
-                public var state: Components.Schemas.SyncWithCursor.SyncPayload.StatePayload
+                public var state: Swift.String
                 /// Creates a new `SyncPayload`.
                 ///
                 /// - Parameters:
@@ -15824,13 +15808,13 @@ public enum Components {
                 ///   - commit:
                 ///   - startedAt:
                 ///   - completedAt:
-                ///   - state:
+                ///   - state: Free text: see Scripts/blueprint-quirks.py.
                 public init(
                     id: Swift.String,
                     commit: Components.Schemas.SyncWithCursor.SyncPayload.CommitPayload,
                     startedAt: Foundation.Date? = nil,
                     completedAt: Foundation.Date? = nil,
-                    state: Components.Schemas.SyncWithCursor.SyncPayload.StatePayload
+                    state: Swift.String
                 ) {
                     self.id = id
                     self.commit = commit
@@ -19181,20 +19165,10 @@ public enum Operations {
                         public var ownerId: Swift.String
                         /// - Remark: Generated from `#/paths/blueprints/{blueprintId}/GET/responses/200/content/json/name`.
                         public var name: Swift.String
-                        /// A Blueprint has status `created` until its first Sync is approved.
+                        /// A Blueprint has status `created` until its first Sync is approved. Free text: see Scripts/blueprint-quirks.py.
                         ///
                         /// - Remark: Generated from `#/paths/blueprints/{blueprintId}/GET/responses/200/content/json/status`.
-                        @frozen public enum StatusPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                            case created = "created"
-                            case paused = "paused"
-                            case inSync = "in_sync"
-                            case syncing = "syncing"
-                            case error = "error"
-                        }
-                        /// A Blueprint has status `created` until its first Sync is approved.
-                        ///
-                        /// - Remark: Generated from `#/paths/blueprints/{blueprintId}/GET/responses/200/content/json/status`.
-                        public var status: Operations.RetrieveBlueprint.Output.Ok.Body.JsonPayload.StatusPayload
+                        public var status: Swift.String
                         /// Configuration value that controls whether or not this blueprint will be re-synced on each git push to the configured branch.
                         /// Even when true, autoSync will not apply when the blueprint has the Created status, which indicates its first sync has not yet been approved.
                         /// Other conditions, such as a locked workspace, can also prevent automatic syncing even when this is true.
@@ -19218,36 +19192,20 @@ public enum Operations {
                             public var id: Swift.String
                             /// - Remark: Generated from `#/paths/blueprints/{blueprintId}/GET/responses/200/content/json/ResourcesPayload/name`.
                             public var name: Swift.String
-                            /// type of the resource (ex. web_service or postgres)
+                            /// type of the resource (ex. web_service or postgres) Free text: see Scripts/blueprint-quirks.py.
                             ///
                             /// - Remark: Generated from `#/paths/blueprints/{blueprintId}/GET/responses/200/content/json/ResourcesPayload/type`.
-                            @frozen public enum _TypePayload: String, Codable, Hashable, Sendable, CaseIterable {
-                                case staticSite = "static_site"
-                                case webService = "web_service"
-                                case privateService = "private_service"
-                                case backgroundWorker = "background_worker"
-                                case cronJob = "cron_job"
-                                case redis = "redis"
-                                case keyValue = "key_value"
-                                case postgres = "postgres"
-                                case environmentGroup = "environment_group"
-                                case buildSource = "build_source"
-                                case workflow = "workflow"
-                            }
-                            /// type of the resource (ex. web_service or postgres)
-                            ///
-                            /// - Remark: Generated from `#/paths/blueprints/{blueprintId}/GET/responses/200/content/json/ResourcesPayload/type`.
-                            public var _type: Operations.RetrieveBlueprint.Output.Ok.Body.JsonPayload.ResourcesPayloadPayload._TypePayload
+                            public var _type: Swift.String
                             /// Creates a new `ResourcesPayloadPayload`.
                             ///
                             /// - Parameters:
                             ///   - id:
                             ///   - name:
-                            ///   - _type: type of the resource (ex. web_service or postgres)
+                            ///   - _type: type of the resource (ex. web_service or postgres) Free text: see Scripts/blueprint-quirks.py.
                             public init(
                                 id: Swift.String,
                                 name: Swift.String,
-                                _type: Operations.RetrieveBlueprint.Output.Ok.Body.JsonPayload.ResourcesPayloadPayload._TypePayload
+                                _type: Swift.String
                             ) {
                                 self.id = id
                                 self.name = name
@@ -19269,7 +19227,7 @@ public enum Operations {
                         ///   - id:
                         ///   - ownerId: ID of the workspace that owns this Blueprint.
                         ///   - name:
-                        ///   - status: A Blueprint has status `created` until its first Sync is approved.
+                        ///   - status: A Blueprint has status `created` until its first Sync is approved. Free text: see Scripts/blueprint-quirks.py.
                         ///   - autoSync: Configuration value that controls whether or not this blueprint will be re-synced on each git push to the configured branch.
                         ///   - repo:
                         ///   - branch:
@@ -19280,7 +19238,7 @@ public enum Operations {
                             id: Swift.String,
                             ownerId: Swift.String,
                             name: Swift.String,
-                            status: Operations.RetrieveBlueprint.Output.Ok.Body.JsonPayload.StatusPayload,
+                            status: Swift.String,
                             autoSync: Swift.Bool,
                             repo: Swift.String,
                             branch: Swift.String,
@@ -19698,20 +19656,10 @@ public enum Operations {
                         public var ownerId: Swift.String
                         /// - Remark: Generated from `#/paths/blueprints/{blueprintId}/PATCH/responses/200/content/json/name`.
                         public var name: Swift.String
-                        /// A Blueprint has status `created` until its first Sync is approved.
+                        /// A Blueprint has status `created` until its first Sync is approved. Free text: see Scripts/blueprint-quirks.py.
                         ///
                         /// - Remark: Generated from `#/paths/blueprints/{blueprintId}/PATCH/responses/200/content/json/status`.
-                        @frozen public enum StatusPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                            case created = "created"
-                            case paused = "paused"
-                            case inSync = "in_sync"
-                            case syncing = "syncing"
-                            case error = "error"
-                        }
-                        /// A Blueprint has status `created` until its first Sync is approved.
-                        ///
-                        /// - Remark: Generated from `#/paths/blueprints/{blueprintId}/PATCH/responses/200/content/json/status`.
-                        public var status: Operations.UpdateBlueprint.Output.Ok.Body.JsonPayload.StatusPayload
+                        public var status: Swift.String
                         /// Configuration value that controls whether or not this blueprint will be re-synced on each git push to the configured branch.
                         /// Even when true, autoSync will not apply when the blueprint has the Created status, which indicates its first sync has not yet been approved.
                         /// Other conditions, such as a locked workspace, can also prevent automatic syncing even when this is true.
@@ -19735,7 +19683,7 @@ public enum Operations {
                         ///   - id:
                         ///   - ownerId: ID of the workspace that owns this Blueprint.
                         ///   - name:
-                        ///   - status: A Blueprint has status `created` until its first Sync is approved.
+                        ///   - status: A Blueprint has status `created` until its first Sync is approved. Free text: see Scripts/blueprint-quirks.py.
                         ///   - autoSync: Configuration value that controls whether or not this blueprint will be re-synced on each git push to the configured branch.
                         ///   - repo:
                         ///   - branch:
@@ -19745,7 +19693,7 @@ public enum Operations {
                             id: Swift.String,
                             ownerId: Swift.String,
                             name: Swift.String,
-                            status: Operations.UpdateBlueprint.Output.Ok.Body.JsonPayload.StatusPayload,
+                            status: Swift.String,
                             autoSync: Swift.Bool,
                             repo: Swift.String,
                             branch: Swift.String,

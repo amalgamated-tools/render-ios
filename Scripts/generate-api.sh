@@ -97,6 +97,11 @@ echo "==> Letting a task run without results decode"
 # spec says it's a required array. See the script.
 python3 "$REPO_ROOT/Scripts/workflow-quirks.py" "$SPEC"
 
+echo "==> Letting blueprint statuses, sync states and resource types be any string"
+# Closed enums in the spec; one value Render adds later would fail a whole blueprint list, sync
+# history or blueprint. See the script.
+python3 "$REPO_ROOT/Scripts/blueprint-quirks.py" "$SPEC"
+
 echo "==> Fixing numeric query parameter types"
 # The spec types every numeric query parameter as `number`, which the generator maps to Double or
 # Float — and Render accepts neither serialization: it rejects `resolutionSeconds=60.0` outright, and

@@ -25,6 +25,7 @@ struct WorkspaceScreen: View {
     @State private var selectedTab: WorkspaceTab = .services
     @State private var isShowingNotificationSettings = false
     @State private var isShowingWebhooks = false
+    @State private var isShowingBlueprints = false
     @State private var isShowingWorkspace = false
     @Environment(NotificationRouter.self) private var router
 
@@ -96,6 +97,9 @@ struct WorkspaceScreen: View {
         .sheet(isPresented: $isShowingWebhooks) {
             WebhooksView(client: client, ownerID: ownerID)
         }
+        .sheet(isPresented: $isShowingBlueprints) {
+            BlueprintsView(client: client, ownerID: ownerID)
+        }
         .sheet(isPresented: $isShowingWorkspace) {
             WorkspaceDetailView(client: client, ownerID: ownerID, accountStore: accountStore)
         }
@@ -166,6 +170,9 @@ struct WorkspaceScreen: View {
             Button("Webhooks", systemImage: "point.3.connected.trianglepath.dotted") {
                 isShowingWebhooks = true
             }
+            Button("Blueprints", systemImage: "doc.text.below.ecg") {
+                isShowingBlueprints = true
+            }
             // Clearing the watchlist is `AuthStore`'s job, via `onSessionEnded` — doing it here
             // would only cover the sessions that end because someone tapped this.
             Button("Sign Out", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) {
@@ -173,6 +180,7 @@ struct WorkspaceScreen: View {
             }
         } label: {
             Image(systemName: "person.crop.circle")
+                .accessibilityLabel("Account")
         }
     }
 }

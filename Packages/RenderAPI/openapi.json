@@ -525,14 +525,7 @@
                     },
                     "status": {
                       "type": "string",
-                      "description": "A Blueprint has status `created` until its first Sync is approved.",
-                      "enum": [
-                        "created",
-                        "paused",
-                        "in_sync",
-                        "syncing",
-                        "error"
-                      ]
+                      "description": "A Blueprint has status `created` until its first Sync is approved. Free text: see Scripts/blueprint-quirks.py."
                     },
                     "autoSync": {
                       "type": "boolean",
@@ -571,20 +564,7 @@
                           },
                           "type": {
                             "type": "string",
-                            "description": "type of the resource (ex. web_service or postgres)",
-                            "enum": [
-                              "static_site",
-                              "web_service",
-                              "private_service",
-                              "background_worker",
-                              "cron_job",
-                              "redis",
-                              "key_value",
-                              "postgres",
-                              "environment_group",
-                              "build_source",
-                              "workflow"
-                            ]
+                            "description": "type of the resource (ex. web_service or postgres) Free text: see Scripts/blueprint-quirks.py."
                           }
                         }
                       }
@@ -688,14 +668,7 @@
                     },
                     "status": {
                       "type": "string",
-                      "description": "A Blueprint has status `created` until its first Sync is approved.",
-                      "enum": [
-                        "created",
-                        "paused",
-                        "in_sync",
-                        "syncing",
-                        "error"
-                      ]
+                      "description": "A Blueprint has status `created` until its first Sync is approved. Free text: see Scripts/blueprint-quirks.py."
                     },
                     "autoSync": {
                       "type": "boolean",
@@ -30525,14 +30498,7 @@
               },
               "status": {
                 "type": "string",
-                "description": "A Blueprint has status `created` until its first Sync is approved.",
-                "enum": [
-                  "created",
-                  "paused",
-                  "in_sync",
-                  "syncing",
-                  "error"
-                ]
+                "description": "A Blueprint has status `created` until its first Sync is approved. Free text: see Scripts/blueprint-quirks.py."
               },
               "autoSync": {
                 "type": "boolean",
@@ -30602,13 +30568,7 @@
               },
               "state": {
                 "type": "string",
-                "enum": [
-                  "created",
-                  "pending",
-                  "running",
-                  "error",
-                  "success"
-                ]
+                "description": "Free text: see Scripts/blueprint-quirks.py."
               }
             }
           },
