@@ -4,8 +4,9 @@ import RenderAPI
 
 /// One task run: its input, results, error and attempts, the runs it started, and cancelling it.
 ///
-/// An unfinished run is refreshed every few seconds while the screen is open (`watch()`), so a run
-/// you just started moves from Pending to Running to its result without pulling to refresh.
+/// While the screen is open, an unfinished run is watched (`watch()`): Render's event stream says the
+/// moment it finishes, and polling keeps Pending → Running current, since the stream only reports
+/// finished runs. Polling slows down while the stream is connected and speeds back up if it fails.
 @MainActor
 @Observable
 final class TaskRunDetailStore {
@@ -22,12 +23,23 @@ final class TaskRunDetailStore {
     let runID: String
     private let client: RenderClient
     private let refreshInterval: Duration
+    private let streamingRefreshInterval: Duration
+    /// Whether the event stream is connected, which is when polling can slow down.
+    private(set) var isStreaming = false
 
-    init(client: RenderClient, runID: String, refreshInterval: Duration = .seconds(3)) {
+    init(
+        client: RenderClient,
+        runID: String,
+        refreshInterval: Duration = .seconds(3),
+        streamingRefreshInterval: Duration = .seconds(15)
+    ) {
         self.client = client
         self.runID = runID
         self.refreshInterval = refreshInterval
+        self.streamingRefreshInterval = streamingRefreshInterval
     }
+
+    private var isUnfinished: Bool { run.map { !$0.status.isFinished } ?? false }
 
     var canCancel: Bool { run.map { !$0.status.isFinished } ?? false }
 
@@ -71,15 +83,51 @@ final class TaskRunDetailStore {
         }
     }
 
-    /// Loads, then keeps refreshing until the run finishes or the calling task is cancelled (the
+    /// Loads, then keeps the run current until it finishes or the calling task is cancelled (the
     /// screen goes away). A failed refresh of a loaded run doesn't stop it; the next one may work.
-    /// A run that never loaded isn't polled: pull to refresh retries it.
+    /// A run that never loaded isn't watched: pull to refresh retries it.
     func watch() async {
         await load()
-        while !Task.isCancelled, run.map({ !$0.status.isFinished }) ?? false {
-            try? await Task.sleep(for: refreshInterval)
+        guard isUnfinished else { return }
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask { await self.followCompletion() }
+            group.addTask { await self.poll() }
+            // Whichever side sees the run finish first ends the other. The stream ending without a
+            // finished run (it failed) leaves polling to carry on alone.
+            while await group.next() != nil {
+                if !isUnfinished { group.cancelAll() }
+            }
+        }
+        isStreaming = false
+    }
+
+    private func poll() async {
+        while !Task.isCancelled, isUnfinished {
+            try? await Task.sleep(for: isStreaming ? streamingRefreshInterval : refreshInterval)
             if Task.isCancelled { break }
             await load()
+        }
+    }
+
+    /// Waits on Render's event stream for this run to finish, then reloads it once for its results
+    /// and children. Returns early, leaving polling at full speed, if the stream fails.
+    private func followCompletion() async {
+        defer { isStreaming = false }
+        do {
+            for try await event in client.taskRunEvents.completions(of: [runID]) {
+                switch event {
+                case .connected:
+                    isStreaming = true
+                case .reconnecting:
+                    isStreaming = false
+                case .completed:
+                    isStreaming = false
+                    await load()
+                    return
+                }
+            }
+        } catch {
+            // The stream is an optimisation over polling, which is still running; nothing to show.
         }
     }
 

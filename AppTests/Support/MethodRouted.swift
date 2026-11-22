@@ -5,8 +5,10 @@ import RenderAPI
 import RenderAPITestSupport
 
 /// Like `RenderClient.routed`, but the route also sees the method, since fetching and cancelling a
-/// run share a path.
+/// run share a path. The run event stream refuses by default, so a store that opens one falls back to
+/// polling instead of reaching the network.
 func methodRouted(
+    eventSourceConnector: any EventSourceConnecting = StubEventSourceConnector.refusing(),
     _ route: @escaping @Sendable (HTTPRequest.Method, String) -> (status: Int, body: String)
 ) -> (client: RenderClient, transport: StubTransport) {
     let transport = StubTransport { request, _, _ in
@@ -18,7 +20,9 @@ func methodRouted(
     let client = RenderClient(
         apiKeyProvider: StaticAPIKeyProvider("test-key"),
         retryPolicy: .none,
-        transport: transport
+        transport: transport,
+        eventSourceConnector: eventSourceConnector,
+        eventReconnectPolicy: .none
     )
     return (client, transport)
 }
