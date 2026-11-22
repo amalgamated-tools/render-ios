@@ -94818,7 +94818,7 @@ public enum Operations {
                         /// - Remark: Generated from `#/paths/task-runs/{taskRunId}/GET/responses/200/content/json/status`.
                         public var status: Operations.GetTaskRun.Output.Ok.Body.JsonPayload.StatusPayload
                         /// - Remark: Generated from `#/paths/task-runs/{taskRunId}/GET/responses/200/content/json/results`.
-                        public var results: [OpenAPIRuntime.OpenAPIValueContainer]
+                        public var results: [OpenAPIRuntime.OpenAPIValueContainer]?
                         /// Error message if the task run failed.
                         ///
                         /// - Remark: Generated from `#/paths/task-runs/{taskRunId}/GET/responses/200/content/json/error`.
@@ -95003,7 +95003,7 @@ public enum Operations {
                             id: Swift.String,
                             taskId: Swift.String,
                             status: Operations.GetTaskRun.Output.Ok.Body.JsonPayload.StatusPayload,
-                            results: [OpenAPIRuntime.OpenAPIValueContainer],
+                            results: [OpenAPIRuntime.OpenAPIValueContainer]? = nil,
                             error: Swift.String? = nil,
                             startedAt: Foundation.Date? = nil,
                             completedAt: Foundation.Date? = nil,

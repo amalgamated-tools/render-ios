@@ -5,8 +5,10 @@ import SwiftUI
 /// its versions, newest first.
 struct WorkflowDetailView: View {
     @State private var store: WorkflowDetailStore
+    private let client: RenderClient
 
     init(client: RenderClient, workflow: WorkflowSummary) {
+        self.client = client
         _store = State(initialValue: WorkflowDetailStore(client: client, workflow: workflow))
     }
 
@@ -20,6 +22,13 @@ struct WorkflowDetailView: View {
                     .foregroundStyle(.orange)
             }
             detailsSection
+            Section {
+                NavigationLink {
+                    TaskRunsView(client: client, scope: .workflow(id: workflow.id), title: "All Runs")
+                } label: {
+                    Label("All Runs", systemImage: "list.bullet.rectangle")
+                }
+            }
             entriesSection("Tasks", entries: store.tasks, empty: "No tasks in this version.")
             entriesSection("Flows", entries: store.flows, empty: "No flows in this version.")
             versionsSection
@@ -63,8 +72,22 @@ struct WorkflowDetailView: View {
     private func entriesSection(_ title: String, entries: [WorkflowEntry], empty: String) -> some View {
         Section {
             ForEach(entries) { entry in
-                Text(entry.name)
-                    .font(.system(.body, design: .monospaced))
+                if title == "Tasks" {
+                    // Every version is named, since a bare slug only matches the latest version's runs.
+                    NavigationLink {
+                        TaskRunsView(
+                            client: client,
+                            scope: .task(slug: "\(workflow.slug)/\(entry.name)", versions: store.versions.map(\.name)),
+                            title: entry.name
+                        )
+                    } label: {
+                        Text(entry.name)
+                            .font(.system(.body, design: .monospaced))
+                    }
+                } else {
+                    Text(entry.name)
+                        .font(.system(.body, design: .monospaced))
+                }
             }
             if store.hasLoaded, entries.isEmpty {
                 Text(empty)

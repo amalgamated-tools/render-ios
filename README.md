@@ -410,9 +410,13 @@ make ui-test                              # every UI test; screenshots in build/
 make ui-test ONLY=ServiceScreensTests     # one class, or Class/testMethod
 make ui-test TEXT_SIZE=AccessibilityM     # at a Dynamic Type size
 make ui-test UI_SERVICE=my-api            # UI_* variables reach the tests via AppDriver.value
+make ui-test ONLY=WorkflowScreensTests UI_WORKFLOW=my-workflow UI_TASK=square
+make ui-test UI_ALLOW_WRITES=1            # also run tests that change things (start a task run)
 ```
 
 The simulator's Keychain is reset first, so every run starts signed out with the current key.
+Tests that change anything skip themselves unless `UI_ALLOW_WRITES=1` is set; only use it with a
+key for a workspace that's safe to write to.
 
 ### Driving the simulator
 
