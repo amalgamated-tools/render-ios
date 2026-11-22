@@ -24,9 +24,14 @@ struct WorkflowDetailView: View {
             detailsSection
             Section {
                 NavigationLink {
-                    TaskRunsView(client: client, scope: .workflow(id: workflow.id), title: "All Runs")
+                    TaskRunsView(client: client, scope: .workflow(id: workflow.id), title: "All Task Runs")
                 } label: {
-                    Label("All Runs", systemImage: "list.bullet.rectangle")
+                    Label("All Task Runs", systemImage: "list.bullet.rectangle")
+                }
+                NavigationLink {
+                    FlowRunsView(client: client, scope: .workflow(id: workflow.id), title: "All Flow Runs")
+                } label: {
+                    Label("All Flow Runs", systemImage: "point.3.connected.trianglepath.dotted")
                 }
             }
             entriesSection("Tasks", entries: store.tasks, empty: "No tasks in this version.")
@@ -85,8 +90,17 @@ struct WorkflowDetailView: View {
                             .font(.system(.body, design: .monospaced))
                     }
                 } else {
-                    Text(entry.name)
-                        .font(.system(.body, design: .monospaced))
+                    // Same for flows: the slug covers every version's copy of the flow.
+                    NavigationLink {
+                        FlowRunsView(
+                            client: client,
+                            scope: .flow(slug: "\(workflow.slug)/\(entry.name)", versions: store.versions.map(\.name)),
+                            title: entry.name
+                        )
+                    } label: {
+                        Text(entry.name)
+                            .font(.system(.body, design: .monospaced))
+                    }
                 }
             }
             if store.hasLoaded, entries.isEmpty {
@@ -98,7 +112,7 @@ struct WorkflowDetailView: View {
         } header: {
             Text(entries.isEmpty ? title : "\(title) (\(entries.count))")
         } footer: {
-            if title == "Tasks", let version = store.currentVersion {
+            if let version = store.currentVersion, !entries.isEmpty {
                 Text("From version \(version.name).")
             }
         }

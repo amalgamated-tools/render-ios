@@ -23,6 +23,7 @@ final class TaskRunsStore {
     /// Bounds the query string for a workflow with a long history.
     nonisolated static let maxVersionsQueried = 20
 
+    /// The bare slug plus one versioned slug per known version. Flow slugs work the same way.
     nonisolated static func taskSlugs(slug: String, versions: [String]) -> [String] {
         [slug] + versions.prefix(maxVersionsQueried).map { "\(slug):\($0)" }
     }
@@ -111,16 +112,20 @@ final class TaskRunsStore {
     /// Reads what was typed as a task's input: an array of positional arguments or an object of
     /// named ones. Blank means no arguments.
     nonisolated static func parseInput(_ text: String) throws(InputError) -> Operations.CreateTask.Input.Body.JsonPayload.InputPayload {
+        try parseInput(text, empty: .case1([]))
+    }
+
+    /// The same for any run input type (a flow run's input has its own generated type). `empty` is
+    /// what blank input means.
+    nonisolated static func parseInput<Input: Decodable>(_ text: String, empty: Input) throws(InputError) -> Input {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.isEmpty { return .case1([]) }
+        if trimmed.isEmpty { return empty }
         guard let data = trimmed.data(using: .utf8),
               (try? JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed])) != nil else {
             throw .notJSON
         }
         guard trimmed.hasPrefix("[") || trimmed.hasPrefix("{"),
-              let input = try? JSONDecoder().decode(
-                  Operations.CreateTask.Input.Body.JsonPayload.InputPayload.self, from: data
-              ) else {
+              let input = try? JSONDecoder().decode(Input.self, from: data) else {
             throw .notArrayOrObject
         }
         return input
