@@ -223,6 +223,75 @@ struct BlueprintStoresTests {
         #expect(!store.isSaving)
     }
 
+    @Test("a disconnect answered with 404 counts as done, as when a retried DELETE finds it gone")
+    func disconnectNotFoundIsDone() async {
+        let (client, _) = recording { _, _ in (404, #"{"message":"not found"}"#) }
+        let store = BlueprintDetailStore(client: client, blueprintID: "exs-1", initial: Self.initial)
+
+        #expect(await store.disconnect())
+        #expect(store.isDisconnected)
+        #expect(store.actionResult?.isFailure == false)
+        #expect(!store.isSaving)
+    }
+
+    /// Holds the first load's GETs open until `gate` opens, and answers the PATCH with `patch`.
+    private func heldLoad(patch: (status: Int, body: String), gate: Gate) -> RenderClient {
+        let resources = #"[{"id":"srv-1","name":"web","type":"web_service"}]"#
+        let syncs = "[" + Self.sync(id: "s1", state: "success") + "]"
+        let transport = StubTransport { request, _, _ in
+            let path = request.path ?? ""
+            let answer: (status: Int, body: String)
+            if request.method == .patch {
+                answer = patch
+            } else {
+                await gate.hold()
+                // Render's copy from before the write still has auto-sync on.
+                answer = path.hasPrefix("/blueprints/exs-1/syncs") ? (200, syncs) : (200, Self.detail(resources: resources))
+            }
+            var response = HTTPResponse(status: .init(code: answer.status))
+            response.headerFields = [.contentType: "application/json"]
+            return (response, HTTPBody(answer.body))
+        }
+        return RenderClient(apiKeyProvider: StaticAPIKeyProvider("test-key"), retryPolicy: .none, transport: transport)
+    }
+
+    @Test("a toggle during the first load keeps its result, and the load still finishes")
+    func toggleDuringLoad() async {
+        let updated = #"{\#(Self.blueprintFields(id: "exs-1", name: "infra", status: "in_sync").replacingOccurrences(of: #""autoSync":true"#, with: #""autoSync":false"#))}"#
+        let gate = Gate()
+        let store = BlueprintDetailStore(client: heldLoad(patch: (200, updated), gate: gate), blueprintID: "exs-1", initial: Self.initial)
+
+        let load = Task { await store.load() }
+        await gate.waitUntilEntered(count: 2)
+        #expect(await store.setAutoSync(false)?.autoSync == false)
+        await gate.open()
+        await load.value
+
+        #expect(store.hasLoaded)
+        #expect(store.hasLoadedSyncs)
+        #expect(store.blueprint?.autoSync == false, "the pre-write load overwrote the toggle")
+        #expect(store.resources.map(\.id) == ["srv-1"])
+        #expect(store.syncs.map(\.id) == ["s1"])
+    }
+
+    @Test("a failed toggle during the first load still lets the load finish")
+    func failedToggleDuringLoad() async {
+        let gate = Gate()
+        let store = BlueprintDetailStore(client: heldLoad(patch: (400, #"{"message":"no"}"#), gate: gate), blueprintID: "exs-1", initial: Self.initial)
+
+        let load = Task { await store.load() }
+        await gate.waitUntilEntered(count: 2)
+        #expect(await store.setAutoSync(false) == nil)
+        await gate.open()
+        await load.value
+
+        #expect(store.hasLoaded)
+        #expect(store.hasLoadedSyncs)
+        #expect(store.blueprint?.autoSync == true)
+        #expect(store.resources.map(\.id) == ["srv-1"])
+        #expect(store.actionResult?.isFailure == true)
+    }
+
     @Test("the list takes changes from the detail screen, and reports a disconnect")
     func listTakesChanges() async {
         let body = "[" + [Self.listEntry(id: "exs-1", name: "alpha"), Self.listEntry(id: "exs-2", name: "beta")].joined(separator: ",") + "]"
@@ -248,4 +317,34 @@ private final class SentRequests: @unchecked Sendable {
     private var requests: [(method: HTTPRequest.Method, path: String, body: String)] = []
     var all: [(method: HTTPRequest.Method, path: String, body: String)] { lock.withLock { requests } }
     func append(_ request: (HTTPRequest.Method, String, String)) { lock.withLock { requests.append(request) } }
+}
+
+/// Holds requests until it opens, so a test can act while they're in flight.
+private actor Gate {
+    private var entered = 0
+    private var isOpen = false
+    private var held: [CheckedContinuation<Void, Never>] = []
+    private var enteredWaiters: [(count: Int, continuation: CheckedContinuation<Void, Never>)] = []
+
+    func hold() async {
+        entered += 1
+        enteredWaiters.removeAll { waiter in
+            guard entered >= waiter.count else { return false }
+            waiter.continuation.resume()
+            return true
+        }
+        guard !isOpen else { return }
+        await withCheckedContinuation { held.append($0) }
+    }
+
+    func waitUntilEntered(count: Int) async {
+        guard entered < count else { return }
+        await withCheckedContinuation { enteredWaiters.append((count, $0)) }
+    }
+
+    func open() {
+        isOpen = true
+        held.forEach { $0.resume() }
+        held = []
+    }
 }

@@ -290,8 +290,12 @@ final class BlueprintDetailStore {
     let blueprintID: String
     private let client: RenderClient
     private let syncLimit: Int
-    /// Bumped by every load and write, so a load that started before a write can't overwrite it.
+    /// Bumped by every load, so only the newest load's answers are kept.
     private var generation = 0
+    /// Bumped as each write starts and ends. A load that overlaps a write still finishes and keeps
+    /// its resources and syncs, which a write doesn't change, but drops its copy of the Blueprint,
+    /// which may predate the write.
+    private var writes = 0
 
     init(client: RenderClient, blueprintID: String, initial: Blueprint? = nil, syncLimit: Int = 20) {
         self.client = client
@@ -305,18 +309,20 @@ final class BlueprintDetailStore {
         guard !isDisconnected else { return }
         generation += 1
         let current = generation
-        async let details: Void = loadDetails(generation: current)
+        async let details: Void = loadDetails(generation: current, writes: writes)
         async let history: Void = loadSyncs(generation: current)
         _ = await (details, history)
     }
 
-    private func loadDetails(generation current: Int) async {
+    private func loadDetails(generation current: Int, writes writesAtStart: Int) async {
         do {
             let payload = try await client.api
                 .retrieveBlueprint(path: .init(blueprintId: blueprintID))
                 .ok.body.json
             guard current == generation else { return }
-            blueprint = Blueprint(payload)
+            if writes == writesAtStart, !isSaving {
+                blueprint = Blueprint(payload)
+            }
             resources = payload.resources
                 .map { BlueprintResource(id: $0.id, name: $0.name, type: $0._type) }
                 .sorted {
@@ -380,13 +386,18 @@ final class BlueprintDetailStore {
         defer { endWrite() }
         do {
             _ = try await client.api.disconnectBlueprint(path: .init(blueprintId: blueprintID)).noContent
-            isDisconnected = true
-            actionResult = ActionResult(message: "Disconnected \(blueprint?.name ?? "Blueprint"). Its resources stay.", isFailure: false)
-            return true
         } catch {
-            actionResult = ActionResult(message: Self.message(for: error), isFailure: true)
-            return false
+            // A 404 means it's already gone: most likely `RetryMiddleware` repeated a DELETE whose
+            // first answer was lost, or it was disconnected elsewhere. Either way the outcome the
+            // user asked for holds, so treat it as success rather than leaving a stale row.
+            guard case .notFound = RenderError.wrapping(error) else {
+                actionResult = ActionResult(message: Self.message(for: error), isFailure: true)
+                return false
+            }
         }
+        isDisconnected = true
+        actionResult = ActionResult(message: "Disconnected \(blueprint?.name ?? "Blueprint"). Its resources stay.", isFailure: false)
+        return true
     }
 
     func dismissActionResult() {
@@ -396,11 +407,11 @@ final class BlueprintDetailStore {
     private func beginWrite() {
         isSaving = true
         actionResult = nil
-        generation += 1
+        writes += 1
     }
 
     private func endWrite() {
-        generation += 1
+        writes += 1
         isSaving = false
     }
 
