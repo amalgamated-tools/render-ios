@@ -37,6 +37,8 @@ struct BlueprintsView: View {
                         } label: {
                             BlueprintRow(blueprint: blueprint)
                         }
+                        // The loading, error and empty rows are cells too; UI tests wait for this one.
+                        .accessibilityIdentifier("blueprintRow")
                     }
                 } else {
                     ProgressView().frame(maxWidth: .infinity)

@@ -23,10 +23,20 @@ final class BlueprintScreensTests: XCTestCase {
         blueprints.tap()
 
         XCTAssertTrue(driver.app.navigationBars["Blueprints"].waitForExistence(timeout: AppDriver.timeout))
-        XCTAssertTrue(driver.app.cells.firstMatch.waitForExistence(timeout: AppDriver.timeout), "The Blueprint list is empty")
+        // Wait for a real Blueprint row: the loading spinner is also a cell, so `cells.firstMatch`
+        // can match before anything has loaded.
+        let rows = driver.app.descendants(matching: .any).matching(identifier: "blueprintRow")
+        let firstRow = rows.firstMatch
+        XCTAssertTrue(firstRow.waitForExistence(timeout: AppDriver.timeout), "The Blueprint list is empty")
         driver.screenshot("blueprints")
 
-        driver.openRow(named: AppDriver.value("UI_BLUEPRINT"))
+        if let name = AppDriver.value("UI_BLUEPRINT") {
+            let row = rows.containing(.staticText, identifier: name).firstMatch
+            XCTAssertTrue(row.waitForExistence(timeout: AppDriver.timeout), "No Blueprint named \(name)")
+            row.tap()
+        } else {
+            firstRow.tap()
+        }
         XCTAssertTrue(driver.app.staticTexts["Recent Syncs"].firstMatch.waitForExistence(timeout: AppDriver.timeout)
                       || driver.app.staticTexts["RECENT SYNCS"].firstMatch.exists, "The Blueprint screen didn't open")
         XCTAssertTrue(driver.app.staticTexts["Resources"].firstMatch.exists || driver.app.staticTexts["RESOURCES"].firstMatch.exists)
