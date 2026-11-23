@@ -140,3 +140,22 @@ extension Operations.TriggerMaintenance.Output: NoContentWrite {
         return nil
     }
 }
+
+// Environment resources: adding is documented as `200` with the environment as the body. Live, Render
+// answered `201`, so a move it had made was reported as a failure. The app reloads the environment
+// after a move rather than reading the body, so the body isn't needed. Removing is documented as `204`
+// and is accepted the same way.
+
+extension Operations.AddResourcesToEnvironment.Output: NoContentWrite {
+    public var undocumentedStatusCode: Int? {
+        if case .undocumented(let statusCode, _) = self { return statusCode }
+        return nil
+    }
+}
+
+extension Operations.RemoveResourcesFromEnvironment.Output: NoContentWrite {
+    public var undocumentedStatusCode: Int? {
+        if case .undocumented(let statusCode, _) = self { return statusCode }
+        return nil
+    }
+}
