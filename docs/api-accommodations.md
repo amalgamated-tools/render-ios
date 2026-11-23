@@ -75,7 +75,11 @@ turned a *successful* write into an error banner over a change Render had alread
 3. Because that was the **third** instance, the rule was centralized: `NoContentWrite` in `RenderAPI`
    treats **any 2xx** as success for the nine no-body writes the app makes, with tests pinning that a
    real failure is still a failure.
-4. **`GET /services/{id}/routes` on a non-static-site answers `400`** (`invalid service type. Only
+4. **`POST /environments/{id}/resources` answers `201`, not the documented `200`.** Moving a resource
+   between environments was applied and then reported as a failure. Both environment resource writes
+   (add, and remove, documented `204`) are now `NoContentWrite`s. The app doesn't read the body: it
+   reloads the environment after a move or removal.
+5. **`GET /services/{id}/routes` on a non-static-site answers `400`** (`invalid service type. Only
    static sites have routes`), not the `406` the spec advertises — and headers/routes turned out to be
    static-site-only, which narrowed `ServiceConfigCatalog`'s applicability gate.
 

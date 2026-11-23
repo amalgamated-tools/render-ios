@@ -130,30 +130,13 @@ struct BlueprintStoresTests {
 
     // MARK: - Writes
 
-    /// Answers like `methodRouted`, and also records each request's method, path and body text.
-    private func recording(
-        _ route: @escaping @Sendable (HTTPRequest.Method, String) -> (status: Int, body: String)
-    ) -> (client: RenderClient, sent: SentRequests) {
-        let sent = SentRequests()
-        let transport = StubTransport { request, body, _ in
-            let text = if let body { try await String(collecting: body, upTo: 1 << 20) } else { "" }
-            sent.append((request.method, request.path ?? "", text))
-            let answer = route(request.method, request.path ?? "")
-            var response = HTTPResponse(status: .init(code: answer.status))
-            response.headerFields = [.contentType: "application/json"]
-            return (response, answer.body.isEmpty ? nil : HTTPBody(answer.body))
-        }
-        let client = RenderClient(apiKeyProvider: StaticAPIKeyProvider("test-key"), retryPolicy: .none, transport: transport)
-        return (client, sent)
-    }
-
     private static let initial = Blueprint(id: "exs-1", name: "infra", status: "in_sync", autoSync: true,
                                            repo: "https://github.com/acme/infra", branch: "main", path: "render.yaml", lastSync: nil)
 
     @Test("switching auto-sync off sends only autoSync and shows Render's answer")
     func autoSyncOff() async throws {
         let updated = #"{\#(Self.blueprintFields(id: "exs-1", name: "infra", status: "in_sync").replacingOccurrences(of: #""autoSync":true"#, with: #""autoSync":false"#))}"#
-        let (client, sent) = recording { method, _ in method == .patch ? (200, updated) : (500, "") }
+        let (client, sent) = recordingClient { method, _ in method == .patch ? (200, updated) : (500, "") }
         let store = BlueprintDetailStore(client: client, blueprintID: "exs-1", initial: Self.initial)
 
         let result = await store.setAutoSync(false)
@@ -173,7 +156,7 @@ struct BlueprintStoresTests {
 
     @Test("asking for the auto-sync value it already has sends nothing")
     func autoSyncUnchangedSendsNothing() async {
-        let (client, sent) = recording { _, _ in (500, "") }
+        let (client, sent) = recordingClient { _, _ in (500, "") }
         let store = BlueprintDetailStore(client: client, blueprintID: "exs-1", initial: Self.initial)
 
         #expect(await store.setAutoSync(true) == nil)
@@ -183,7 +166,7 @@ struct BlueprintStoresTests {
 
     @Test("a failed auto-sync change keeps the old value and reports the error")
     func autoSyncFailure() async {
-        let (client, _) = recording { _, _ in (400, #"{"message":"workspace is locked"}"#) }
+        let (client, _) = recordingClient { _, _ in (400, #"{"message":"workspace is locked"}"#) }
         let store = BlueprintDetailStore(client: client, blueprintID: "exs-1", initial: Self.initial)
 
         #expect(await store.setAutoSync(false) == nil)
@@ -194,7 +177,7 @@ struct BlueprintStoresTests {
 
     @Test("disconnecting sends DELETE, then refreshes and further writes do nothing")
     func disconnect() async throws {
-        let (client, sent) = recording { method, _ in method == .delete ? (204, "") : (404, #"{"message":"not found"}"#) }
+        let (client, sent) = recordingClient { method, _ in method == .delete ? (204, "") : (404, #"{"message":"not found"}"#) }
         let store = BlueprintDetailStore(client: client, blueprintID: "exs-1", initial: Self.initial)
 
         #expect(await store.disconnect())
@@ -214,7 +197,7 @@ struct BlueprintStoresTests {
 
     @Test("a failed disconnect leaves the Blueprint connected and reports the error")
     func disconnectFailure() async {
-        let (client, _) = recording { _, _ in (403, #"{"message":"forbidden"}"#) }
+        let (client, _) = recordingClient { _, _ in (403, #"{"message":"forbidden"}"#) }
         let store = BlueprintDetailStore(client: client, blueprintID: "exs-1", initial: Self.initial)
 
         #expect(await store.disconnect() == false)
@@ -225,7 +208,7 @@ struct BlueprintStoresTests {
 
     @Test("a disconnect answered with 404 counts as done, as when a retried DELETE finds it gone")
     func disconnectNotFoundIsDone() async {
-        let (client, _) = recording { _, _ in (404, #"{"message":"not found"}"#) }
+        let (client, _) = recordingClient { _, _ in (404, #"{"message":"not found"}"#) }
         let store = BlueprintDetailStore(client: client, blueprintID: "exs-1", initial: Self.initial)
 
         #expect(await store.disconnect())
@@ -235,7 +218,7 @@ struct BlueprintStoresTests {
     }
 
     /// Holds the first load's GETs open until `gate` opens, and answers the PATCH with `patch`.
-    private func heldLoad(patch: (status: Int, body: String), gate: Gate) -> RenderClient {
+    private func heldLoad(patch: (status: Int, body: String), gate: LoadGate) -> RenderClient {
         let resources = #"[{"id":"srv-1","name":"web","type":"web_service"}]"#
         let syncs = "[" + Self.sync(id: "s1", state: "success") + "]"
         let transport = StubTransport { request, _, _ in
@@ -258,7 +241,7 @@ struct BlueprintStoresTests {
     @Test("a toggle during the first load keeps its result, and the load still finishes")
     func toggleDuringLoad() async {
         let updated = #"{\#(Self.blueprintFields(id: "exs-1", name: "infra", status: "in_sync").replacingOccurrences(of: #""autoSync":true"#, with: #""autoSync":false"#))}"#
-        let gate = Gate()
+        let gate = LoadGate()
         let store = BlueprintDetailStore(client: heldLoad(patch: (200, updated), gate: gate), blueprintID: "exs-1", initial: Self.initial)
 
         let load = Task { await store.load() }
@@ -276,7 +259,7 @@ struct BlueprintStoresTests {
 
     @Test("a failed toggle during the first load still lets the load finish")
     func failedToggleDuringLoad() async {
-        let gate = Gate()
+        let gate = LoadGate()
         let store = BlueprintDetailStore(client: heldLoad(patch: (400, #"{"message":"no"}"#), gate: gate), blueprintID: "exs-1", initial: Self.initial)
 
         let load = Task { await store.load() }
@@ -308,43 +291,5 @@ struct BlueprintStoresTests {
         #expect(store.blueprints.map(\.id) == ["exs-2"])
         #expect(store.actionResult?.message.contains("alpha") == true)
         #expect(store.actionResult?.isFailure == false)
-    }
-}
-
-/// Requests a stub transport saw, with their bodies as text.
-private final class SentRequests: @unchecked Sendable {
-    private let lock = NSLock()
-    private var requests: [(method: HTTPRequest.Method, path: String, body: String)] = []
-    var all: [(method: HTTPRequest.Method, path: String, body: String)] { lock.withLock { requests } }
-    func append(_ request: (HTTPRequest.Method, String, String)) { lock.withLock { requests.append(request) } }
-}
-
-/// Holds requests until it opens, so a test can act while they're in flight.
-private actor Gate {
-    private var entered = 0
-    private var isOpen = false
-    private var held: [CheckedContinuation<Void, Never>] = []
-    private var enteredWaiters: [(count: Int, continuation: CheckedContinuation<Void, Never>)] = []
-
-    func hold() async {
-        entered += 1
-        enteredWaiters.removeAll { waiter in
-            guard entered >= waiter.count else { return false }
-            waiter.continuation.resume()
-            return true
-        }
-        guard !isOpen else { return }
-        await withCheckedContinuation { held.append($0) }
-    }
-
-    func waitUntilEntered(count: Int) async {
-        guard entered < count else { return }
-        await withCheckedContinuation { enteredWaiters.append((count, $0)) }
-    }
-
-    func open() {
-        isOpen = true
-        held.forEach { $0.resume() }
-        held = []
     }
 }

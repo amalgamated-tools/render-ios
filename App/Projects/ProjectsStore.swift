@@ -86,6 +86,14 @@ final class ProjectsStore {
         }
     }
 
+    /// Takes a rename made on a project's screen, so the picker and the Projects list show it
+    /// without a reload.
+    func replace(_ project: ProjectSummary) {
+        guard let index = projects.firstIndex(where: { $0.id == project.id }) else { return }
+        projects[index] = project
+        projects.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
     private static func defaultsKey(_ ownerID: String) -> String {
         "selectedProjectID.\(ownerID)"
     }

@@ -27,7 +27,18 @@ struct EnvironmentSummary: Identifiable, Hashable, Sendable {
     }
 }
 
-/// A project's environments.
+/// The outcome of a rename, settings change, or move on the project screens.
+struct ProjectActionResult: Identifiable, ActionOutcome {
+    let id = UUID()
+    let message: String
+    let isFailure: Bool
+
+    static func failure(_ error: any Error) -> ProjectActionResult {
+        ProjectActionResult(message: RenderError.wrapping(error).errorDescription ?? "Something went wrong.", isFailure: true)
+    }
+}
+
+/// A project's environments, plus renaming the project.
 @MainActor
 @Observable
 final class ProjectDetailStore {
@@ -36,19 +47,68 @@ final class ProjectDetailStore {
     private(set) var hasLoaded = false
     private(set) var errorMessage: String?
 
-    let project: ProjectSummary
+    private(set) var project: ProjectSummary
+    private(set) var isSaving = false
+    private(set) var actionResult: ProjectActionResult?
+
     private let client: RenderClient
+    private let onProjectChange: (ProjectSummary) -> Void
     /// Bumped by every load, so an older load that finishes late can't overwrite a newer one.
     private var generation = 0
+    /// Environments changed on their own screen since the current load started. Render's answer to
+    /// that change is newer than anything the load fetched, so it's applied over the load's result.
+    private var changedSinceLoad: [String: EnvironmentSummary] = [:]
 
-    init(client: RenderClient, project: ProjectSummary) {
+    /// - Parameter onProjectChange: Receives a renamed project, so the shared `ProjectsStore` (the
+    ///   scope picker and the Projects list) shows the new name.
+    init(client: RenderClient, project: ProjectSummary, onProjectChange: @escaping (ProjectSummary) -> Void = { _ in }) {
         self.client = client
         self.project = project
+        self.onProjectChange = onProjectChange
+    }
+
+    /// The environments a resource in `environment` could move to.
+    func destinations(from environment: EnvironmentSummary) -> [EnvironmentSummary] {
+        environments.filter { $0.id != environment.id }
+    }
+
+    func rename(to name: String) async {
+        let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !isSaving, !name.isEmpty, name != project.name else { return }
+        isSaving = true
+        actionResult = nil
+        defer { isSaving = false }
+        do {
+            let updated = try await client.api.updateProject(
+                path: .init(projectId: project.id),
+                body: .json(.init(name: name))
+            ).ok.body.json
+            project = ProjectSummary(updated)
+            onProjectChange(project)
+            actionResult = ProjectActionResult(message: "Renamed to \(project.name).", isFailure: false)
+        } catch {
+            actionResult = .failure(error)
+        }
+    }
+
+    /// Takes a change made on an environment's screen. A load in flight keeps everything else it
+    /// fetched, and this environment is applied over it when it finishes.
+    func replace(_ environment: EnvironmentSummary) {
+        guard let index = environments.firstIndex(where: { $0.id == environment.id }) else { return }
+        changedSinceLoad[environment.id] = environment
+        environments[index] = environment
+        environments.sort { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+    }
+
+    func dismissActionResult() {
+        actionResult = nil
     }
 
     func load() async {
         generation += 1
         let current = generation
+        // A load starting now fetches after any earlier change, so it has nothing to apply over it.
+        changedSinceLoad = [:]
         let client = client
         let projectID = project.id
         do {
@@ -61,7 +121,10 @@ final class ProjectDetailStore {
             }
             let listed = try await paginator.collect(limit: 500)
             guard current == generation else { return }
-            environments = listed.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+            environments = listed
+                .map { changedSinceLoad[$0.id] ?? $0 }
+                .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+            changedSinceLoad = [:]
             errorMessage = nil
         } catch {
             guard current == generation else { return }
@@ -86,15 +149,32 @@ final class EnvironmentResourcesStore {
     private(set) var hasLoaded = false
     private(set) var errorMessage: String?
 
-    let environment: EnvironmentSummary
+    private(set) var environment: EnvironmentSummary
+    private(set) var isSaving = false
+    private(set) var actionResult: ProjectActionResult?
+
     let ownerID: String
     private let client: RenderClient
+    private let onEnvironmentChange: (EnvironmentSummary) -> Void
+    private let onResourcesChange: () -> Void
     private var generation = 0
 
-    init(client: RenderClient, ownerID: String, environment: EnvironmentSummary) {
+    /// - Parameters:
+    ///   - onEnvironmentChange: Receives the environment after a rename or settings change.
+    ///   - onResourcesChange: Called after a resource moves or is removed, so the project screen
+    ///     can reload its counts.
+    init(
+        client: RenderClient,
+        ownerID: String,
+        environment: EnvironmentSummary,
+        onEnvironmentChange: @escaping (EnvironmentSummary) -> Void = { _ in },
+        onResourcesChange: @escaping () -> Void = {}
+    ) {
         self.client = client
         self.ownerID = ownerID
         self.environment = environment
+        self.onEnvironmentChange = onEnvironmentChange
+        self.onResourcesChange = onResourcesChange
     }
 
     var isEmpty: Bool {
@@ -176,6 +256,95 @@ final class EnvironmentResourcesStore {
             errorMessage = nil
         }
         hasLoaded = true
+    }
+
+    // MARK: - Writes
+
+    func rename(to name: String) async {
+        let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty, name != environment.name else { return }
+        await update(.init(name: name)) { "Renamed to \($0.name)." }
+    }
+
+    func setProtected(_ isOn: Bool) async {
+        guard isOn != environment.isProtected else { return }
+        await update(.init(protectedStatus: isOn ? .protected : .unprotected)) {
+            $0.isProtected ? "\($0.name) is protected." : "\($0.name) is no longer protected."
+        }
+    }
+
+    func setNetworkIsolation(_ isOn: Bool) async {
+        guard isOn != environment.networkIsolationEnabled else { return }
+        await update(.init(networkIsolationEnabled: isOn)) {
+            $0.networkIsolationEnabled ? "Network isolation on." : "Network isolation off."
+        }
+    }
+
+    /// Moves a resource into `target`. Render keeps a resource in one environment at a time, so
+    /// adding it there takes it out of this one.
+    func move(resourceID: String, name: String, to target: EnvironmentSummary) async {
+        await changeResources {
+            // Render answers 201, not the documented 200. See `NoContentWrite`.
+            try await $0.api.addResourcesToEnvironment(
+                path: .init(environmentId: target.id),
+                body: .json(.init(resourceIds: [resourceID]))
+            ).expectSuccess()
+            return "Moved \(name) to \(target.name)."
+        }
+    }
+
+    /// Takes a resource out of this environment. It stays in the workspace, outside any project.
+    func remove(resourceID: String, name: String) async {
+        let environmentID = environment.id
+        await changeResources {
+            try await $0.api.removeResourcesFromEnvironment(
+                path: .init(environmentId: environmentID),
+                query: .init(resourceIds: [resourceID])
+            ).expectSuccess()
+            return "Removed \(name) from \(self.environment.name)."
+        }
+    }
+
+    func dismissActionResult() {
+        actionResult = nil
+    }
+
+    private func update(
+        _ body: Components.Schemas.EnvironmentPATCHInput,
+        message: (EnvironmentSummary) -> String
+    ) async {
+        guard !isSaving else { return }
+        isSaving = true
+        actionResult = nil
+        defer { isSaving = false }
+        do {
+            let updated = try await client.api.updateEnvironment(
+                path: .init(environmentId: environment.id),
+                body: .json(body)
+            ).ok.body.json
+            environment = EnvironmentSummary(updated)
+            onEnvironmentChange(environment)
+            actionResult = ProjectActionResult(message: message(environment), isFailure: false)
+        } catch {
+            actionResult = .failure(error)
+        }
+    }
+
+    /// Runs a move or removal, then reloads either way: on a failure Render may still have
+    /// applied part of it (a retried request whose first answer was lost), so the list shows
+    /// what's actually there rather than what the app assumed.
+    private func changeResources(_ write: (RenderClient) async throws -> String) async {
+        guard !isSaving else { return }
+        isSaving = true
+        actionResult = nil
+        do {
+            actionResult = ProjectActionResult(message: try await write(client), isFailure: false)
+        } catch {
+            actionResult = .failure(error)
+        }
+        await load()
+        isSaving = false
+        onResourcesChange()
     }
 
     private nonisolated static func attempt<T: Sendable>(

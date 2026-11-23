@@ -1,4 +1,6 @@
 import Foundation
+import HTTPTypes
+import OpenAPIRuntime
 import RenderAPI
 import RenderAPITestSupport
 import Testing
@@ -108,5 +110,165 @@ struct ProjectStoresTests {
 
         #expect(store.services.map(\.id) == ["srv-1"])
         #expect(store.errorMessage?.hasPrefix("Couldn't load Postgres.") == true)
+    }
+
+    // MARK: - Writes
+
+    private nonisolated static let environmentJSON = #"{"id":"evm-1","name":"prod","projectId":"prj-1","databasesIds":[],"redisIds":[],"serviceIds":[],"envGroupIds":[],"protectedStatus":"unprotected","networkIsolationEnabled":true}"#
+
+    @Test("renaming a project sends only the name and tells the shared store")
+    func renameProject() async throws {
+        let renamed = #"{"id":"prj-1","name":"store","createdAt":"2025-01-01T00:00:00Z","updatedAt":"2025-01-01T00:00:00Z","owner":{"id":"tea-1","name":"Team","email":"t@example.com","type":"team"},"environmentIds":["evm-1"]}"#
+        let (client, sent) = recordingClient { method, _ in method == .patch ? (200, renamed) : (200, "[]") }
+        var reported: ProjectSummary?
+        let store = ProjectDetailStore(client: client, project: Self.project) { reported = $0 }
+
+        await store.rename(to: "  store ")
+
+        let patch = try #require(sent.all.first { $0.method == .patch })
+        #expect(patch.path == "/projects/prj-1")
+        #expect(patch.body.replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "\n", with: "") == #"{"name":"store"}"#)
+        #expect(store.project.name == "store")
+        #expect(reported?.name == "store")
+        #expect(store.actionResult?.isFailure == false)
+    }
+
+    @Test("an unchanged or blank name sends nothing")
+    func renameNoOp() async {
+        let (client, sent) = recordingClient { _, _ in (500, "") }
+        let store = ProjectDetailStore(client: client, project: Self.project)
+
+        await store.rename(to: Self.project.name)
+        await store.rename(to: "   ")
+
+        #expect(sent.all.isEmpty)
+        #expect(store.actionResult == nil)
+    }
+
+    @Test("turning protection on sends protectedStatus and shows Render's answer")
+    func protectEnvironment() async throws {
+        let protected = Self.environmentJSON.replacingOccurrences(of: #""unprotected""#, with: #""protected""#)
+        let (client, sent) = recordingClient { method, _ in method == .patch ? (200, protected) : (200, "[]") }
+        var reported: EnvironmentSummary?
+        let unprotected = EnvironmentSummary(Self.decode(Components.Schemas.Environment.self, from: Self.environmentJSON)!)
+        let store = EnvironmentResourcesStore(client: client, ownerID: Fixtures.ownerID, environment: unprotected,
+                                              onEnvironmentChange: { reported = $0 })
+
+        await store.setProtected(true)
+
+        let patch = try #require(sent.all.first { $0.method == .patch })
+        #expect(patch.path == "/environments/evm-1")
+        #expect(patch.body.contains(#""protectedStatus""#))
+        #expect(!patch.body.contains("networkIsolationEnabled"))
+        #expect(store.environment.isProtected)
+        #expect(reported?.isProtected == true)
+    }
+
+    @Test("a failed settings change leaves the environment as it was and reports the error")
+    func failedSettingsChange() async {
+        let (client, _) = recordingClient { _, _ in (403, #"{"message":"forbidden"}"#) }
+        let store = EnvironmentResourcesStore(client: client, ownerID: Fixtures.ownerID, environment: Self.sampleEnvironment())
+
+        await store.setNetworkIsolation(false)
+
+        #expect(store.environment.networkIsolationEnabled)
+        #expect(store.actionResult?.isFailure == true)
+    }
+
+    @Test("moving a resource adds it to the target, then reloads and tells the project screen")
+    func moveResource() async throws {
+        let (client, sent) = recordingClient { method, _ in
+            // What Render really answers: 201, where the spec documents 200.
+            if method == .post { return (201, Self.environmentJSON) }
+            return (200, "[]")
+        }
+        var reloads = 0
+        let store = EnvironmentResourcesStore(client: client, ownerID: Fixtures.ownerID, environment: Self.sampleEnvironment(),
+                                              onResourcesChange: { reloads += 1 })
+        let staging = EnvironmentSummary(Self.decode(Components.Schemas.Environment.self,
+                                                     from: Self.environmentJSON.replacingOccurrences(of: "evm-1", with: "evm-2"))!)
+
+        await store.move(resourceID: "evg-1", name: "shared", to: staging)
+
+        let post = try #require(sent.all.first { $0.method == .post })
+        #expect(post.path == "/environments/evm-2/resources")
+        #expect(post.body.contains("evg-1"))
+        #expect(sent.all.filter { $0.method == .get }.count == 4)
+        #expect(reloads == 1)
+        #expect(store.actionResult?.isFailure == false)
+        #expect(!store.isSaving)
+    }
+
+    @Test("removing a resource sends its ID to this environment, and a failure still reloads")
+    func removeResource() async throws {
+        let (client, sent) = recordingClient { method, _ in method == .delete ? (500, #"{"message":"boom"}"#) : (200, "[]") }
+        let store = EnvironmentResourcesStore(client: client, ownerID: Fixtures.ownerID, environment: Self.sampleEnvironment())
+
+        await store.remove(resourceID: "srv-1", name: "api")
+
+        let delete = try #require(sent.all.first { $0.method == .delete })
+        #expect(delete.path.hasPrefix("/environments/evm-1/resources?"))
+        #expect(delete.path.contains("srv-1"))
+        #expect(sent.all.filter { $0.method == .get }.count == 4)
+        #expect(store.actionResult?.isFailure == true)
+    }
+
+    @Test("a removal Render answers with a 2xx other than the documented 204 still succeeds")
+    func removeUndocumentedSuccess() async {
+        let (client, _) = recordingClient { method, _ in method == .delete ? (200, "{}") : (200, "[]") }
+        let store = EnvironmentResourcesStore(client: client, ownerID: Fixtures.ownerID, environment: Self.sampleEnvironment())
+
+        await store.remove(resourceID: "srv-1", name: "api")
+
+        #expect(store.actionResult?.isFailure == false)
+    }
+
+    @Test("an environment change from its screen replaces the project's copy")
+    func projectTakesEnvironmentChange() async {
+        let (client, _) = methodRouted { _, _ in (200, "[" + Self.environment(id: "evm-1", name: "production") + "]") }
+        let store = ProjectDetailStore(client: client, project: Self.project)
+        await store.load()
+
+        let renamed = EnvironmentSummary(Self.decode(Components.Schemas.Environment.self,
+                                                 from: Self.environmentJSON.replacingOccurrences(of: #""prod""#, with: #""live""#))!)
+        store.replace(renamed)
+
+        #expect(store.environments.map(\.name) == ["live"])
+        #expect(store.destinations(from: renamed).isEmpty)
+    }
+
+    @Test("a reload in flight keeps what it fetched, with an environment changed meanwhile applied over it")
+    func reloadKeepsChangeAndOtherEnvironments() async throws {
+        let gate = LoadGate()
+        let reloading = LockedFlag()
+        let transport = StubTransport { _, _, _ in
+            let body: String
+            if reloading.value {
+                await gate.hold()
+                // Fetched before the rename: `production` has its old name, and `staging` has the
+                // resource that was just moved into it.
+                body = "[" + Self.environment(id: "evm-1", name: "production") + "," + Self.environment(id: "evm-2", name: "staging", groups: 1) + "]"
+            } else {
+                body = "[" + Self.environment(id: "evm-1", name: "production") + "," + Self.environment(id: "evm-2", name: "staging") + "]"
+            }
+            var response = HTTPResponse(status: .ok)
+            response.headerFields = [.contentType: "application/json"]
+            return (response, HTTPBody(body))
+        }
+        let client = RenderClient(apiKeyProvider: StaticAPIKeyProvider("test-key"), retryPolicy: .none, transport: transport)
+        let store = ProjectDetailStore(client: client, project: Self.project)
+        await store.load()
+        reloading.value = true
+
+        let reload = Task { await store.load() }
+        await gate.waitUntilEntered(count: 1)
+        let renamed = EnvironmentSummary(Self.decode(Components.Schemas.Environment.self,
+                                                 from: Self.environmentJSON.replacingOccurrences(of: #""prod""#, with: #""live""#))!)
+        store.replace(renamed)
+        await gate.open()
+        await reload.value
+
+        #expect(store.environments.map(\.name) == ["live", "staging"])
+        #expect(store.environments.last?.envGroupCount == 1)
     }
 }
