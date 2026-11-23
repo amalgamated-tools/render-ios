@@ -225,7 +225,7 @@ struct ProjectStoresTests {
     func projectTakesEnvironmentChange() async {
         let (client, _) = methodRouted { _, _ in (200, "[" + Self.environment(id: "evm-1", name: "production") + "]") }
         let store = ProjectDetailStore(client: client, project: Self.project)
-        await store.load()
+    @Test("an environment change from its screen replaces the project's copy")
 
         let renamed = EnvironmentSummary(Self.decode(Components.Schemas.Environment.self,
                                                  from: Self.environmentJSON.replacingOccurrences(of: #""prod""#, with: #""live""#))!)
