@@ -28,6 +28,11 @@ extension Blueprint {
         self.init(id: payload.id, name: payload.name, status: payload.status, autoSync: payload.autoSync,
                   repo: payload.repo, branch: payload.branch, path: payload.path, lastSync: payload.lastSync)
     }
+
+    init(_ payload: Operations.UpdateBlueprint.Output.Ok.Body.JsonPayload) {
+        self.init(id: payload.id, name: payload.name, status: payload.status, autoSync: payload.autoSync,
+                  repo: payload.repo, branch: payload.branch, path: payload.path, lastSync: payload.lastSync)
+    }
 }
 
 /// A resource a Blueprint manages.
@@ -185,7 +190,7 @@ enum BlueprintDisplay {
 
 // MARK: - Stores
 
-/// The workspace's Blueprints. Read-only.
+/// The workspace's Blueprints.
 @MainActor
 @Observable
 final class BlueprintsStore {
@@ -193,6 +198,8 @@ final class BlueprintsStore {
     private(set) var blueprints: [Blueprint] = []
     private(set) var hasLoaded = false
     private(set) var errorMessage: String?
+    /// Reports a disconnect made on the detail screen.
+    private(set) var actionResult: BlueprintDetailStore.ActionResult?
 
     private let client: RenderClient
     let ownerID: String
@@ -227,9 +234,30 @@ final class BlueprintsStore {
         }
         hasLoaded = true
     }
+
+    /// Takes a change made on the detail screen, so the list doesn't show stale values. A load
+    /// already in flight was started before the change, so it's discarded.
+    func replace(_ blueprint: Blueprint) {
+        guard let index = blueprints.firstIndex(where: { $0.id == blueprint.id }) else { return }
+        generation += 1
+        blueprints[index] = blueprint
+    }
+
+    /// Drops a Blueprint disconnected from the detail screen, which closes straight afterwards, so
+    /// the list reports it. Render may keep listing it briefly, so an in-flight load is discarded.
+    func remove(_ blueprint: Blueprint) {
+        generation += 1
+        blueprints.removeAll { $0.id == blueprint.id }
+        actionResult = BlueprintDetailStore.ActionResult(message: "Disconnected \(blueprint.name). Its resources stay.", isFailure: false)
+    }
+
+    func dismissActionResult() {
+        actionResult = nil
+    }
 }
 
-/// One Blueprint: its details, the resources it manages, and its recent syncs. Read-only.
+/// One Blueprint: its details, the resources it manages, and its recent syncs, plus switching
+/// auto-sync and disconnecting it.
 ///
 /// The syncs load alongside the details but fail on their own, so a history error can't hide the
 /// Blueprint, and a details error can't hide the history.
@@ -247,9 +275,22 @@ final class BlueprintDetailStore {
     private(set) var syncsErrorMessage: String?
     private(set) var hasLoadedSyncs = false
 
+    /// The outcome of the last auto-sync change or disconnect.
+    struct ActionResult: Identifiable, ActionOutcome {
+        let id = UUID()
+        let message: String
+        let isFailure: Bool
+    }
+
+    private(set) var isSaving = false
+    private(set) var actionResult: ActionResult?
+    /// Set once Render confirms the disconnect; the Blueprint no longer exists after that.
+    private(set) var isDisconnected = false
+
     let blueprintID: String
     private let client: RenderClient
     private let syncLimit: Int
+    /// Bumped by every load and write, so a load that started before a write can't overwrite it.
     private var generation = 0
 
     init(client: RenderClient, blueprintID: String, initial: Blueprint? = nil, syncLimit: Int = 20) {
@@ -260,6 +301,8 @@ final class BlueprintDetailStore {
     }
 
     func load() async {
+        // A pull-to-refresh after the disconnect would only fetch a 404.
+        guard !isDisconnected else { return }
         generation += 1
         let current = generation
         async let details: Void = loadDetails(generation: current)
@@ -302,6 +345,63 @@ final class BlueprintDetailStore {
             syncsErrorMessage = Self.message(for: error)
         }
         hasLoadedSyncs = true
+    }
+
+    // MARK: - Writes
+
+    /// Switches whether Render re-syncs on every push to the Blueprint's branch. Returns the
+    /// updated Blueprint, or nil if nothing changed.
+    @discardableResult
+    func setAutoSync(_ isOn: Bool) async -> Blueprint? {
+        guard !isSaving, !isDisconnected, let current = blueprint, current.autoSync != isOn else { return nil }
+        beginWrite()
+        defer { endWrite() }
+        do {
+            let updated = try await client.api.updateBlueprint(
+                path: .init(blueprintId: blueprintID),
+                body: .json(.init(autoSync: isOn))
+            ).ok.body.json
+            let blueprint = Blueprint(updated)
+            self.blueprint = blueprint
+            actionResult = ActionResult(message: isOn ? "Auto-sync on." : "Auto-sync off.", isFailure: false)
+            return blueprint
+        } catch {
+            actionResult = ActionResult(message: Self.message(for: error), isFailure: true)
+            return nil
+        }
+    }
+
+    /// Disconnects the Blueprint: Render stops syncing from its file. The resources it managed
+    /// stay. Returns whether Render confirmed it.
+    @discardableResult
+    func disconnect() async -> Bool {
+        guard !isSaving, !isDisconnected else { return false }
+        beginWrite()
+        defer { endWrite() }
+        do {
+            _ = try await client.api.disconnectBlueprint(path: .init(blueprintId: blueprintID)).noContent
+            isDisconnected = true
+            actionResult = ActionResult(message: "Disconnected \(blueprint?.name ?? "Blueprint"). Its resources stay.", isFailure: false)
+            return true
+        } catch {
+            actionResult = ActionResult(message: Self.message(for: error), isFailure: true)
+            return false
+        }
+    }
+
+    func dismissActionResult() {
+        actionResult = nil
+    }
+
+    private func beginWrite() {
+        isSaving = true
+        actionResult = nil
+        generation += 1
+    }
+
+    private func endWrite() {
+        generation += 1
+        isSaving = false
     }
 
     private static func message(for error: any Error) -> String {

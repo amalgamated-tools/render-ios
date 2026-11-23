@@ -1,7 +1,7 @@
 import RenderAPI
 import SwiftUI
 
-/// The workspace's Blueprints, presented from the account menu. Read-only.
+/// The workspace's Blueprints, presented from the account menu.
 struct BlueprintsView: View {
     @State private var store: BlueprintsStore
     @Environment(\.dismiss) private var dismiss
@@ -33,7 +33,11 @@ struct BlueprintsView: View {
                     }
                     ForEach(store.blueprints) { blueprint in
                         NavigationLink {
-                            BlueprintDetailView(client: client, ownerID: ownerID, blueprint: blueprint)
+                            BlueprintDetailView(
+                                client: client, ownerID: ownerID, blueprint: blueprint,
+                                onUpdate: { store.replace($0) },
+                                onDisconnect: { store.remove($0) }
+                            )
                         } label: {
                             BlueprintRow(blueprint: blueprint)
                         }
@@ -53,7 +57,35 @@ struct BlueprintsView: View {
             }
             .task { await store.load() }
             .refreshable { await store.load() }
+            .safeAreaInset(edge: .bottom) {
+                if let result = store.actionResult {
+                    BlueprintActionBanner(result: result) { store.dismissActionResult() }
+                }
+            }
+            .actionOutcomeFeedback(store.actionResult)
         }
+    }
+}
+
+/// The outcome of the last auto-sync change or disconnect.
+private struct BlueprintActionBanner: View {
+    let result: BlueprintDetailStore.ActionResult
+    let dismiss: () -> Void
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: result.isFailure ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
+            Text(result.message)
+                .font(.subheadline)
+            Spacer()
+            Button("Dismiss", systemImage: "xmark", action: dismiss)
+                .labelStyle(.iconOnly)
+        }
+        .padding(12)
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .foregroundStyle(result.isFailure ? .red : .green)
+        .padding(.horizontal)
+        .transition(.move(edge: .bottom).combined(with: .opacity))
     }
 }
 
@@ -107,18 +139,27 @@ enum BlueprintFormat {
     }
 }
 
-/// One Blueprint: status, source, the resources it manages, and its recent syncs.
+/// One Blueprint: status, source, the resources it manages, and its recent syncs, with an
+/// auto-sync switch and a way to disconnect it.
 struct BlueprintDetailView: View {
     @State private var store: BlueprintDetailStore
+    @State private var isConfirmingDisconnect = false
+    @Environment(\.dismiss) private var dismiss
 
     private let client: RenderClient
     private let ownerID: String
     private let title: String
+    private let onUpdate: (Blueprint) -> Void
+    private let onDisconnect: (Blueprint) -> Void
 
-    init(client: RenderClient, ownerID: String, blueprint: Blueprint) {
+    init(client: RenderClient, ownerID: String, blueprint: Blueprint,
+         onUpdate: @escaping (Blueprint) -> Void = { _ in },
+         onDisconnect: @escaping (Blueprint) -> Void = { _ in }) {
         self.client = client
         self.ownerID = ownerID
         self.title = blueprint.name
+        self.onUpdate = onUpdate
+        self.onDisconnect = onDisconnect
         _store = State(initialValue: BlueprintDetailStore(client: client, blueprintID: blueprint.id, initial: blueprint))
     }
 
@@ -134,11 +175,56 @@ struct BlueprintDetailView: View {
             }
             resourcesSection
             syncsSection
+            if store.blueprint != nil {
+                Section {
+                    Button("Disconnect Blueprint", systemImage: "xmark.circle", role: .destructive) {
+                        isConfirmingDisconnect = true
+                    }
+                    .disabled(store.isSaving || store.isDisconnected)
+                } footer: {
+                    Text("Render stops syncing from the Blueprint file. The resources it manages stay, and you manage them directly.")
+                }
+            }
         }
         .navigationTitle(store.blueprint?.name ?? title)
         .navigationBarTitleDisplayMode(.inline)
         .task { await store.load() }
         .refreshable { await store.load() }
+        .safeAreaInset(edge: .bottom) {
+            if let result = store.actionResult {
+                BlueprintActionBanner(result: result) { store.dismissActionResult() }
+            }
+        }
+        .actionOutcomeFeedback(store.actionResult)
+        .confirmationDialog(
+            "Disconnect \(store.blueprint?.name ?? title)?",
+            isPresented: $isConfirmingDisconnect,
+            titleVisibility: .visible
+        ) {
+            Button("Disconnect Blueprint", role: .destructive) {
+                guard let blueprint = store.blueprint else { return }
+                Task {
+                    if await store.disconnect() {
+                        onDisconnect(blueprint)
+                        dismiss()
+                    }
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text(disconnectMessage)
+        }
+    }
+
+    /// Says what stays, since "disconnect" is easy to read as "delete".
+    private var disconnectMessage: String {
+        let count = store.resources.count
+        let resources = switch count {
+        case 0: "Nothing it created is deleted."
+        case 1: "The resource it manages isn't deleted."
+        default: "The \(count) resources it manages aren't deleted."
+        }
+        return "Render stops syncing from \(store.blueprint?.path ?? "the Blueprint file"). \(resources) This can't be undone from the app; to sync again, create a new Blueprint in the dashboard."
     }
 
     @ViewBuilder
@@ -155,7 +241,15 @@ struct BlueprintDetailView: View {
                     isActive: blueprint.status == "syncing"
                 )
             }
-            LabeledContent("Auto-Sync", value: blueprint.autoSync ? "On" : "Off")
+            Toggle("Auto-Sync", isOn: Binding(
+                get: { blueprint.autoSync },
+                set: { isOn in
+                    Task {
+                        if let updated = await store.setAutoSync(isOn) { onUpdate(updated) }
+                    }
+                }
+            ))
+            .disabled(store.isSaving || store.isDisconnected)
             LabeledContent("Last Sync") {
                 if let lastSync = blueprint.lastSync {
                     Text(lastSync, format: .relative(presentation: .named))
@@ -163,6 +257,8 @@ struct BlueprintDetailView: View {
                     Text("Never")
                 }
             }
+        } footer: {
+            Text("With auto-sync on, Render syncs every push to \(blueprint.branch).")
         }
         Section("Source") {
             if let url = BlueprintFormat.repoURL(blueprint.repo) {

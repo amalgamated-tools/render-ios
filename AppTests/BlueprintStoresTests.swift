@@ -7,7 +7,8 @@ import Testing
 
 @testable import RenderiOS
 
-/// Blueprints: the list, a Blueprint's details and resources, and its sync history.
+/// Blueprints: the list, a Blueprint's details and resources, its sync history, switching auto-sync
+/// and disconnecting.
 @MainActor
 @Suite("Blueprints")
 struct BlueprintStoresTests {
@@ -126,4 +127,125 @@ struct BlueprintStoresTests {
         #expect(BlueprintFormat.repoURL("https://github.com/acme/infra") != nil)
         #expect(BlueprintFormat.repoURL("git@github.com:acme/infra.git") == nil)
     }
+
+    // MARK: - Writes
+
+    /// Answers like `methodRouted`, and also records each request's method, path and body text.
+    private func recording(
+        _ route: @escaping @Sendable (HTTPRequest.Method, String) -> (status: Int, body: String)
+    ) -> (client: RenderClient, sent: SentRequests) {
+        let sent = SentRequests()
+        let transport = StubTransport { request, body, _ in
+            let text = if let body { try await String(collecting: body, upTo: 1 << 20) } else { "" }
+            sent.append((request.method, request.path ?? "", text))
+            let answer = route(request.method, request.path ?? "")
+            var response = HTTPResponse(status: .init(code: answer.status))
+            response.headerFields = [.contentType: "application/json"]
+            return (response, answer.body.isEmpty ? nil : HTTPBody(answer.body))
+        }
+        let client = RenderClient(apiKeyProvider: StaticAPIKeyProvider("test-key"), retryPolicy: .none, transport: transport)
+        return (client, sent)
+    }
+
+    private static let initial = Blueprint(id: "exs-1", name: "infra", status: "in_sync", autoSync: true,
+                                           repo: "https://github.com/acme/infra", branch: "main", path: "render.yaml", lastSync: nil)
+
+    @Test("switching auto-sync off sends only autoSync and shows Render's answer")
+    func autoSyncOff() async throws {
+        let updated = #"{\#(Self.blueprintFields(id: "exs-1", name: "infra", status: "in_sync").replacingOccurrences(of: #""autoSync":true"#, with: #""autoSync":false"#))}"#
+        let (client, sent) = recording { method, _ in method == .patch ? (200, updated) : (500, "") }
+        let store = BlueprintDetailStore(client: client, blueprintID: "exs-1", initial: Self.initial)
+
+        let result = await store.setAutoSync(false)
+
+        #expect(result?.autoSync == false)
+        #expect(store.blueprint?.autoSync == false)
+        #expect(store.actionResult?.isFailure == false)
+        #expect(store.actionResult?.message == "Auto-sync off.")
+        #expect(!store.isSaving)
+        let request = try #require(sent.all.first)
+        #expect(request.method == .patch)
+        #expect(request.path == "/blueprints/exs-1")
+        let json = try #require(JSONSerialization.jsonObject(with: Data(request.body.utf8)) as? [String: Any])
+        #expect(json.keys.sorted() == ["autoSync"])
+        #expect(json["autoSync"] as? Bool == false)
+    }
+
+    @Test("asking for the auto-sync value it already has sends nothing")
+    func autoSyncUnchangedSendsNothing() async {
+        let (client, sent) = recording { _, _ in (500, "") }
+        let store = BlueprintDetailStore(client: client, blueprintID: "exs-1", initial: Self.initial)
+
+        #expect(await store.setAutoSync(true) == nil)
+        #expect(sent.all.isEmpty)
+        #expect(store.actionResult == nil)
+    }
+
+    @Test("a failed auto-sync change keeps the old value and reports the error")
+    func autoSyncFailure() async {
+        let (client, _) = recording { _, _ in (400, #"{"message":"workspace is locked"}"#) }
+        let store = BlueprintDetailStore(client: client, blueprintID: "exs-1", initial: Self.initial)
+
+        #expect(await store.setAutoSync(false) == nil)
+        #expect(store.blueprint?.autoSync == true)
+        #expect(store.actionResult?.isFailure == true)
+        #expect(!store.isSaving)
+    }
+
+    @Test("disconnecting sends DELETE, then refreshes and further writes do nothing")
+    func disconnect() async throws {
+        let (client, sent) = recording { method, _ in method == .delete ? (204, "") : (404, #"{"message":"not found"}"#) }
+        let store = BlueprintDetailStore(client: client, blueprintID: "exs-1", initial: Self.initial)
+
+        #expect(await store.disconnect())
+
+        #expect(store.isDisconnected)
+        #expect(store.actionResult?.isFailure == false)
+        let request = try #require(sent.all.first)
+        #expect(request.method == .delete)
+        #expect(request.path == "/blueprints/exs-1")
+
+        await store.load()
+        #expect(await store.setAutoSync(false) == nil)
+        #expect(await store.disconnect() == false)
+        #expect(sent.all.count == 1)
+        #expect(store.errorMessage == nil)
+    }
+
+    @Test("a failed disconnect leaves the Blueprint connected and reports the error")
+    func disconnectFailure() async {
+        let (client, _) = recording { _, _ in (403, #"{"message":"forbidden"}"#) }
+        let store = BlueprintDetailStore(client: client, blueprintID: "exs-1", initial: Self.initial)
+
+        #expect(await store.disconnect() == false)
+        #expect(!store.isDisconnected)
+        #expect(store.actionResult?.isFailure == true)
+        #expect(!store.isSaving)
+    }
+
+    @Test("the list takes changes from the detail screen, and reports a disconnect")
+    func listTakesChanges() async {
+        let body = "[" + [Self.listEntry(id: "exs-1", name: "alpha"), Self.listEntry(id: "exs-2", name: "beta")].joined(separator: ",") + "]"
+        let (client, _) = methodRouted { _, _ in (200, body) }
+        let store = BlueprintsStore(client: client, ownerID: "tea-1")
+        await store.load()
+        let alpha = store.blueprints[0]
+
+        store.replace(Blueprint(id: alpha.id, name: alpha.name, status: alpha.status, autoSync: false,
+                                repo: alpha.repo, branch: alpha.branch, path: alpha.path, lastSync: alpha.lastSync))
+        #expect(store.blueprints.first?.autoSync == false)
+
+        store.remove(alpha)
+        #expect(store.blueprints.map(\.id) == ["exs-2"])
+        #expect(store.actionResult?.message.contains("alpha") == true)
+        #expect(store.actionResult?.isFailure == false)
+    }
+}
+
+/// Requests a stub transport saw, with their bodies as text.
+private final class SentRequests: @unchecked Sendable {
+    private let lock = NSLock()
+    private var requests: [(method: HTTPRequest.Method, path: String, body: String)] = []
+    var all: [(method: HTTPRequest.Method, path: String, body: String)] { lock.withLock { requests } }
+    func append(_ request: (HTTPRequest.Method, String, String)) { lock.withLock { requests.append(request) } }
 }
