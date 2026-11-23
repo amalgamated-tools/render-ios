@@ -1,4 +1,6 @@
 import Foundation
+import HTTPTypes
+import OpenAPIRuntime
 import RenderAPI
 import RenderAPITestSupport
 import Testing
@@ -221,7 +223,7 @@ struct ProjectStoresTests {
         #expect(store.actionResult?.isFailure == false)
     }
 
-    @Test("an environment change from its screen replaces the project's copy and drops a load in flight")
+    @Test("an environment change from its screen replaces the project's copy")
     func projectTakesEnvironmentChange() async {
         let (client, _) = methodRouted { _, _ in (200, "[" + Self.environment(id: "evm-1", name: "production") + "]") }
         let store = ProjectDetailStore(client: client, project: Self.project)
@@ -233,5 +235,40 @@ struct ProjectStoresTests {
 
         #expect(store.environments.map(\.name) == ["live"])
         #expect(store.destinations(from: renamed).isEmpty)
+    }
+
+    @Test("a reload in flight keeps what it fetched, with an environment changed meanwhile applied over it")
+    func reloadKeepsChangeAndOtherEnvironments() async throws {
+        let gate = LoadGate()
+        let reloading = LockedFlag()
+        let transport = StubTransport { _, _, _ in
+            let body: String
+            if reloading.value {
+                await gate.hold()
+                // Fetched before the rename: `production` has its old name, and `staging` has the
+                // resource that was just moved into it.
+                body = "[" + Self.environment(id: "evm-1", name: "production") + "," + Self.environment(id: "evm-2", name: "staging", groups: 1) + "]"
+            } else {
+                body = "[" + Self.environment(id: "evm-1", name: "production") + "," + Self.environment(id: "evm-2", name: "staging") + "]"
+            }
+            var response = HTTPResponse(status: .ok)
+            response.headerFields = [.contentType: "application/json"]
+            return (response, HTTPBody(body))
+        }
+        let client = RenderClient(apiKeyProvider: StaticAPIKeyProvider("test-key"), retryPolicy: .none, transport: transport)
+        let store = ProjectDetailStore(client: client, project: Self.project)
+        await store.load()
+        reloading.value = true
+
+        let reload = Task { await store.load() }
+        await gate.waitUntilEntered(count: 1)
+        let renamed = EnvironmentSummary(Self.decode(Components.Schemas.Environment.self,
+                                                 from: Self.environmentJSON.replacingOccurrences(of: #""prod""#, with: #""live""#))!)
+        store.replace(renamed)
+        await gate.open()
+        await reload.value
+
+        #expect(store.environments.map(\.name) == ["live", "staging"])
+        #expect(store.environments.last?.envGroupCount == 1)
     }
 }

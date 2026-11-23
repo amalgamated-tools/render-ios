@@ -218,7 +218,7 @@ struct BlueprintStoresTests {
     }
 
     /// Holds the first load's GETs open until `gate` opens, and answers the PATCH with `patch`.
-    private func heldLoad(patch: (status: Int, body: String), gate: Gate) -> RenderClient {
+    private func heldLoad(patch: (status: Int, body: String), gate: LoadGate) -> RenderClient {
         let resources = #"[{"id":"srv-1","name":"web","type":"web_service"}]"#
         let syncs = "[" + Self.sync(id: "s1", state: "success") + "]"
         let transport = StubTransport { request, _, _ in
@@ -241,7 +241,7 @@ struct BlueprintStoresTests {
     @Test("a toggle during the first load keeps its result, and the load still finishes")
     func toggleDuringLoad() async {
         let updated = #"{\#(Self.blueprintFields(id: "exs-1", name: "infra", status: "in_sync").replacingOccurrences(of: #""autoSync":true"#, with: #""autoSync":false"#))}"#
-        let gate = Gate()
+        let gate = LoadGate()
         let store = BlueprintDetailStore(client: heldLoad(patch: (200, updated), gate: gate), blueprintID: "exs-1", initial: Self.initial)
 
         let load = Task { await store.load() }
@@ -259,7 +259,7 @@ struct BlueprintStoresTests {
 
     @Test("a failed toggle during the first load still lets the load finish")
     func failedToggleDuringLoad() async {
-        let gate = Gate()
+        let gate = LoadGate()
         let store = BlueprintDetailStore(client: heldLoad(patch: (400, #"{"message":"no"}"#), gate: gate), blueprintID: "exs-1", initial: Self.initial)
 
         let load = Task { await store.load() }
@@ -291,35 +291,5 @@ struct BlueprintStoresTests {
         #expect(store.blueprints.map(\.id) == ["exs-2"])
         #expect(store.actionResult?.message.contains("alpha") == true)
         #expect(store.actionResult?.isFailure == false)
-    }
-}
-
-/// Holds requests until it opens, so a test can act while they're in flight.
-private actor Gate {
-    private var entered = 0
-    private var isOpen = false
-    private var held: [CheckedContinuation<Void, Never>] = []
-    private var enteredWaiters: [(count: Int, continuation: CheckedContinuation<Void, Never>)] = []
-
-    func hold() async {
-        entered += 1
-        enteredWaiters.removeAll { waiter in
-            guard entered >= waiter.count else { return false }
-            waiter.continuation.resume()
-            return true
-        }
-        guard !isOpen else { return }
-        await withCheckedContinuation { held.append($0) }
-    }
-
-    func waitUntilEntered(count: Int) async {
-        guard entered < count else { return }
-        await withCheckedContinuation { enteredWaiters.append((count, $0)) }
-    }
-
-    func open() {
-        isOpen = true
-        held.forEach { $0.resume() }
-        held = []
     }
 }

@@ -55,6 +55,9 @@ final class ProjectDetailStore {
     private let onProjectChange: (ProjectSummary) -> Void
     /// Bumped by every load, so an older load that finishes late can't overwrite a newer one.
     private var generation = 0
+    /// Environments changed on their own screen since the current load started. Render's answer to
+    /// that change is newer than anything the load fetched, so it's applied over the load's result.
+    private var changedSinceLoad: [String: EnvironmentSummary] = [:]
 
     /// - Parameter onProjectChange: Receives a renamed project, so the shared `ProjectsStore` (the
     ///   scope picker and the Projects list) shows the new name.
@@ -88,11 +91,11 @@ final class ProjectDetailStore {
         }
     }
 
-    /// Takes a change made on an environment's screen. A load already in flight started before
-    /// the change, so it's discarded.
+    /// Takes a change made on an environment's screen. A load in flight keeps everything else it
+    /// fetched, and this environment is applied over it when it finishes.
     func replace(_ environment: EnvironmentSummary) {
         guard let index = environments.firstIndex(where: { $0.id == environment.id }) else { return }
-        generation += 1
+        changedSinceLoad[environment.id] = environment
         environments[index] = environment
         environments.sort { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
@@ -104,6 +107,8 @@ final class ProjectDetailStore {
     func load() async {
         generation += 1
         let current = generation
+        // A load starting now fetches after any earlier change, so it has nothing to apply over it.
+        changedSinceLoad = [:]
         let client = client
         let projectID = project.id
         do {
@@ -116,7 +121,10 @@ final class ProjectDetailStore {
             }
             let listed = try await paginator.collect(limit: 500)
             guard current == generation else { return }
-            environments = listed.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+            environments = listed
+                .map { changedSinceLoad[$0.id] ?? $0 }
+                .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+            changedSinceLoad = [:]
             errorMessage = nil
         } catch {
             guard current == generation else { return }
