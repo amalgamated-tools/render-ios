@@ -26,6 +26,7 @@ struct WorkspaceScreen: View {
     @State private var isShowingNotificationSettings = false
     @State private var isShowingWebhooks = false
     @State private var isShowingBlueprints = false
+    @State private var isShowingProjects = false
     @State private var isShowingWorkspace = false
     @Environment(NotificationRouter.self) private var router
 
@@ -100,6 +101,9 @@ struct WorkspaceScreen: View {
         .sheet(isPresented: $isShowingBlueprints) {
             BlueprintsView(client: client, ownerID: ownerID)
         }
+        .sheet(isPresented: $isShowingProjects) {
+            ProjectsView(store: projectsStore, client: client, ownerID: ownerID)
+        }
         .sheet(isPresented: $isShowingWorkspace) {
             WorkspaceDetailView(client: client, ownerID: ownerID, accountStore: accountStore)
         }
@@ -172,6 +176,9 @@ struct WorkspaceScreen: View {
             }
             Button("Blueprints", systemImage: "doc.text.below.ecg") {
                 isShowingBlueprints = true
+            }
+            Button("Projects", systemImage: "folder") {
+                isShowingProjects = true
             }
             // Clearing the watchlist is `AuthStore`'s job, via `onSessionEnded` — doing it here
             // would only cover the sessions that end because someone tapped this.
