@@ -35,8 +35,9 @@ struct ServicesScreen: View {
                 ownerID: ownerID,
                 environmentIDs: projectsStore.selectedEnvironmentIDs
             )
-            // Re-create the list (and its store) when the project scope changes.
-            .id(projectsStore.selectedProjectID ?? "")
+            // Re-create the list (and its store) when the project scope changes, including when
+            // the selected project gains or loses an environment.
+            .id(projectsStore.selectedScopeKey)
         }
     }
 }

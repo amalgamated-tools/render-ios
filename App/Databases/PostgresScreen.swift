@@ -37,7 +37,7 @@ struct PostgresScreen: View {
                 environmentIDs: projectsStore.selectedEnvironmentIDs
             )
             // Re-create the list (and its store) when the project scope changes.
-            .id(projectsStore.selectedProjectID ?? "")
+            .id(projectsStore.selectedScopeKey)
         }
     }
 }

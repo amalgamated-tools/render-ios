@@ -10,7 +10,8 @@ import XCTest
 /// `UI_PROJECT`, checks it arrived, then moves it back. `testRenameAndSettingsAndBack` renames
 /// `UI_PROJECT` and `UI_ENVIRONMENT` and turns each switch on, then puts all of it back.
 /// `testRemoveResource` removes `UI_REMOVE_RESOURCE` from `UI_ENVIRONMENT` and can't put it back
-/// (it leaves the project), so restore it afterwards.
+/// (it leaves the project), so restore it afterwards. `testCreateAndDeleteThrowaway` creates a
+/// project with a random name, adds an environment to it, then deletes both; it touches nothing else.
 @MainActor
 final class ProjectScreensTests: XCTestCase {
     override func setUp() async throws {
@@ -113,6 +114,70 @@ final class ProjectScreensTests: XCTestCase {
         try expectBanner("Removed \(resource) from \(environment).", driver)
         XCTAssertTrue(row.waitForNonExistence(timeout: AppDriver.timeout), "\(resource) still shows")
         driver.screenshot("removed")
+    }
+
+    func testCreateAndDeleteThrowaway() throws {
+        try XCTSkipUnless(AppDriver.value("UI_ALLOW_WRITES") == "1", "Creates and deletes a project; set UI_ALLOW_WRITES=1")
+        let project = "ui-throwaway-\(Int.random(in: 10_000...99_999))"
+        let environment = "extra"
+        let driver = try openProjects()
+
+        // Create the project, with its first environment.
+        try tapButton("New Project", driver)
+        try type(project, into: "newProjectName", driver)
+        driver.app.navigationBars["New Project"].buttons["Create"].tap()
+        try expectBanner("Created \(project).", driver)
+        try open(rowsWith: "projectRow", named: project, driver)
+        XCTAssertTrue(driver.app.navigationBars[project].waitForExistence(timeout: AppDriver.timeout))
+
+        // Add a second environment, then delete it.
+        try tapButton("New Environment", driver)
+        try type(environment, into: "newEnvironmentName", driver)
+        driver.app.navigationBars["New Environment"].buttons["Create"].tap()
+        try expectBanner("Created \(environment).", driver)
+        driver.screenshot("environment-created")
+        try open(rowsWith: "environmentRow", named: environment, driver)
+        try confirmDelete("Delete Environment", name: environment, driver)
+        try expectBanner("Deleted \(environment).", driver)
+        let deletedRow = driver.app.buttons.matching(identifier: "environmentRow")
+            .matching(NSPredicate(format: "label CONTAINS %@", environment)).firstMatch
+        XCTAssertTrue(deletedRow.waitForNonExistence(timeout: AppDriver.timeout), "\(environment) still listed")
+
+        // Delete the project, now holding only its empty first environment.
+        try confirmDelete("Delete Project", name: project, driver)
+        try expectBanner("Deleted \(project).", driver)
+        let projectRow = driver.app.buttons.matching(identifier: "projectRow")
+            .matching(NSPredicate(format: "label CONTAINS %@", project)).firstMatch
+        XCTAssertTrue(projectRow.waitForNonExistence(timeout: AppDriver.timeout), "\(project) still listed")
+        driver.screenshot("project-deleted")
+    }
+
+    private func tapButton(_ label: String, _ driver: AppDriver) throws {
+        let button = driver.app.buttons[label].firstMatch
+        XCTAssertTrue(button.waitForExistence(timeout: AppDriver.timeout), "No \(label) button")
+        XCTAssertTrue(button.isEnabled, "\(label) is disabled")
+        button.tap()
+    }
+
+    private func type(_ text: String, into identifier: String, _ driver: AppDriver) throws {
+        let field = driver.app.textFields[identifier].firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: AppDriver.timeout), "No \(identifier) field")
+        field.tap()
+        field.typeText(text)
+    }
+
+    /// Taps the screen's delete button, types `name` into the confirmation, and confirms.
+    private func confirmDelete(_ label: String, name: String, _ driver: AppDriver) throws {
+        let button = driver.app.buttons[label].firstMatch
+        if !button.waitForExistence(timeout: 2) { driver.app.swipeUp() }
+        try tapButton(label, driver)
+        let confirm = driver.app.buttons["deleteConfirmButton"]
+        XCTAssertTrue(confirm.waitForExistence(timeout: AppDriver.timeout), "No confirmation sheet")
+        XCTAssertFalse(confirm.isEnabled, "Delete is enabled before the name is typed")
+        try type(name, into: "deleteConfirmName", driver)
+        XCTAssertTrue(confirm.isEnabled, "Delete is still disabled after typing \(name)")
+        driver.screenshot("confirm-\(label)")
+        confirm.tap()
     }
 
     private func openProjects() throws -> AppDriver {
