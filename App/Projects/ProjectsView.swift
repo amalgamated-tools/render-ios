@@ -6,6 +6,7 @@ import SwiftUI
 struct ProjectsView: View {
     @Bindable var store: ProjectsStore
     @Environment(\.dismiss) private var dismiss
+    @State private var isCreating = false
 
     let client: RenderClient
     let ownerID: String
@@ -28,9 +29,11 @@ struct ProjectsView: View {
                     }
                     ForEach(store.projects) { project in
                         NavigationLink {
-                            ProjectDetailView(client: client, ownerID: ownerID, project: project) {
-                                store.replace($0)
-                            }
+                            ProjectDetailView(
+                                client: client, ownerID: ownerID, project: project,
+                                onProjectChange: { store.replace($0) },
+                                onProjectDelete: { store.remove($0) }
+                            )
                         } label: {
                             LabeledContent {
                                 Text(environmentCount(project))
@@ -50,9 +53,22 @@ struct ProjectsView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Done") { dismiss() }
                 }
+                ToolbarItem(placement: .primaryAction) {
+                    Button("New Project", systemImage: "plus") { isCreating = true }
+                        .disabled(!store.hasLoaded || store.isCreating)
+                }
+            }
+            .sheet(isPresented: $isCreating) {
+                NewProjectSheet(store: store)
             }
             .task { if !store.hasLoaded { await store.load() } }
             .refreshable { await store.load() }
+            .safeAreaInset(edge: .bottom) {
+                if let result = store.actionResult, !isCreating {
+                    ProjectActionBanner(result: result) { store.dismissActionResult() }
+                }
+            }
+            .actionOutcomeFeedback(store.actionResult)
         }
     }
 
@@ -66,14 +82,21 @@ struct ProjectDetailView: View {
     @State private var store: ProjectDetailStore
     @State private var isRenaming = false
     @State private var draftName = ""
+    @State private var isCreatingEnvironment = false
+    @State private var isConfirmingDelete = false
+    @Environment(\.dismiss) private var dismiss
     private let client: RenderClient
     private let ownerID: String
 
     init(client: RenderClient, ownerID: String, project: ProjectSummary,
-         onProjectChange: @escaping (ProjectSummary) -> Void = { _ in }) {
+         onProjectChange: @escaping (ProjectSummary) -> Void = { _ in },
+         onProjectDelete: @escaping (ProjectSummary) -> Void = { _ in }) {
         self.client = client
         self.ownerID = ownerID
-        _store = State(initialValue: ProjectDetailStore(client: client, project: project, onProjectChange: onProjectChange))
+        _store = State(initialValue: ProjectDetailStore(
+            client: client, project: project,
+            onProjectChange: onProjectChange, onProjectDelete: onProjectDelete
+        ))
     }
 
     var body: some View {
@@ -94,13 +117,22 @@ struct ProjectDetailView: View {
                                 client: client, ownerID: ownerID, environment: environment,
                                 destinations: store.destinations(from: environment),
                                 onEnvironmentChange: { store.replace($0) },
-                                onResourcesChange: { Task { await store.load() } }
+                                onResourcesChange: { Task { await store.load() } },
+                                onEnvironmentDelete: { store.environmentDeleted($0) }
                             )
                         } label: {
                             EnvironmentRow(environment: environment)
                         }
                         .accessibilityIdentifier("environmentRow")
                     }
+                }
+                Section {
+                    Button("Delete Project", systemImage: "trash", role: .destructive) {
+                        isConfirmingDelete = true
+                    }
+                    .disabled(!store.canDeleteProject || store.isSaving)
+                } footer: {
+                    Text("Render deletes a project only when all of its environments are empty.")
                 }
             } else {
                 ProgressView().frame(maxWidth: .infinity)
@@ -116,14 +148,31 @@ struct ProjectDetailView: View {
                 }
                 .disabled(store.isSaving)
             }
+            ToolbarItem(placement: .primaryAction) {
+                Button("New Environment", systemImage: "plus") { isCreatingEnvironment = true }
+                    .disabled(!store.hasLoaded || store.isSaving)
+            }
         }
         .renameAlert("Rename Project", isPresented: $isRenaming, name: $draftName) {
             Task { await store.rename(to: draftName) }
         }
+        .sheet(isPresented: $isCreatingEnvironment) {
+            NewEnvironmentSheet(store: store)
+        }
+        .sheet(isPresented: $isConfirmingDelete) {
+            DeleteByNameSheet(
+                title: "Delete Project",
+                name: store.project.name,
+                explanation: "This can't be undone. The app checks again that every environment is empty before asking Render to delete it."
+            ) { await store.deleteProject() }
+        }
+        .onChange(of: store.isDeleted) { _, isDeleted in
+            if isDeleted { dismiss() }
+        }
         .task { await store.load() }
         .refreshable { await store.load() }
         .safeAreaInset(edge: .bottom) {
-            if let result = store.actionResult {
+            if let result = store.actionResult, !isCreatingEnvironment {
                 ProjectActionBanner(result: result) { store.dismissActionResult() }
             }
         }
@@ -173,6 +222,8 @@ struct EnvironmentDetailView: View {
     @State private var draftName = ""
     @State private var isConfirmingUnprotect = false
     @State private var pendingRemoval: ResourceRef?
+    @State private var isConfirmingDelete = false
+    @Environment(\.dismiss) private var dismiss
     private let client: RenderClient
     /// The project's other environments, which a resource here can move to.
     private let destinations: [EnvironmentSummary]
@@ -183,13 +234,15 @@ struct EnvironmentDetailView: View {
         environment: EnvironmentSummary,
         destinations: [EnvironmentSummary] = [],
         onEnvironmentChange: @escaping (EnvironmentSummary) -> Void = { _ in },
-        onResourcesChange: @escaping () -> Void = {}
+        onResourcesChange: @escaping () -> Void = {},
+        onEnvironmentDelete: @escaping (EnvironmentSummary) -> Void = { _ in }
     ) {
         self.client = client
         self.destinations = destinations
         _store = State(initialValue: EnvironmentResourcesStore(
             client: client, ownerID: ownerID, environment: environment,
-            onEnvironmentChange: onEnvironmentChange, onResourcesChange: onResourcesChange
+            onEnvironmentChange: onEnvironmentChange, onResourcesChange: onResourcesChange,
+            onEnvironmentDelete: onEnvironmentDelete
         ))
     }
 
@@ -228,6 +281,16 @@ struct EnvironmentDetailView: View {
                                            description: Text("This environment has no services, databases or env groups."))
                 }
                 resourceSections
+                Section {
+                    Button("Delete Environment", systemImage: "trash", role: .destructive) {
+                        isConfirmingDelete = true
+                    }
+                    .disabled(!store.canDelete || store.isSaving)
+                } footer: {
+                    Text(store.isEmpty
+                         ? "Render deletes an environment only when it's empty."
+                         : "Move or remove everything in this environment before deleting it.")
+                }
             } else {
                 ProgressView().frame(maxWidth: .infinity)
             }
@@ -268,6 +331,16 @@ struct EnvironmentDetailView: View {
             }
         } message: { _ in
             Text("It stays in the workspace, outside any project. Nothing is deleted.")
+        }
+        .sheet(isPresented: $isConfirmingDelete) {
+            DeleteByNameSheet(
+                title: "Delete Environment",
+                name: store.environment.name,
+                explanation: "This can't be undone. Render refuses if anything has been added to it since."
+            ) { await store.delete() }
+        }
+        .onChange(of: store.isDeleted) { _, isDeleted in
+            if isDeleted { dismiss() }
         }
         .task { await store.load() }
         .refreshable { await store.load() }
@@ -357,6 +430,192 @@ struct EnvironmentDetailView: View {
                     .disabled(store.isSaving)
                 }
             }
+        }
+    }
+}
+
+/// Names a new project and its first environment.
+private struct NewProjectSheet: View {
+    let store: ProjectsStore
+
+    @State private var name = ""
+    @State private var environmentName = "production"
+    @Environment(\.dismiss) private var dismiss
+
+    private var trimmedName: String { name.trimmingCharacters(in: .whitespacesAndNewlines) }
+
+    private var nameProblem: String? {
+        store.projects.contains { $0.name.caseInsensitiveCompare(trimmedName) == .orderedSame }
+            ? "\(trimmedName) already exists." : nil
+    }
+
+    private var canSave: Bool {
+        !trimmedName.isEmpty && nameProblem == nil
+            && !environmentName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && !store.isCreating
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Name") {
+                    TextField("my-project", text: $name)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
+                        .accessibilityIdentifier("newProjectName")
+                }
+                Section {
+                    TextField("production", text: $environmentName)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
+                        .accessibilityIdentifier("newProjectEnvironmentName")
+                } header: {
+                    Text("First Environment")
+                } footer: {
+                    Text("Add more environments from the project's screen.")
+                }
+                CreateProblem(message: nameProblem ?? store.actionResult.flatMap { $0.isFailure ? $0.message : nil })
+            }
+            .navigationTitle("New Project")
+            // An older failure (a rename, say) isn't about this sheet.
+            .onAppear { store.dismissActionResult() }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    if store.isCreating {
+                        ProgressView()
+                    } else {
+                        Button("Create") {
+                            Task {
+                                // Dismiss only on success, so a rejected name isn't lost with the sheet.
+                                if await store.create(name: name, environmentName: environmentName) != nil { dismiss() }
+                            }
+                        }
+                        .disabled(!canSave)
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Names a new environment in a project.
+private struct NewEnvironmentSheet: View {
+    let store: ProjectDetailStore
+
+    @State private var name = ""
+    @State private var isProtected = false
+    @Environment(\.dismiss) private var dismiss
+
+    private var trimmedName: String { name.trimmingCharacters(in: .whitespacesAndNewlines) }
+
+    private var nameProblem: String? {
+        store.environments.contains { $0.name.caseInsensitiveCompare(trimmedName) == .orderedSame }
+            ? "\(store.project.name) already has \(trimmedName)." : nil
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Name") {
+                    TextField("staging", text: $name)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
+                        .accessibilityIdentifier("newEnvironmentName")
+                }
+                Section {
+                    Toggle("Protected", isOn: $isProtected)
+                } footer: {
+                    Text("Protected environments limit who can change or delete their resources.")
+                }
+                CreateProblem(message: nameProblem ?? store.actionResult.flatMap { $0.isFailure ? $0.message : nil })
+            }
+            .navigationTitle("New Environment")
+            // An older failure (a rename, say) isn't about this sheet.
+            .onAppear { store.dismissActionResult() }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    if store.isSaving {
+                        ProgressView()
+                    } else {
+                        Button("Create") {
+                            Task {
+                                if await store.createEnvironment(name: name, isProtected: isProtected) != nil { dismiss() }
+                            }
+                        }
+                        .disabled(trimmedName.isEmpty || nameProblem != nil)
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Why a create sheet can't go ahead, or why Render refused it.
+private struct CreateProblem: View {
+    let message: String?
+
+    var body: some View {
+        if let message {
+            Label(message, systemImage: "exclamationmark.triangle")
+                .font(.footnote)
+                .foregroundStyle(.orange)
+        }
+    }
+}
+
+/// Confirms a delete by having the user type the exact name, so it can't happen from a stray tap.
+/// Closes either way once Render has answered; a failure shows on the screen underneath.
+private struct DeleteByNameSheet: View {
+    let title: String
+    let name: String
+    let explanation: String
+    let delete: () async -> Bool
+
+    @State private var typed = ""
+    @State private var isWorking = false
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField(name, text: $typed)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
+                        .accessibilityIdentifier("deleteConfirmName")
+                } header: {
+                    Text("Type \(name) to confirm")
+                } footer: {
+                    Text(explanation)
+                }
+                Section {
+                    Button(title, role: .destructive) {
+                        isWorking = true
+                        Task {
+                            _ = await delete()
+                            dismiss()
+                        }
+                    }
+                    .disabled(typed != name || isWorking)
+                    .accessibilityIdentifier("deleteConfirmButton")
+                }
+            }
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }.disabled(isWorking)
+                }
+            }
+            .interactiveDismissDisabled(isWorking)
         }
     }
 }

@@ -159,3 +159,20 @@ extension Operations.RemoveResourcesFromEnvironment.Output: NoContentWrite {
         return nil
     }
 }
+
+// Projects and environments: deletes are documented as `204`, and Render answered `204` for both
+// live. Any 2xx is still accepted, as for the other writes here.
+
+extension Operations.DeleteProject.Output: NoContentWrite {
+    public var undocumentedStatusCode: Int? {
+        if case .undocumented(let statusCode, _) = self { return statusCode }
+        return nil
+    }
+}
+
+extension Operations.DeleteEnvironment.Output: NoContentWrite {
+    public var undocumentedStatusCode: Int? {
+        if case .undocumented(let statusCode, _) = self { return statusCode }
+        return nil
+    }
+}

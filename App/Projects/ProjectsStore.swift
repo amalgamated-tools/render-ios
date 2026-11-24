@@ -15,6 +15,12 @@ struct ProjectSummary: Identifiable, Hashable, Sendable {
         self.name = project.name
         self.environmentIDs = project.environmentIds
     }
+
+    init(id: String, name: String, environmentIDs: [String]) {
+        self.id = id
+        self.name = name
+        self.environmentIDs = environmentIDs
+    }
 }
 
 /// Loads the projects of one owner and remembers which one the service list is scoped to.
@@ -30,6 +36,9 @@ final class ProjectsStore {
     /// environments before then, so the service list has to wait rather than briefly load the
     /// whole workspace under a project's name.
     private(set) var hasLoaded = false
+    private(set) var isCreating = false
+    /// The outcome of the last create or delete, for the Projects list's banner.
+    private(set) var actionResult: ProjectActionResult?
 
     /// `nil` means "all projects" — the unscoped workspace-wide list. Persisted per owner (and
     /// non-secret) so the app reopens on the same scope.
@@ -92,6 +101,45 @@ final class ProjectsStore {
         guard let index = projects.firstIndex(where: { $0.id == project.id }) else { return }
         projects[index] = project
         projects.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
+    /// Creates a project with one environment. Render requires a project to start with its
+    /// environments listed, and a project with none has nowhere to put anything.
+    /// - Returns: The new project, or `nil` when Render refused it (the reason is in `actionResult`).
+    func create(name: String, environmentName: String) async -> ProjectSummary? {
+        let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let environmentName = environmentName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !isCreating, !name.isEmpty, !environmentName.isEmpty else { return nil }
+        isCreating = true
+        actionResult = nil
+        defer { isCreating = false }
+        do {
+            let created = try await client.api.createProject(body: .json(.init(
+                name: name,
+                ownerId: ownerID,
+                environments: [.init(name: environmentName)]
+            ))).created.body.json
+            let project = ProjectSummary(created)
+            projects.append(project)
+            projects.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+            actionResult = ProjectActionResult(message: "Created \(project.name).", isFailure: false)
+            return project
+        } catch {
+            actionResult = .failure(error)
+            return nil
+        }
+    }
+
+    /// Takes a project deleted on its own screen out of the list, and out of the scope picker.
+    func remove(_ project: ProjectSummary) {
+        projects.removeAll { $0.id == project.id }
+        // Otherwise the service list stays scoped to environments that no longer exist.
+        if selectedProjectID == project.id { selectedProjectID = nil }
+        actionResult = ProjectActionResult(message: "Deleted \(project.name).", isFailure: false)
+    }
+
+    func dismissActionResult() {
+        actionResult = nil
     }
 
     private static func defaultsKey(_ ownerID: String) -> String {
