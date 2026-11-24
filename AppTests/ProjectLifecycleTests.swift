@@ -184,6 +184,159 @@ struct ProjectLifecycleTests {
         #expect(store.selectedEnvironmentIDs == ["evm-1", "evm-3"])
     }
 
+    @Test("a project renamed during a reload keeps its new name, even one created during it")
+    func createThenRenameDuringReload() async {
+        let page = Fixtures.projectsPage([("prj-1", "shop", ["evm-1"])])
+        let gate = LoadGate(), reloading = LockedFlag()
+        let store = heldReloadStore(firstPage: page, reloadPage: page, gate: gate, reloading: reloading)
+        await store.load()
+        reloading.value = true
+
+        let reload = Task { await store.load() }
+        await gate.waitUntilEntered(count: 1)
+        _ = await store.create(name: "blog", environmentName: "production")
+        store.replace(ProjectSummary(id: "prj-9", name: "notes", environmentIDs: ["evm-9"]))
+        await gate.open()
+        await reload.value
+
+        #expect(store.projects.map(\.name) == ["notes", "shop"])
+    }
+
+    @Test("a project a reload already listed isn't added twice when its create answers")
+    func createAnsweredAfterReloadListsIt() async {
+        let gate = LoadGate(), created = LockedFlag()
+        let transport = StubTransport { request, _, _ in
+            var response = HTTPResponse(status: .ok)
+            response.headerFields = [.contentType: "application/json"]
+            if request.method == .post {
+                await gate.hold()
+                response.status = .created
+                return (response, HTTPBody(Self.projectJSON(id: "prj-9", name: "blog", environmentIDs: ["evm-9"])))
+            }
+            let rows: [(String, String, [String])] = created.value
+                ? [("prj-1", "shop", ["evm-1"]), ("prj-9", "blog", ["evm-9"])]
+                : [("prj-1", "shop", ["evm-1"])]
+            return (response, HTTPBody(Fixtures.projectsPage(rows)))
+        }
+        let client = RenderClient(apiKeyProvider: StaticAPIKeyProvider("test-key"), retryPolicy: .none, transport: transport)
+        let store = ProjectsStore(client: client, ownerID: Fixtures.ownerID, defaults: UserDefaults(suiteName: UUID().uuidString)!)
+        await store.load()
+
+        let create = Task { await store.create(name: "blog", environmentName: "production") }
+        await gate.waitUntilEntered(count: 1)
+        // Render has made the project; its answer just hasn't arrived yet.
+        created.value = true
+        await store.load()
+        await gate.open()
+        _ = await create.value
+
+        #expect(store.projects.map(\.id) == ["prj-9", "prj-1"])
+    }
+
+    @Test("a failed refresh keeps the projects shown, including one just created")
+    func failedRefreshKeepsProjects() async {
+        let failing = LockedFlag()
+        let (client, _) = recordingClient { method, _ in
+            if method == .post { return (201, Self.projectJSON(id: "prj-9", name: "blog", environmentIDs: ["evm-9"])) }
+            return failing.value ? (500, #"{"message":"boom"}"#) : (200, Fixtures.projectsPage([("prj-1", "shop", ["evm-1"])]))
+        }
+        let store = ProjectsStore(client: client, ownerID: Fixtures.ownerID, defaults: UserDefaults(suiteName: UUID().uuidString)!)
+        await store.load()
+        store.selectedProjectID = "prj-1"
+        _ = await store.create(name: "blog", environmentName: "production")
+        failing.value = true
+
+        await store.load()
+
+        #expect(store.errorMessage != nil)
+        #expect(store.projects.map(\.id) == ["prj-9", "prj-1"])
+        #expect(store.selectedEnvironmentIDs == ["evm-1"])
+    }
+
+    /// A `ProjectDetailStore` whose environment list requests wait on `gate` once `reloading` is
+    /// set, answering with production and staging only. A POST creates `evm-3`, "preview".
+    private func heldEnvironmentStore(gate: LoadGate, reloading: LockedFlag) -> ProjectDetailStore {
+        let transport = StubTransport { request, _, _ in
+            var response = HTTPResponse(status: .ok)
+            response.headerFields = [.contentType: "application/json"]
+            if request.method == .post {
+                response.status = .created
+                return (response, HTTPBody(Self.environmentJSON(id: "evm-3", name: "preview")))
+            }
+            if reloading.value { await gate.hold() }
+            return (response, HTTPBody(Self.environmentsPage([("evm-1", "production", 0), ("evm-2", "staging", 0)])))
+        }
+        let client = RenderClient(apiKeyProvider: StaticAPIKeyProvider("test-key"), retryPolicy: .none, transport: transport)
+        return ProjectDetailStore(client: client, project: Self.project)
+    }
+
+    @Test("an environment created and then deleted during a reload isn't brought back by it")
+    func createThenDeleteEnvironmentDuringReload() async throws {
+        let gate = LoadGate(), reloading = LockedFlag()
+        let store = heldEnvironmentStore(gate: gate, reloading: reloading)
+        await store.load()
+        reloading.value = true
+
+        let reload = Task { await store.load() }
+        await gate.waitUntilEntered(count: 1)
+        let created = try #require(await store.createEnvironment(name: "preview", isProtected: false))
+        store.environmentDeleted(created)
+        await gate.open()
+        await reload.value
+
+        #expect(store.environments.map(\.id) == ["evm-1", "evm-2"])
+    }
+
+    @Test("an environment created and then renamed during a reload keeps its new name")
+    func createThenRenameEnvironmentDuringReload() async throws {
+        let gate = LoadGate(), reloading = LockedFlag()
+        let store = heldEnvironmentStore(gate: gate, reloading: reloading)
+        await store.load()
+        reloading.value = true
+
+        let reload = Task { await store.load() }
+        await gate.waitUntilEntered(count: 1)
+        _ = try #require(await store.createEnvironment(name: "preview", isProtected: false))
+        let schema = try JSONDecoder().decode(Components.Schemas.Environment.self,
+                                              from: Data(Self.environmentJSON(id: "evm-3", name: "review").utf8))
+        store.replace(EnvironmentSummary(schema))
+        await gate.open()
+        await reload.value
+
+        #expect(store.environments.map(\.name) == ["production", "review", "staging"])
+    }
+
+    @Test("an environment a reload already listed isn't added twice when its create answers")
+    func createEnvironmentAnsweredAfterReloadListsIt() async throws {
+        let gate = LoadGate(), created = LockedFlag()
+        let changed = LockedBox<ProjectSummary?>(nil)
+        let transport = StubTransport { request, _, _ in
+            var response = HTTPResponse(status: .ok)
+            response.headerFields = [.contentType: "application/json"]
+            if request.method == .post {
+                await gate.hold()
+                response.status = .created
+                return (response, HTTPBody(Self.environmentJSON(id: "evm-3", name: "preview")))
+            }
+            var rows: [(id: String, name: String, groups: Int)] = [("evm-1", "production", 0), ("evm-2", "staging", 0)]
+            if created.value { rows.append(("evm-3", "preview", 0)) }
+            return (response, HTTPBody(Self.environmentsPage(rows)))
+        }
+        let client = RenderClient(apiKeyProvider: StaticAPIKeyProvider("test-key"), retryPolicy: .none, transport: transport)
+        let store = ProjectDetailStore(client: client, project: Self.project, onProjectChange: { changed.value = $0 })
+        await store.load()
+
+        let create = Task { await store.createEnvironment(name: "preview", isProtected: false) }
+        await gate.waitUntilEntered(count: 1)
+        created.value = true
+        await store.load()
+        await gate.open()
+        _ = await create.value
+
+        #expect(store.environments.map(\.id) == ["evm-3", "evm-1", "evm-2"])
+        #expect(changed.value?.environmentIDs == ["evm-1", "evm-2", "evm-3"])
+    }
+
     @Test("creating an environment sends the project and protection, and adds it to the project")
     func createEnvironment() async throws {
         let changed = LockedBox<ProjectSummary?>(nil)
@@ -229,6 +382,26 @@ struct ProjectLifecycleTests {
         #expect(!sent.all.contains { $0.method == .delete })
         #expect(store.actionResult?.message.contains("staging") == true)
         #expect(!store.canDeleteProject)
+    }
+
+    @Test("a project with too many environments to list in full is never sent a DELETE")
+    func deleteProjectRefusesAtListLimit() async {
+        // Every page is full, so the list only stops at the limit. All listed are empty.
+        let pages = LockedBox(0)
+        let (client, sent) = recordingClient { method, _ in
+            if method == .delete { return (204, "") }
+            pages.value += 1
+            let page = pages.value
+            return (200, Self.environmentsPage((0..<100).map { ("evm-\(page)-\($0)", "env-\(page)-\($0)", 0) }))
+        }
+        let store = ProjectDetailStore(client: client, project: Self.project)
+        await store.load()
+
+        #expect(await !store.deleteProject())
+
+        #expect(!sent.all.contains { $0.method == .delete })
+        #expect(store.actionResult?.isFailure == true)
+        #expect(!store.isDeleted)
     }
 
     @Test("a project whose environments are all empty is deleted")

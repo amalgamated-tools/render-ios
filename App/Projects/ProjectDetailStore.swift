@@ -153,9 +153,11 @@ final class ProjectDetailStore {
             ))).created.body.json
             let environment = EnvironmentSummary(created)
             createdSinceLoad.append(environment)
+            // A load that finished while this request was out may already list it.
+            environments.removeAll { $0.id == environment.id }
             environments.append(environment)
             environments.sort { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
-            setEnvironmentIDs(project.environmentIDs + [environment.id])
+            setEnvironmentIDs(project.environmentIDs.filter { $0 != environment.id } + [environment.id])
             actionResult = ProjectActionResult(message: "Created \(environment.name).", isFailure: false)
             return environment
         } catch {
@@ -193,6 +195,14 @@ final class ProjectDetailStore {
         // Anything loading now is older than this.
         generation += 1
         show(current)
+        // The list stops at the limit, so an occupied environment past it would go unseen.
+        guard current.count < Self.environmentLimit else {
+            actionResult = ProjectActionResult(
+                message: "This project has too many environments for the app to check that they're all empty. Delete it from the Render Dashboard.",
+                isFailure: true
+            )
+            return false
+        }
         let occupied = environments.filter { !$0.isEmpty }
         guard occupied.isEmpty else {
             let names = ListFormatter.localizedString(byJoining: occupied.map(\.name))
@@ -244,7 +254,10 @@ final class ProjectDetailStore {
             var merged = listed
                 .filter { !deletedSinceLoad.contains($0.id) }
                 .map { changedSinceLoad[$0.id] ?? $0 }
-            merged += createdSinceLoad.filter { created in !merged.contains { $0.id == created.id } }
+            // Created entries get the same overrides: one may have been renamed or deleted since.
+            merged += createdSinceLoad
+                .filter { created in !deletedSinceLoad.contains(created.id) && !merged.contains { $0.id == created.id } }
+                .map { changedSinceLoad[$0.id] ?? $0 }
             show(merged)
             changedSinceLoad = [:]
             createdSinceLoad = []
@@ -257,6 +270,10 @@ final class ProjectDetailStore {
         hasLoaded = true
     }
 
+    /// Where an environment list stops. `deleteProject` refuses at this size, because the list
+    /// may be incomplete.
+    static let environmentLimit = 500
+
     private func fetchEnvironments() async throws -> [EnvironmentSummary] {
         let client = client
         let projectID = project.id
@@ -266,7 +283,7 @@ final class ProjectDetailStore {
                 .ok.body.json
         } unwrap: { (envelope: Components.Schemas.EnvironmentWithCursor) in
             (EnvironmentSummary(envelope.environment), envelope.cursor)
-        }.collect(limit: 500)
+        }.collect(limit: Self.environmentLimit)
     }
 
     private func show(_ list: [EnvironmentSummary]) {

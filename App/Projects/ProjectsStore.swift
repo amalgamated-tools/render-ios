@@ -84,8 +84,8 @@ final class ProjectsStore {
         return ([selectedProjectID] + (selectedEnvironmentIDs ?? [])).joined(separator: ",")
     }
 
-    /// Loads every project for the owner. A failure is non-fatal: the picker just doesn't offer
-    /// projects, and the service list stays workspace-wide.
+    /// Loads every project for the owner. A failure is non-fatal: the projects already shown stay.
+    /// On a first load that means the picker offers none, and the service list stays workspace-wide.
     func load() async {
         generation += 1
         let current = generation
@@ -107,7 +107,10 @@ final class ProjectsStore {
             var merged = listed
                 .filter { !removedSinceLoad.contains($0.id) }
                 .map { changedSinceLoad[$0.id] ?? $0 }
-            merged += createdSinceLoad.filter { created in !merged.contains { $0.id == created.id } }
+            // Created entries get the same overrides: one may have been renamed since.
+            merged += createdSinceLoad
+                .filter { created in !removedSinceLoad.contains(created.id) && !merged.contains { $0.id == created.id } }
+                .map { changedSinceLoad[$0.id] ?? $0 }
             projects = merged
             sortProjects()
             // A remembered project that's been deleted (or belongs to another workspace) would
@@ -117,8 +120,9 @@ final class ProjectsStore {
             }
         } catch {
             guard current == generation else { return }
+            // Keep what's shown, including anything created while this load ran. A failed refresh
+            // shouldn't drop the projects, or the remembered scope with them.
             errorMessage = RenderError.wrapping(error).errorDescription
-            projects = []
         }
         hasLoaded = true
     }
@@ -153,6 +157,8 @@ final class ProjectsStore {
                 environments: [.init(name: environmentName)]
             ))).created.body.json
             let project = ProjectSummary(created)
+            // A load that finished while this request was out may already list it.
+            projects.removeAll { $0.id == project.id }
             projects.append(project)
             createdSinceLoad.append(project)
             sortProjects()
