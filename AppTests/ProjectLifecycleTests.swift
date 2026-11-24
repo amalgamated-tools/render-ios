@@ -91,6 +91,99 @@ struct ProjectLifecycleTests {
         #expect(store.selectedProjectID == nil)
     }
 
+    @Test("the scope key changes when the selected project gains an environment, so scoped lists rebuild")
+    func scopeKeyFollowsEnvironments() async {
+        let (client, _) = recordingClient { _, _ in (200, Fixtures.projectsPage([("prj-1", "shop", ["evm-1"])])) }
+        let store = ProjectsStore(client: client, ownerID: Fixtures.ownerID, defaults: UserDefaults(suiteName: UUID().uuidString)!)
+        await store.load()
+        #expect(store.selectedScopeKey == "")
+        store.selectedProjectID = "prj-1"
+        let before = store.selectedScopeKey
+
+        store.replace(ProjectSummary(id: "prj-1", name: "shop", environmentIDs: ["evm-1", "evm-2"]))
+
+        #expect(store.selectedScopeKey != before)
+        #expect(store.selectedEnvironmentIDs == ["evm-1", "evm-2"])
+        // A rename alone keeps the key, so the lists don't reload for nothing.
+        let afterAdd = store.selectedScopeKey
+        store.replace(ProjectSummary(id: "prj-1", name: "store", environmentIDs: ["evm-1", "evm-2"]))
+        #expect(store.selectedScopeKey == afterAdd)
+    }
+
+    /// A `ProjectsStore` whose project list requests wait on `gate` once `reloading` is set, and
+    /// then answer with `reloadPage`: what Render listed before the change the test makes meanwhile.
+    private func heldReloadStore(
+        firstPage: String, reloadPage: String, gate: LoadGate, reloading: LockedFlag
+    ) -> ProjectsStore {
+        let transport = StubTransport { request, _, _ in
+            var response = HTTPResponse(status: .ok)
+            response.headerFields = [.contentType: "application/json"]
+            if request.method == .post {
+                response.status = .created
+                return (response, HTTPBody(Self.projectJSON(id: "prj-9", name: "blog", environmentIDs: ["evm-9"])))
+            }
+            if reloading.value {
+                await gate.hold()
+                return (response, HTTPBody(reloadPage))
+            }
+            return (response, HTTPBody(firstPage))
+        }
+        let client = RenderClient(apiKeyProvider: StaticAPIKeyProvider("test-key"), retryPolicy: .none, transport: transport)
+        return ProjectsStore(client: client, ownerID: Fixtures.ownerID, defaults: UserDefaults(suiteName: UUID().uuidString)!)
+    }
+
+    @Test("a project created during a reload stays listed when the reload finishes")
+    func createDuringReload() async {
+        let page = Fixtures.projectsPage([("prj-1", "shop", ["evm-1"])])
+        let gate = LoadGate(), reloading = LockedFlag()
+        let store = heldReloadStore(firstPage: page, reloadPage: page, gate: gate, reloading: reloading)
+        await store.load()
+        reloading.value = true
+
+        let reload = Task { await store.load() }
+        await gate.waitUntilEntered(count: 1)
+        _ = await store.create(name: "blog", environmentName: "production")
+        await gate.open()
+        await reload.value
+
+        #expect(store.projects.map(\.id) == ["prj-9", "prj-1"])
+    }
+
+    @Test("a project deleted during a reload isn't brought back by it")
+    func removeDuringReload() async {
+        let page = Fixtures.projectsPage([("prj-1", "shop", ["evm-1"]), ("prj-2", "wiki", ["evm-2"])])
+        let gate = LoadGate(), reloading = LockedFlag()
+        let store = heldReloadStore(firstPage: page, reloadPage: page, gate: gate, reloading: reloading)
+        await store.load()
+        reloading.value = true
+
+        let reload = Task { await store.load() }
+        await gate.waitUntilEntered(count: 1)
+        store.remove(Self.project)
+        await gate.open()
+        await reload.value
+
+        #expect(store.projects.map(\.id) == ["prj-2"])
+    }
+
+    @Test("an environment added during a reload keeps the project's new environment IDs")
+    func changeDuringReload() async {
+        let page = Fixtures.projectsPage([("prj-1", "shop", ["evm-1"])])
+        let gate = LoadGate(), reloading = LockedFlag()
+        let store = heldReloadStore(firstPage: page, reloadPage: page, gate: gate, reloading: reloading)
+        await store.load()
+        store.selectedProjectID = "prj-1"
+        reloading.value = true
+
+        let reload = Task { await store.load() }
+        await gate.waitUntilEntered(count: 1)
+        store.replace(ProjectSummary(id: "prj-1", name: "shop", environmentIDs: ["evm-1", "evm-3"]))
+        await gate.open()
+        await reload.value
+
+        #expect(store.selectedEnvironmentIDs == ["evm-1", "evm-3"])
+    }
+
     @Test("creating an environment sends the project and protection, and adds it to the project")
     func createEnvironment() async throws {
         let changed = LockedBox<ProjectSummary?>(nil)

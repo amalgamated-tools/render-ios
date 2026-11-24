@@ -49,6 +49,13 @@ final class ProjectsStore {
     private let client: RenderClient
     private let ownerID: String
     private let defaults: UserDefaults
+    /// Bumped by every load, so an older load that finishes late can't overwrite a newer one.
+    private var generation = 0
+    /// Changes made since the current load started. Each is newer than anything that load
+    /// fetched, so they're applied over its result rather than lost to it.
+    private var changedSinceLoad: [String: ProjectSummary] = [:]
+    private var createdSinceLoad: [ProjectSummary] = []
+    private var removedSinceLoad: Set<String> = []
 
     /// - Parameter defaults: Injection seam for tests, so a test run doesn't leave a scope behind
     ///   in the app's own defaults.
@@ -69,11 +76,24 @@ final class ProjectsStore {
         selectedProject?.environmentIDs
     }
 
+    /// Identifies the current scope for the scoped lists' `.id`. It changes when the selected
+    /// project gains or loses an environment, not only when another project is picked, so those
+    /// lists rebuild their stores with the new filter.
+    var selectedScopeKey: String {
+        guard let selectedProjectID else { return "" }
+        return ([selectedProjectID] + (selectedEnvironmentIDs ?? [])).joined(separator: ",")
+    }
+
     /// Loads every project for the owner. A failure is non-fatal: the picker just doesn't offer
     /// projects, and the service list stays workspace-wide.
     func load() async {
+        generation += 1
+        let current = generation
+        // A load starting now fetches after any earlier change, so it has nothing to apply over it.
+        changedSinceLoad = [:]
+        createdSinceLoad = []
+        removedSinceLoad = []
         errorMessage = nil
-        defer { hasLoaded = true }
         let paginator = CursorPaginator(pageSize: 100) { [client, ownerID] cursor, limit in
             try await client.api
                 .listProjects(query: .init(ownerId: [ownerID], cursor: cursor, limit: limit))
@@ -82,17 +102,29 @@ final class ProjectsStore {
             (ProjectSummary(envelope.project), envelope.cursor)
         }
         do {
-            projects = try await paginator.collect()
-                .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+            let listed = try await paginator.collect()
+            guard current == generation else { return }
+            var merged = listed
+                .filter { !removedSinceLoad.contains($0.id) }
+                .map { changedSinceLoad[$0.id] ?? $0 }
+            merged += createdSinceLoad.filter { created in !merged.contains { $0.id == created.id } }
+            projects = merged
+            sortProjects()
             // A remembered project that's been deleted (or belongs to another workspace) would
             // otherwise scope the list to a filter the user can't see or clear.
             if let selectedProjectID, !projects.contains(where: { $0.id == selectedProjectID }) {
                 self.selectedProjectID = nil
             }
         } catch {
+            guard current == generation else { return }
             errorMessage = RenderError.wrapping(error).errorDescription
             projects = []
         }
+        hasLoaded = true
+    }
+
+    private func sortProjects() {
+        projects.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
     /// Takes a rename made on a project's screen, so the picker and the Projects list show it
@@ -100,7 +132,8 @@ final class ProjectsStore {
     func replace(_ project: ProjectSummary) {
         guard let index = projects.firstIndex(where: { $0.id == project.id }) else { return }
         projects[index] = project
-        projects.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        changedSinceLoad[project.id] = project
+        sortProjects()
     }
 
     /// Creates a project with one environment. Render requires a project to start with its
@@ -121,7 +154,8 @@ final class ProjectsStore {
             ))).created.body.json
             let project = ProjectSummary(created)
             projects.append(project)
-            projects.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+            createdSinceLoad.append(project)
+            sortProjects()
             actionResult = ProjectActionResult(message: "Created \(project.name).", isFailure: false)
             return project
         } catch {
@@ -133,6 +167,9 @@ final class ProjectsStore {
     /// Takes a project deleted on its own screen out of the list, and out of the scope picker.
     func remove(_ project: ProjectSummary) {
         projects.removeAll { $0.id == project.id }
+        removedSinceLoad.insert(project.id)
+        createdSinceLoad.removeAll { $0.id == project.id }
+        changedSinceLoad[project.id] = nil
         // Otherwise the service list stays scoped to environments that no longer exist.
         if selectedProjectID == project.id { selectedProjectID = nil }
         actionResult = ProjectActionResult(message: "Deleted \(project.name).", isFailure: false)
