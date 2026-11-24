@@ -538,7 +538,7 @@ struct ProjectLifecycleTests {
     }
 
     @Test("a deleted environment leaves the project list and isn't brought back by a reload already running")
-    func environmentDeletedSurvivesReload() async {
+    func environmentDeletedSurvivesReload() async throws {
         let gate = LoadGate()
         let reloading = LockedFlag()
         let transport = StubTransport { _, _, _ in
@@ -550,7 +550,7 @@ struct ProjectLifecycleTests {
         let client = RenderClient(apiKeyProvider: StaticAPIKeyProvider("test-key"), retryPolicy: .none, transport: transport)
         let store = ProjectDetailStore(client: client, project: Self.project)
         await store.load()
-        let staging = try! #require(store.environments.first { $0.id == "evm-2" })
+        let staging = try #require(store.environments.first { $0.id == "evm-2" })
         reloading.value = true
 
         let reload = Task { await store.load() }

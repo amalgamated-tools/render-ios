@@ -26,8 +26,8 @@ struct EnvironmentSummary: Identifiable, Hashable, Sendable {
         self.envGroupCount = environment.envGroupIds.count
     }
 
-    /// Render deletes an environment only when this is true. The four counts cover every kind of
-    /// resource `Environment` lists.
+    /// Render deletes an environment only when this is true. These three counts cover every kind of
+    /// resource `Environment` lists, since `databaseCount` combines Postgres and Key Value.
     var isEmpty: Bool {
         serviceCount == 0 && databaseCount == 0 && envGroupCount == 0
     }
