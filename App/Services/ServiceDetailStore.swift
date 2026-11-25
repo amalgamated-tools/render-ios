@@ -188,6 +188,12 @@ final class ServiceDetailStore {
         actionResult = nil
     }
 
+    /// Reports a disk added or deleted from its own screen, then reloads so the disk row matches.
+    func diskChanged(message: String) async {
+        actionResult = ActionResult(message: message, isFailure: false)
+        await reload()
+    }
+
     /// Runs an action, then reloads so the UI reflects what Render actually did.
     func perform(_ action: ServiceAction) async {
         guard actionInFlight == nil else { return }

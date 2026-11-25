@@ -10,6 +10,7 @@ struct ServiceDetailView: View {
     @State private var pendingAction: ServiceAction?
     @State private var isShowingScaleSheet = false
     @State private var isShowingAutoscalingSheet = false
+    @State private var isShowingAddDisk = false
     @State private var watchDenialMessage: String?
     @Environment(FailureWatchCoordinator.self) private var coordinator
     @Environment(NotificationRouter.self) private var router
@@ -65,6 +66,13 @@ struct ServiceDetailView: View {
         .overlay { errorState }
         .safeAreaInset(edge: .bottom) { actionBanner }
         .actionOutcomeFeedback(store.actionResult)
+        .sheet(isPresented: $isShowingAddDisk) {
+            AddDiskSheet(client: client, serviceID: serviceID) { name in
+                Task {
+                    await store.diskChanged(message: "Added \(name). Deploy the service to attach it.")
+                }
+            }
+        }
         .confirmationDialog(
             pendingAction?.confirmationTitle(serviceName: store.service?.name ?? serviceName) ?? "",
             isPresented: .init(get: { pendingAction != nil }, set: { if !$0 { pendingAction = nil } }),
@@ -312,10 +320,17 @@ struct ServiceDetailView: View {
             }
             if let disk = details.disk {
                 NavigationLink {
-                    DiskView(client: client, disk: disk)
+                    DiskView(client: client, disk: disk) { name in
+                        Task { await store.diskChanged(message: "Deleted \(name).") }
+                    }
                 } label: {
                     LabeledContent("Disk", value: "\(disk.name) · \(disk.sizeGB) GB")
                 }
+            } else if details.canAddDisk {
+                Button("Add Disk…", systemImage: "externaldrive.badge.plus") {
+                    isShowingAddDisk = true
+                }
+                .accessibilityIdentifier("addDisk")
             }
             if details.isMaintenanceModeEnabled {
                 Label("Maintenance mode is on", systemImage: "wrench.and.screwdriver.fill")

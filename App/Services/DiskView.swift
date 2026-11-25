@@ -2,15 +2,20 @@ import RenderAPI
 import SwiftUI
 
 /// A service's persistent disk: its size and mount path, the snapshots Render has taken of it, and
-/// growing the disk or restoring a snapshot, each confirmed first.
+/// growing the disk, restoring a snapshot or deleting the disk, each confirmed first.
 struct DiskView: View {
     let disk: ServiceDetails.Disk
+    /// Called once the disk is deleted, before this screen closes.
+    let onDeleted: (String) -> Void
     @State private var store: DiskStore
     @State private var isShowingResize = false
+    @State private var isShowingDelete = false
     @State private var confirmingRestore: DiskStore.Snapshot?
+    @Environment(\.dismiss) private var dismiss
 
-    init(client: RenderClient, disk: ServiceDetails.Disk) {
+    init(client: RenderClient, disk: ServiceDetails.Disk, onDeleted: @escaping (String) -> Void) {
         self.disk = disk
+        self.onDeleted = onDeleted
         _store = State(initialValue: DiskStore(client: client, diskID: disk.id, sizeGB: disk.sizeGB))
     }
 
@@ -36,6 +41,15 @@ struct DiskView: View {
                 }
             }
             snapshotsSection
+            Section {
+                Button("Delete Disk…", systemImage: "trash", role: .destructive) {
+                    isShowingDelete = true
+                }
+                .disabled(store.isWriting)
+                .accessibilityIdentifier("deleteDisk")
+            } footer: {
+                Text("Deleting the disk erases everything on it and its snapshots. The service loses access straight away.")
+            }
         }
         .navigationTitle("Disk")
         .navigationBarTitleDisplayMode(.inline)
@@ -47,6 +61,18 @@ struct DiskView: View {
             ResizeSheet(diskName: disk.name, store: store) { newSize in
                 isShowingResize = false
                 Task { await store.resize(to: newSize) }
+            }
+        }
+        .sheet(isPresented: $isShowingDelete) {
+            DeleteByNameSheet(
+                title: "Delete Disk",
+                name: disk.name,
+                explanation: "Everything on \(disk.name) is lost, along with its snapshots. This can't be undone."
+            ) {
+                guard await store.delete() else { return false }
+                onDeleted(disk.name)
+                dismiss()
+                return true
             }
         }
         .confirmationDialog(

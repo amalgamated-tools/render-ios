@@ -2,8 +2,8 @@ import Foundation
 import Observation
 import RenderAPI
 
-/// A service's disk, the snapshots Render has taken of it, and the two writes a phone can make:
-/// growing the disk and restoring a snapshot.
+/// A service's disk, the snapshots Render has taken of it, and the writes a phone can make: growing
+/// the disk, restoring a snapshot, and deleting the disk.
 ///
 /// The disk itself comes from the service details the detail screen already loaded, so only the
 /// snapshot list is fetched here. The size is kept locally after that so a resize shows straight away.
@@ -61,9 +61,10 @@ final class DiskStore {
     /// The `matchID` of the snapshot being restored, so its row can show progress even after the
     /// fresh fetch renews its key.
     private(set) var restoringID: String?
+    private(set) var isDeleting = false
     private(set) var actionResult: ActionResult?
 
-    var isWriting: Bool { isResizing || restoringID != nil }
+    var isWriting: Bool { isResizing || restoringID != nil || isDeleting }
 
     private let client: RenderClient
     let diskID: String
@@ -150,6 +151,30 @@ final class DiskStore {
             )
         } catch {
             actionResult = ActionResult(message: Self.message(for: error), isFailure: true)
+        }
+    }
+
+    /// Deletes the disk and everything on it. Returns true once it's gone, so the screen can close.
+    ///
+    /// A 404 or 410 counts as gone: most likely a retried DELETE whose first answer was lost, or a
+    /// delete made elsewhere, and the spec documents 410 for a disk or service that's already gone.
+    /// Either way the disk no longer exists, as asked.
+    func delete() async -> Bool {
+        guard !isWriting else { return false }
+        isDeleting = true
+        actionResult = nil
+        defer { isDeleting = false }
+
+        do {
+            try await client.api.deleteDisk(path: .init(diskId: diskID)).expectSuccess()
+            return true
+        } catch {
+            switch RenderError.wrapping(error) {
+            case .notFound, .client(statusCode: 410, _): return true
+            default: break
+            }
+            actionResult = ActionResult(message: Self.message(for: error), isFailure: true)
+            return false
         }
     }
 

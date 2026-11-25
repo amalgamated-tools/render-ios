@@ -184,6 +184,27 @@ extension Components.Schemas.ServiceType {
         }
     }
 
+    /// Types `POST /disks` can attach a disk to, from the endpoint's docs. A free instance can't have
+    /// one either; see ``ServiceDetails/canAddDisk``.
+    var supportsDisk: Bool {
+        switch self {
+        case .webService, .privateService, .backgroundWorker: true
+        case .staticSite, .cronJob: false
+        }
+    }
+
     /// `POST /services/{id}/cache/purge` is documented for web services only.
     var supportsCachePurge: Bool { self == .webService }
+}
+
+extension ServiceDetails {
+    /// Whether the service screen offers Add Disk: a type that takes a disk, on a known paid plan, with
+    /// no disk yet. Render allows one disk per service.
+    ///
+    /// Details that decoded as another type say nothing reliable about the plan or an existing disk
+    /// (both come back nil), so they never offer it.
+    var canAddDisk: Bool {
+        guard matchesDeclaredType, type.supportsDisk, disk == nil, let plan else { return false }
+        return plan != .free
+    }
 }

@@ -176,3 +176,13 @@ extension Operations.DeleteEnvironment.Output: NoContentWrite {
         return nil
     }
 }
+
+// Disks: deleting is documented as `204`, and Render answered `204` live. Any 2xx is still accepted,
+// as for the other writes here.
+
+extension Operations.DeleteDisk.Output: NoContentWrite {
+    public var undocumentedStatusCode: Int? {
+        if case .undocumented(let statusCode, _) = self { return statusCode }
+        return nil
+    }
+}
