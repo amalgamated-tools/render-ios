@@ -36,25 +36,7 @@ struct DiskStoreTests {
         recorder: Recorder,
         _ route: @escaping @Sendable (HTTPRequest.Method, String) -> (status: Int, body: String)
     ) -> DiskStore {
-        let transport = StubTransport { request, body, _ in
-            let path = request.path ?? ""
-            var sent: String?
-            if let body {
-                let data = try await Data(collecting: body, upTo: 1 << 16)
-                sent = String(decoding: data, as: UTF8.self)
-            }
-            recorder.append(.init(method: request.method, path: path, body: sent))
-            let answer = route(request.method, path)
-            var response = HTTPResponse(status: .init(code: answer.status))
-            response.headerFields = [.contentType: "application/json"]
-            return (response, HTTPBody(answer.body))
-        }
-        let client = RenderClient(
-            apiKeyProvider: StaticAPIKeyProvider("test-key"),
-            retryPolicy: .none,
-            transport: transport
-        )
-        return DiskStore(client: client, diskID: "dsk-1", sizeGB: 10)
+        DiskStore(client: writingClient(recorder: recorder, route), diskID: "dsk-1", sizeGB: 10)
     }
 
     // MARK: - Reading
@@ -310,6 +292,191 @@ struct DiskStoreTests {
         #expect(store.actionResult?.isFailure == true)
         #expect(store.restoringID == nil)
     }
+
+    // MARK: - Deleting
+
+    @Test("deleting sends one DELETE for the disk and reports it gone")
+    func deletes() async throws {
+        let recorder = Recorder()
+        let store = writingStore(recorder: recorder) { method, path in
+            method == .delete && path.hasSuffix("/disks/dsk-1") ? (204, "") : (500, "{}")
+        }
+
+        #expect(await store.delete())
+
+        #expect(recorder.requests.map(\.method) == [.delete])
+        #expect(store.actionResult == nil)
+        #expect(!store.isDeleting)
+    }
+
+    @Test("a disk that's already gone counts as deleted")
+    func deleteNotFound() async {
+        let store = writingStore(recorder: Recorder()) { _, _ in (404, #"{"message":"not found"}"#) }
+
+        #expect(await store.delete())
+        #expect(store.actionResult == nil)
+    }
+
+    @Test("a refused delete keeps the screen open and says why")
+    func deleteFails() async {
+        let store = writingStore(recorder: Recorder()) { _, _ in (500, #"{"message":"boom"}"#) }
+
+        #expect(await store.delete() == false)
+        #expect(store.actionResult?.isFailure == true)
+        #expect(!store.isDeleting)
+    }
+
+    @Test("nothing is deleted while a resize is running")
+    func deleteWaitsForOtherWrites() async throws {
+        let recorder = Recorder()
+        let gate = AsyncStream<Void>.makeStream()
+        let transport = StubTransport { request, _, _ in
+            recorder.append(.init(method: request.method, path: request.path ?? "", body: nil))
+            if request.method == .patch {
+                for await _ in gate.stream { break }
+            }
+            var response = HTTPResponse(status: .init(code: request.method == .patch ? 200 : 204))
+            response.headerFields = [.contentType: "application/json"]
+            return (response, HTTPBody(request.method == .patch ? Self.disk(sizeGB: 20) : ""))
+        }
+        let client = RenderClient(apiKeyProvider: StaticAPIKeyProvider("k"), retryPolicy: .none, transport: transport)
+        let store = DiskStore(client: client, diskID: "dsk-1", sizeGB: 10)
+
+        let resize = Task { await store.resize(to: 20) }
+        while !store.isResizing { await Task.yield() }
+
+        #expect(await store.delete() == false)
+        gate.continuation.yield()
+        gate.continuation.finish()
+        await resize.value
+        #expect(recorder.requests.map(\.method) == [.patch])
+    }
+}
+
+@MainActor
+@Suite("NewDiskStore")
+struct NewDiskStoreTests {
+    private func store(
+        recorder: Recorder,
+        _ route: @escaping @Sendable (HTTPRequest.Method, String) -> (status: Int, body: String)
+    ) -> NewDiskStore {
+        NewDiskStore(client: writingClient(recorder: recorder, route), serviceID: "srv-1")
+    }
+
+    @Test("the form checks the rules Render enforces before anything is sent")
+    func validation() {
+        let store = store(recorder: Recorder()) { _, _ in (500, "{}") }
+        #expect(store.validationMessage == "Enter a name.")
+        store.name = "  data "
+        store.sizeText = ""
+        #expect(store.validationMessage == "Enter a size in GB.")
+        store.sizeText = "0"
+        #expect(store.validationMessage == "A disk must be at least 1 GB.")
+        store.sizeText = "5"
+        #expect(store.validationMessage == "Enter a mount path.")
+        store.mountPath = "var/data"
+        #expect(store.validationMessage == "The mount path must start with /.")
+        store.mountPath = " /var/data "
+        #expect(store.validationMessage == nil)
+    }
+
+    @Test("adding POSTs the trimmed fields for this service and returns the new disk's name")
+    func creates() async throws {
+        let recorder = Recorder()
+        let store = store(recorder: recorder) { method, path in
+            method == .post && path.hasSuffix("/disks")
+                ? (201, #"{"id":"dsk-2","name":"data","sizeGB":5,"mountPath":"/var/data","serviceId":"srv-1","createdAt":"2026-11-25T00:00:00Z","updatedAt":"2026-11-25T00:00:00Z"}"#)
+                : (404, "{}")
+        }
+        store.name = " data "
+        store.sizeText = "5"
+        store.mountPath = " /var/data"
+
+        #expect(await store.create() == "data")
+
+        let request = try #require(recorder.requests.first)
+        let body = try #require(try JSONSerialization.jsonObject(with: Data((request.body ?? "").utf8)) as? [String: Any])
+        #expect(body["name"] as? String == "data")
+        #expect(body["sizeGB"] as? Int == 5)
+        #expect(body["mountPath"] as? String == "/var/data")
+        #expect(body["serviceId"] as? String == "srv-1")
+        #expect(store.error == nil && !store.isCreating)
+    }
+
+    @Test("Render's reason is shown when it refuses, and nothing is reported as added")
+    func refused() async {
+        let store = store(recorder: Recorder()) { _, _ in (400, #"{"message":"disk already exists"}"#) }
+        store.name = "data"
+        store.mountPath = "/data"
+
+        #expect(await store.create() == nil)
+        #expect(store.error?.contains("Disk already exists.") == true)
+    }
+
+    @Test("an invalid form is never sent")
+    func invalidNotSent() async {
+        let recorder = Recorder()
+        let store = store(recorder: recorder) { _, _ in (201, "{}") }
+        store.name = "data"
+        store.mountPath = "data"
+
+        #expect(await store.create() == nil)
+        #expect(recorder.requests.isEmpty)
+    }
+}
+
+@Suite("Add Disk availability")
+struct AddDiskAvailabilityTests {
+    private func details(type: String, diskSizeGB: Int? = nil, plan: String = "starter") throws -> ServiceDetails {
+        let json = Fixtures.serviceJSON(
+            type: type,
+            details: Fixtures.serviceDetailsJSON(for: type, diskSizeGB: diskSizeGB)
+                .replacingOccurrences(of: #""plan":"starter""#, with: #""plan":"\#(plan)""#)
+        )
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return ServiceDetails(try decoder.decode(Components.Schemas.Service.self, from: Data(json.utf8)))
+    }
+
+    @Test("offered for paid web services, private services and workers with no disk")
+    func offered() throws {
+        for type in ["web_service", "private_service", "background_worker"] {
+            #expect(try details(type: type).canAddDisk, "\(type)")
+        }
+    }
+
+    @Test("not offered with a disk already, on a free instance, or for sites and cron jobs")
+    func notOffered() throws {
+        #expect(try !details(type: "web_service", diskSizeGB: 1).canAddDisk)
+        #expect(try !details(type: "web_service", plan: "free").canAddDisk)
+        #expect(try !details(type: "static_site").canAddDisk)
+        #expect(try !details(type: "cron_job").canAddDisk)
+    }
+}
+
+/// A client whose stub records the method and request body of each write.
+private func writingClient(
+    recorder: Recorder,
+    _ route: @escaping @Sendable (HTTPRequest.Method, String) -> (status: Int, body: String)
+) -> RenderClient {
+    let transport = StubTransport { request, body, _ in
+        let path = request.path ?? ""
+        var sent: String?
+        if let body {
+            let data = try await Data(collecting: body, upTo: 1 << 16)
+            sent = String(decoding: data, as: UTF8.self)
+        }
+        recorder.append(.init(method: request.method, path: path, body: sent))
+        let answer = route(request.method, path)
+        var response = HTTPResponse(status: .init(code: answer.status))
+        response.headerFields = [.contentType: "application/json"]
+        return (response, HTTPBody(answer.body))
+    }
+    return RenderClient(
+        apiKeyProvider: StaticAPIKeyProvider("test-key"),
+        retryPolicy: .none,
+        transport: transport
+    )
 }
 
 /// Every request the writing store sent, with its body.

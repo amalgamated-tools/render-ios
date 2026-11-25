@@ -22,9 +22,13 @@ if [ -z "${RENDER_API_KEY:-}" ]; then
 fi
 
 SIMULATOR="${SIMULATOR:-iPhone 17 Pro}"
-NAME=$(Scripts/test-destination.sh "$SIMULATOR" | sed 's/.*name=//')
-DEVICE=$(xcrun simctl list devices available | grep -E "^[[:space:]]+$NAME \(" | head -1 \
-  | sed 's/.*(\([0-9A-F-]*\)).*/\1/')
+# test-destination.sh picks the simulator by UDID, so its runtime matches the SDK.
+DEVICE=$(Scripts/test-destination.sh "$SIMULATOR" | sed -n 's/.*id=\([0-9A-F-]*\).*/\1/p')
+if [ -z "$DEVICE" ]; then
+  echo "!!! No simulator found for \"$SIMULATOR\"." >&2
+  exit 1
+fi
+NAME=$(xcrun simctl list devices available | grep "($DEVICE)" | head -1 | sed 's/^[[:space:]]*\(.*\) ([0-9A-F-]*).*/\1/')
 
 OUT=build/ui-tests
 rm -rf "$OUT"
