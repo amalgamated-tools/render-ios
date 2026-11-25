@@ -9,9 +9,11 @@ import XCTest
 /// `UI_DISK_SERVICE` naming a throwaway service with a disk. It restores the newest snapshot, the one
 /// that loses the least, and checks Render accepted it.
 ///
-/// `testAddAndDeleteDisk` needs the same two settings, but a `UI_DISK_SERVICE` with **no** disk. It
-/// adds a 1 GB disk with a random name, then deletes it through the confirmation sheet, so the service
-/// ends as it started.
+/// `testAddAndDeleteDisk` needs `UI_ALLOW_WRITES=1` and `UI_NO_DISK_SERVICE` naming a throwaway
+/// service on a paid plan with **no** disk. It adds a 1 GB disk with a random name, then deletes it
+/// through the confirmation sheet, so the service ends as it started.
+///
+/// The two need opposite starting states, hence separate settings. Each skips when its own is unset.
 @MainActor
 final class ServiceScreensTests: XCTestCase {
     override func setUp() async throws {
@@ -34,7 +36,9 @@ final class ServiceScreensTests: XCTestCase {
 
     func testRestoreNewestSnapshot() throws {
         try XCTSkipUnless(AppDriver.value("UI_ALLOW_WRITES") == "1", "Overwrites a real disk; set UI_ALLOW_WRITES=1")
-        let service = try XCTUnwrap(AppDriver.value("UI_DISK_SERVICE"), "Set UI_DISK_SERVICE to a throwaway service with a disk")
+        guard let service = AppDriver.value("UI_DISK_SERVICE") else {
+            throw XCTSkip("Set UI_DISK_SERVICE to a throwaway service with a disk")
+        }
         let driver = AppDriver(self)
         driver.launch()
         try driver.signIn()
@@ -65,7 +69,9 @@ final class ServiceScreensTests: XCTestCase {
 
     func testAddAndDeleteDisk() throws {
         try XCTSkipUnless(AppDriver.value("UI_ALLOW_WRITES") == "1", "Adds and deletes a real disk; set UI_ALLOW_WRITES=1")
-        let service = try XCTUnwrap(AppDriver.value("UI_DISK_SERVICE"), "Set UI_DISK_SERVICE to a throwaway service with no disk")
+        guard let service = AppDriver.value("UI_NO_DISK_SERVICE") else {
+            throw XCTSkip("Set UI_NO_DISK_SERVICE to a throwaway paid service with no disk")
+        }
         let name = "ui-disk-\(UUID().uuidString.prefix(6).lowercased())"
         let driver = AppDriver(self)
         driver.launch()

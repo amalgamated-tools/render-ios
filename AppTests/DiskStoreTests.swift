@@ -309,9 +309,9 @@ struct DiskStoreTests {
         #expect(!store.isDeleting)
     }
 
-    @Test("a disk that's already gone counts as deleted")
-    func deleteNotFound() async {
-        let store = writingStore(recorder: Recorder()) { _, _ in (404, #"{"message":"not found"}"#) }
+    @Test("a disk that's already gone counts as deleted", arguments: [404, 410])
+    func deleteNotFound(status: Int) async {
+        let store = writingStore(recorder: Recorder()) { _, _ in (status, #"{"message":"gone"}"#) }
 
         #expect(await store.delete())
         #expect(store.actionResult == nil)
@@ -378,6 +378,22 @@ struct NewDiskStoreTests {
         #expect(store.validationMessage == "The mount path must start with /.")
         store.mountPath = " /var/data "
         #expect(store.validationMessage == nil)
+    }
+
+    @Test("the form says what's wrong once it's been touched, but not when it first opens")
+    func formHint() {
+        let store = store(recorder: Recorder()) { _, _ in (500, "{}") }
+        #expect(store.validationMessage != nil)
+        #expect(store.formHint == nil)
+        store.sizeText = "0"
+        #expect(store.formHint == "Enter a name.")
+        store.name = "data"
+        #expect(store.formHint == "A disk must be at least 1 GB.")
+        store.sizeText = "1"
+        store.mountPath = "var/data"
+        #expect(store.formHint == "The mount path must start with /.")
+        store.mountPath = "/var/data"
+        #expect(store.formHint == nil)
     }
 
     @Test("adding POSTs the trimmed fields for this service and returns the new disk's name")
@@ -451,6 +467,19 @@ struct AddDiskAvailabilityTests {
         #expect(try !details(type: "web_service", plan: "free").canAddDisk)
         #expect(try !details(type: "static_site").canAddDisk)
         #expect(try !details(type: "cron_job").canAddDisk)
+    }
+
+    @Test("not offered when the details decoded as another type, so the plan and disk are unknown")
+    func notOfferedOnMismatch() throws {
+        let json = Fixtures.serviceJSON(
+            type: "web_service",
+            details: #"{"buildCommand":"npm run build","publishPath":"dist","url":"https://x.onrender.com","buildPlan":"starter"}"#
+        )
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let details = ServiceDetails(try decoder.decode(Components.Schemas.Service.self, from: Data(json.utf8)))
+        #expect(!details.matchesDeclaredType)
+        #expect(!details.canAddDisk)
     }
 }
 

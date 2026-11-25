@@ -9,8 +9,10 @@ import RenderAPI
 @MainActor
 @Observable
 final class NewDiskStore {
+    static let defaultSizeText = "1"
+
     var name = ""
-    var sizeText = "1"
+    var sizeText = NewDiskStore.defaultSizeText
     var mountPath = ""
 
     private(set) var isCreating = false
@@ -37,6 +39,13 @@ final class NewDiskStore {
         if trimmedMountPath.isEmpty { return "Enter a mount path." }
         if !trimmedMountPath.hasPrefix("/") { return "The mount path must start with /." }
         return nil
+    }
+
+    /// The rule the form breaks, once the user has started filling it in. An untouched form says
+    /// nothing, so the sheet doesn't open with a complaint.
+    var formHint: String? {
+        let untouched = name.isEmpty && mountPath.isEmpty && sizeText == Self.defaultSizeText
+        return untouched ? nil : validationMessage
     }
 
     /// Adds the disk. Returns the new disk's name once Render has created it, or nil on failure, with

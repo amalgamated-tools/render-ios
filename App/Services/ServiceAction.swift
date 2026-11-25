@@ -198,9 +198,13 @@ extension Components.Schemas.ServiceType {
 }
 
 extension ServiceDetails {
-    /// Whether the service screen offers Add Disk: a type that takes a disk, on a paid plan, with no
-    /// disk yet. Render allows one disk per service.
+    /// Whether the service screen offers Add Disk: a type that takes a disk, on a known paid plan, with
+    /// no disk yet. Render allows one disk per service.
+    ///
+    /// Details that decoded as another type say nothing reliable about the plan or an existing disk
+    /// (both come back nil), so they never offer it.
     var canAddDisk: Bool {
-        disk == nil && type.supportsDisk && plan != .free
+        guard matchesDeclaredType, type.supportsDisk, disk == nil, let plan else { return false }
+        return plan != .free
     }
 }

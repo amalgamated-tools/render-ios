@@ -156,8 +156,9 @@ final class DiskStore {
 
     /// Deletes the disk and everything on it. Returns true once it's gone, so the screen can close.
     ///
-    /// A 404 counts as gone: most likely a retried DELETE whose first answer was lost, or a delete
-    /// made elsewhere. Either way the disk no longer exists, as asked.
+    /// A 404 or 410 counts as gone: most likely a retried DELETE whose first answer was lost, or a
+    /// delete made elsewhere, and the spec documents 410 for a disk or service that's already gone.
+    /// Either way the disk no longer exists, as asked.
     func delete() async -> Bool {
         guard !isWriting else { return false }
         isDeleting = true
@@ -168,7 +169,10 @@ final class DiskStore {
             try await client.api.deleteDisk(path: .init(diskId: diskID)).expectSuccess()
             return true
         } catch {
-            if case .notFound = RenderError.wrapping(error) { return true }
+            switch RenderError.wrapping(error) {
+            case .notFound, .client(statusCode: 410, _): return true
+            default: break
+            }
             actionResult = ActionResult(message: Self.message(for: error), isFailure: true)
             return false
         }

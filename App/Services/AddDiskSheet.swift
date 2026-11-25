@@ -38,6 +38,10 @@ struct AddDiskSheet: View {
                         .accessibilityIdentifier("diskMountPath")
                 } footer: {
                     VStack(alignment: .leading, spacing: 6) {
+                        if let hint = store.formHint {
+                            Label(hint, systemImage: "info.circle")
+                                .accessibilityIdentifier("diskFormHint")
+                        }
                         if let error = store.error {
                             Label(error, systemImage: "exclamationmark.triangle")
                                 .foregroundStyle(.orange)
